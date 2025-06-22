@@ -9,18 +9,18 @@ import lombok.*;
 @Getter
 @Setter
 @Table(name = "notifications")
-public class Notifications {
+public class Notification {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long notification_id;
+    private Long notificationId;
 
-    private boolean is_active;
+    private boolean isActive;
 
-    private String fcm_token;
+    private String fcmToken;
 
     @ManyToOne
-    @JoinColumn(name = "reservation_id", nullable = false)
-    private Reservations reservations;
+    @JoinColumn(name = "reservationId", nullable = false)
+    private Reservation reservation;
 
     @ManyToOne
     @JoinColumn(name = "id", nullable = false)
