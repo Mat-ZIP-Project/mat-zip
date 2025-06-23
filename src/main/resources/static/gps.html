@@ -14,10 +14,7 @@
 
 
     function getLocation() {
-        // if (!isKakaoLoaded) {
-        //     alert("Kakao 지도 API 로드 중입니다. 잠시 후 다시 시도해주세요.");
-        //     return;
-        // }
+
         navigator.geolocation.getCurrentPosition(success, error);
     }
 

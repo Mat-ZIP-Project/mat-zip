@@ -12,7 +12,7 @@ import web.mvc.dto.ResponseErrorDTO;
 @Slf4j
 public class GlobalRestExceptionAdvice {
 
-	@ExceptionHandler(BasicException.class)
+	@ExceptionHandler({BasicException.class,LocalAuthException.class})
 	public ResponseEntity<?> error(BasicException e) {
 
 		log.error("Error Message error {} " , e.getErrorCode().getMsg() );

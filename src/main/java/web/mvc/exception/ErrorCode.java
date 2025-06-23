@@ -21,6 +21,7 @@ public enum ErrorCode { //enum은 'Enumeration' 의 약자로 열거, 목록 이
     NO_AUTH_LOGS(605, "인증 기록이 없습니다.");
 
 
+
 	
   
 	

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import web.mvc.dto.AuthLogDTO;
 import web.mvc.dto.ResAuthDTO;
+import web.mvc.dto.ResBadgeDTO;
 import web.mvc.service.LocalAuthService;
 
 import java.util.List;
@@ -21,6 +22,8 @@ public class LocalAuthController {
      */
     @PostMapping
     public String insertAuthLog(@RequestBody AuthLogDTO authLogDTO) {
+
+
        return localAuthService.insertAuthLog(authLogDTO);
     }
 
@@ -36,6 +39,11 @@ public class LocalAuthController {
     /**
      * 로컬뱃지 정보검색
      */
+    @GetMapping("/badges")
+    public List<ResBadgeDTO> searchBadges(/*@AuthenticationPrincipal*/@RequestParam Long id){
+
+        return localAuthService.searchBadges(id);
+    }
 
     /**
      * 인증 삭제

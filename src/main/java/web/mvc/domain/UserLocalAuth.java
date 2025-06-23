@@ -23,7 +23,7 @@ public class UserLocalAuth {
     private Long authlogId;
 
     private String regionName;
-    @CreationTimestamp
+    //@CreationTimestamp
     private LocalDate authDate; //년월일만
 
     @CreationTimestamp

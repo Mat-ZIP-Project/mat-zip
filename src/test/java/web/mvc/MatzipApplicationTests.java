@@ -6,7 +6,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.stereotype.Repository;
 import web.mvc.domain.User;
 import web.mvc.domain.UserLocalAuth;
+import web.mvc.domain.UserLocalBadge;
 import web.mvc.repository.LocalAuthRepository;
+import web.mvc.repository.LocalBadgeRepository;
 import web.mvc.service.LocalAuthService;
 
 import java.time.LocalDate;
@@ -15,6 +17,8 @@ import java.time.LocalDate;
 class MatzipApplicationTests {
     @Autowired
     private LocalAuthRepository localAuthRepository;
+    @Autowired
+    private LocalBadgeRepository badgeRepository;
 
     @Test
     void contextLoads() {
@@ -23,7 +27,13 @@ class MatzipApplicationTests {
 
     @Test
     void insertLocalAuth(){
-        localAuthRepository.save(UserLocalAuth.builder().regionName("강남구").user(User.builder().id(1L).build()).authDate(LocalDate.of(2025,6,22)).build());
+        localAuthRepository.save(UserLocalAuth.builder().regionName("경기도 성남시 분당구").user(User.builder().id(1L).build()).authDate(LocalDate.of(2025,6,19)).build());
+        localAuthRepository.save(UserLocalAuth.builder().regionName("경기도 성남시 분당구").user(User.builder().id(1L).build()).authDate(LocalDate.of(2025,6,20)).build());
     }
+    @Test
+    void insertBadge(){
+        badgeRepository.save(UserLocalBadge.builder().regionName("경기도 성남시 분당구").authCount(3).user(User.builder().id(1L).build()).build());
+    }
+
 
 }

@@ -3,7 +3,7 @@ package web.mvc.dto;
 import lombok.*;
 import org.springframework.stereotype.Component;
 
-@Component
+
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
