@@ -22,7 +22,7 @@ public class LocalAuthController {
      */
     @PostMapping
     public String insertAuthLog(@RequestBody AuthLogDTO authLogDTO) {
-
+            //authLogDTO 에 id set 해야함!!!
 
        return localAuthService.insertAuthLog(authLogDTO);
     }

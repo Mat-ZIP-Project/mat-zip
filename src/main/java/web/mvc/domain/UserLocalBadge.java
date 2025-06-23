@@ -24,7 +24,7 @@ public class UserLocalBadge {
     private Long authId;
 
     private String regionName;
-    private int authCount;
+
 
     @CreationTimestamp
     private LocalDate certifiedAt;

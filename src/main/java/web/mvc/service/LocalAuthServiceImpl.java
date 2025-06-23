@@ -3,8 +3,7 @@ package web.mvc.service;
 import com.querydsl.core.types.Projections;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+
 import lombok.RequiredArgsConstructor;
 
 
@@ -22,6 +21,7 @@ import web.mvc.dto.ResAuthDTO;
 import web.mvc.dto.ResBadgeDTO;
 import web.mvc.exception.BasicException;
 import web.mvc.exception.ErrorCode;
+
 import web.mvc.exception.LocalAuthException;
 import web.mvc.repository.LocalAuthRepository;
 import web.mvc.repository.LocalBadgeRepository;
@@ -40,8 +40,7 @@ public class LocalAuthServiceImpl implements LocalAuthService {
     private final LocalBadgeRepository localBadgeRepository;
     private final ModelMapper modelMapper;
 
-    @PersistenceContext
-    private EntityManager entityManager;
+
 
     /**
      * 인증하기 (JPA 기본)
@@ -51,7 +50,8 @@ public class LocalAuthServiceImpl implements LocalAuthService {
     public String insertAuthLog(AuthLogDTO authLogDTO) {
         Long id = authLogDTO.getId();
         QUserLocalAuth localAuth = QUserLocalAuth.userLocalAuth;
-        log.info("regionName : {}", authLogDTO.getRegionName());
+        QUserLocalBadge localBadge = QUserLocalBadge.userLocalBadge;
+
         UserLocalAuth entity = modelMapper.map(authLogDTO, UserLocalAuth.class);
         entity.setUser(User.builder().id(id).build());
         entity.setRegionName(authLogDTO.getRegionName().trim());
@@ -68,7 +68,7 @@ public class LocalAuthServiceImpl implements LocalAuthService {
                 throw new BasicException(ErrorCode.FAILED_AUTH);
             }
         } catch (DataIntegrityViolationException e) {  //중복인증으로 인한 제약조건 위반시 발생하는 RuntimeException
-            throw new BasicException(ErrorCode.DUPLICATE_DATE);
+            throw new LocalAuthException(ErrorCode.DUPLICATE_DATE);
         }
 
         List<ResBadgeDTO> badgeList = searchBadges(id);
@@ -77,8 +77,16 @@ public class LocalAuthServiceImpl implements LocalAuthService {
             List<ResBadgeDTO> sameRegionList = badgeList.stream().filter(badge -> badge.getRegionName().equals(authLogDTO.getRegionName())).toList();
             if (sameRegionList.size() != 0) {// 로컬뱃지 지역일 때(local_badges 테이블에 해당 지역이 있다!)
 
-                ResBadgeDTO badge = sameRegionList.get(0); // 인증유효기간 + 30일 update 한다.
-                updateBadgeValidation(badge, id);
+                ResBadgeDTO badge = sameRegionList.get(0);
+
+                // 기존 validUntil에 30일 더한 값 생성
+                LocalDate plus30Days = badge.getValidUntil().plusDays(30);
+
+                jpaQueryFactory.update(localBadge)  // 인증유효기간 + 30일 update 한다.
+                        .set(localBadge.validUntil, plus30Days)
+                        .where(localBadge.regionName.eq(badge.getRegionName()).and(localBadge.user.id.eq(id)))
+                        .execute();
+
                 return "인증 유효일자가 갱신되었습니다.";
             }
         }
@@ -88,10 +96,8 @@ public class LocalAuthServiceImpl implements LocalAuthService {
         Long count = resultList.get(0).getAuthCount();
         log.info("count = {}", count);
 
-        if(badgeList.size()<2 && resultList.get(0).getAuthCount()>=3 ) {// 로컬뱃지가 2개미만+ 30일 이내 인증횟수 3회 이상 일때
-            UserLocalBadge badgeEntity = modelMapper.map(authLogDTO, UserLocalBadge.class);
-            badgeEntity.setAuthCount(3);
-            grantLocalAuthBadge(badgeEntity);// local_badges 테이블에 뱃지 추가
+        if(badgeList.size()<2 && count>=3 ) {// 로컬뱃지가 2개미만+ 30일 이내 인증횟수 3회 이상 일때
+            localBadgeRepository.save(UserLocalBadge.builder().user(User.builder().id(id).build()).regionName(authLogDTO.getRegionName()).build());// local_badges 테이블에 뱃지 추가
              // Users 테이블에 인증여부 1로 update
             return "현지인 인증뱃지가 발급되었습니다.";
         }
@@ -100,29 +106,10 @@ public class LocalAuthServiceImpl implements LocalAuthService {
         return authLogDTO.getRegionName();
     }
 
-    /**
-     * 로컬인증 뱃지 추가(JPA 기본)
-     */
-    public void grantLocalAuthBadge(UserLocalBadge userLocalBadge) {
-
-            localBadgeRepository.save(userLocalBadge);
-    }
 
 
-    /**
-     * 인증 유효기간 +30 일 갱신 (QueryDSL)
-     */
-    public void updateBadgeValidation(ResBadgeDTO badgeDTO, Long id) {
-        QUserLocalBadge localBadge = QUserLocalBadge.userLocalBadge;
 
-        // 기존 validUntil에 30일 더한 값 생성
-        LocalDate plus30Days = badgeDTO.getValidUntil().plusDays(30);
 
-        jpaQueryFactory.update(localBadge)
-                .set(localBadge.validUntil, plus30Days)
-                .where(localBadge.regionName.eq(badgeDTO.getRegionName()).and(localBadge.user.id.eq(id)))
-                .execute();
-    }
 
     /**
      * 인증기록 검색 (QueryDSL)
@@ -139,7 +126,7 @@ public class LocalAuthServiceImpl implements LocalAuthService {
                 .where(localAuth.user.id.eq(id).and(localAuth.authDate.between(LocalDate.now().minusDays(30), LocalDate.now())))
                 .groupBy(localAuth.regionName)
                 .fetch();
-        if(localAuths.size()==0) throw new BasicException(ErrorCode.NO_AUTH_LOGS);
+        if(localAuths.size()==0) throw new LocalAuthException(ErrorCode.NO_AUTH_LOGS);
 
         return localAuths;
     }
