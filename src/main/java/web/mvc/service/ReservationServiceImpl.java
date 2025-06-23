@@ -18,6 +18,7 @@ import web.mvc.repository.RestaurantRepository;
 import web.mvc.repository.UserRepository;
 import web.mvc.util.Enums;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -104,7 +105,33 @@ public class ReservationServiceImpl implements ReservationService {
 
     // PortOne으로부터 받은 웹훅 데이터 받아서
     @Override
+    @Transactional
     public boolean handlePortOneWebhook(PortOneWebhookDto webhookDto) {
+        // 아임포트 결제 고유 번호
+        String impUid = webhookDto.getImpUid();
+        // 가맹점 주문 번호
+        String merchantUid = webhookDto.getMerchantUid();
+        // 결제 상태를 가져옴
+        String status = webhookDto.getStatus();
+        // 실제 결제된 금액을 가져옴
+        Integer webhookAmount = webhookDto.getAmount();
+
+        // 결제 정보를 찾을 수 없을 때 예외 발생
+        Optional<ReservationPayment> optionalPayment = reservationPaymentRepository.findByMerchantUid(merchantUid);
+        if (optionalPayment.isEmpty()) {
+            throw new BasicException(ErrorCode.NOTFOUNT_MERCHANTUID)
+        }
+
+        ReservationPayment payment = optionalPayment.get();
+        // 결제 정보에 연결된 예약 정보를 가져온다.
+        Reservation reservation = payment.getReservation();
+        // 예약에 연결된 사용자 정보를 가져온다.
+        User user = payment.getUser();
+        // 데이터베이스에 저장된 결제 금액을 가져온다.
+        Integer expectedAmount = payment.getAmount();
+
+        // portOne API를 통한 실제 결제 정보 검증
+        boolean isPaymentVolid =
         return false;
     }
 
