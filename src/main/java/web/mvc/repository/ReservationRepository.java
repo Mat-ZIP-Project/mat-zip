@@ -15,6 +15,6 @@ public interface ReservationRepository extends JpaRepository<Reservation,Long> {
     // 특정 식당의 모든 예약 조회
     List<Reservation> findByReservationId(Long reservationId);
 
-    // 특정 상태의 예약 조회
-    Optional<Reservation> findyByReservationIdAndStatus(Long reservationId, Enums.ReservationStatus status);
+    // 특정 식당의 예약 조회
+    Optional<Reservation> findById(Long reservationId);
 }

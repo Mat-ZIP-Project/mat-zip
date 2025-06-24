@@ -2,16 +2,16 @@ package web.mvc.dto;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.antlr.v4.runtime.misc.NotNull;
 
 @Getter
 @Setter
-public class ReservationRequestDto {
+public class PreparationReqDto {
 
     //사용자 Id
     private Long Id;
 
     private Long restaurantId;
+    private Long reservationId;
 
     private Integer numPeople;
 
@@ -19,6 +19,6 @@ public class ReservationRequestDto {
 
     private String time;
 
-    // 예약금
+    // 예약금(결제 예정 금액)
     private Integer amount;
 }

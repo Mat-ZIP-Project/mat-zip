@@ -1,10 +1,7 @@
 package web.mvc.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import web.mvc.util.Enums;
 
 import java.time.LocalDateTime;
@@ -14,8 +11,9 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Table(name="reservation_payments")
-public class ReservationPayment {
+public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "payment_id")
@@ -42,10 +40,10 @@ public class ReservationPayment {
     private User user; // 결제를 수행한 사용자
 
     @Column(name = "portone_imp_uid", unique = true) // PortOne의 imp_uid (결제 고유 번호)
-    private String ImpUid;
+    private String impUid;
 
     @Column(name = "portone_merchant_uid", unique = true) // PortOne의 merchant_uid (가맹점 주문 번호)
-    private String MerchantUid;
+    private String merchantUid;
 
 
 }

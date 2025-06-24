@@ -20,6 +20,19 @@ public enum ErrorCode { //enum은 'Enumeration' 의 약자로 열거, 목록 이
    FAILED_UPDATE(604, "글번호 오류로 수정할수 없습니다."),
    FAILED_DELETE(605, "글을 삭제할수 없습니다.^^."),
 
+    // --- PortOne 결제 관련 오류 코드 추가 ---
+    PAYMENT_PREPARE_FAILED(610, "결제 사전 검증에 실패했습니다."),
+    PAYMENT_INFO_NOT_FOUND(611, "PortOne에서 결제 정보를 조회할 수 없습니다."),
+    PAYMENT_NOT_PAID(612, "결제가 완료되지 않았습니다."),
+    PAYMENT_MERCHANT_UID_MISMATCH(613, "주문 번호가 일치하지 않습니다. 위변조 가능성."),
+    PAYMENT_AMOUNT_MISMATCH(614, "결제 금액이 일치하지 않습니다. 위변조 가능성."),
+    PAYMENT_ALREADY_PROCESSED(615, "이미 처리된 결제입니다."),
+    RESERVATION_NOT_FOUND(616, "해당 예약을 찾을 수 없습니다."),
+    PAYMENT_DB_ERROR(617, "결제 정보를 DB에 저장하는 중 오류가 발생했습니다."),
+    USER_INFO_MISSING(618, "사용자 정보가 누락되었습니다."),
+    PAYMENT_ALREADY_PENDING(619, "이미 진행 중인 결제가 있습니다."), // 선택적, 중복 사전 검증 방지
+    PAYMENT_CANCEL_FAILED(620, "결제 취소에 실패했습니다."),
+    // --- 기존 오류 코드 ---
     NOTFOUNT_MERCHANTUID(606, "결제 정보를 찾을 수 없습니다.");
 	
   
