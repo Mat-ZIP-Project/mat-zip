@@ -5,9 +5,9 @@ import com.siot.IamportRestClient.exception.IamportResponseException;
 import com.siot.IamportRestClient.request.CancelData;
 import com.siot.IamportRestClient.request.PrepareData;
 import com.siot.IamportRestClient.response.IamportResponse;
-//import com.siot.IamportRestClient.response.Payment;
 import com.siot.IamportRestClient.response.Prepare;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional; // <-- 반드시 이 스프링 Transactional을 import 해야 합니다!
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,25 +36,24 @@ import java.util.UUID;
 @Slf4j
 public class PaymentServiceImpl implements PaymentService {
 
-
     private final IamportClient client;
     private final ReservationRepository reservationRepository;
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = {IamportResponseException.class, IOException.class, BasicException.class}) // <-- 여기에 rollbackFor 속성 추가!
     public PreparationResDto prepareValid(PreparationReqDto request) throws BasicException, IamportResponseException, IOException {
         Long reservationId = request.getReservationId();
         Integer amount = request.getAmount();
 
-        log.info("사전 검증 요청 ",reservationId, amount);
+        log.info("사전 검증 요청 - reservationId: {}, amount: {}", reservationId, amount); // 로그 형식 개선
 
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new BasicException(ErrorCode.RESERVATION_NOT_FOUND));
 
         User user = reservation.getUser();
-        if(user==null) {
+        if(user == null) { // 객체 비교는 == null 사용
             throw new BasicException(ErrorCode.USER_INFO_MISSING);
         }
 
@@ -71,17 +70,28 @@ public class PaymentServiceImpl implements PaymentService {
                 .amount(amount)
                 .status(Enums.PaymentStatus.READY)
                 .user(user)
-                .merchantUid(merchantUid)
+                .merchantUid(merchantUid) // Payment 엔티티의 DB 컬럼명이 portone_merchant_uid라면 이렇게 사용하는 것이 일관적입니다. Payment 엔티티의 필드명을 확인하세요.
                 .build();
 
         try {
-            paymentRepository.save(newPayment);
+            paymentRepository.save(newPayment); // 이 시점부터 트랜잭션이 시작됩니다.
         } catch (Exception e) {
+            log.error("DB에 결제 정보 저장 실패: {}", e.getMessage(), e);
             throw new BasicException(ErrorCode.PAYMENT_DB_ERROR);
         }
 
         PrepareData prepareData = new PrepareData(merchantUid, new BigDecimal(amount));
-        IamportResponse<Prepare> iamportResponse = client.postPrepare(prepareData);
+        IamportResponse<Prepare> iamportResponse; // try-catch 외부에서 선언하여 이후에도 접근 가능하게 함
+
+        try {
+            iamportResponse = client.postPrepare(prepareData); // 아임포트 사전 검증 API 호출
+        } catch (IamportResponseException e) {
+            log.error("PortOne 사전 검증 API 호출 중 IamportResponseException 발생: {}", e.getMessage(), e);
+            throw e; // 롤백을 트리거하기 위해 예외를 다시 던짐
+        } catch (IOException e) {
+            log.error("PortOne 사전 검증 API 호출 중 IOException 발생: {}", e.getMessage(), e);
+            throw e; // 롤백을 트리거하기 위해 예외를 다시 던짐
+        }
 
         if (iamportResponse.getCode() == 0) {
             PreparationResDto response = new PreparationResDto();
@@ -90,18 +100,19 @@ public class PaymentServiceImpl implements PaymentService {
             response.setMerchantUid(merchantUid);
             response.setAmount(amount);
             response.setMessage("PortOne 사전 검증 성공. 결제창을 띄울 수 있습니다.");
-            log.info("PortOne 사전 검증 성공: merchantUid={}", merchantUid);
+            log.info("PortOne 사전 검증 최종 성공: merchantUid={}", merchantUid);
             return response;
         } else {
-            log.error("PortOne 사전 검증 실패: {} - {}", iamportResponse.getCode(), iamportResponse.getMessage());
-            newPayment.setStatus(Enums.PaymentStatus.FAILED);
-            paymentRepository.save(newPayment);
+            // 아임포트 API 호출 자체는 성공했으나, 응답 코드가 0이 아닌 경우
+            log.error("PortOne 사전 검증 실패 (응답 코드 != 0): Code={}, Message={}", iamportResponse.getCode(), iamportResponse.getMessage());
+            // 이 시점에서 newPayment의 상태를 FAILED로 변경하고 저장할 필요는 없습니다.
+            // 아래에서 BasicException을 던지면 @Transactional에 의해 전체 트랜잭션이 롤백될 것입니다.
             throw new BasicException(ErrorCode.PAYMENT_PREPARE_FAILED);
         }
     }
 
     @Override
-    @Transactional
+    @Transactional // completePayment에도 @Transactional을 적용하여 DB 일관성 유지
     public PaymentCompleteResDto completePayment(PaymentCompleteReqDto request) throws BasicException {
         String impUid = request.getImpUid();
         String merchantUid = request.getMerchantUid();
@@ -122,13 +133,10 @@ public class PaymentServiceImpl implements PaymentService {
             throw new BasicException(ErrorCode.PAYMENT_INFO_NOT_FOUND);
         }
 
+        // DB 컬럼명이 portone_merchant_uid라면 repository 메서드 이름도 findByPortoneMerchantUid가 적합합니다.
         Payment payment = paymentRepository.findByMerchantUid(merchantUid)
                 .orElseThrow(() -> {
                     log.error("DB에 merchant_uid {} 에 해당하는 Payment 정보가 없음.", merchantUid);
-                    // 이 경우, PortOne 결제는 성공했지만 우리 DB에 해당 merchant_uid가 없다는 의미이므로,
-                    // 즉시 해당 결제를 취소(환불)하는 로직을 추가하는 것을 고려해야 합니다.
-                    // 예외를 던지기 전에 cancelPayment를 호출하는 것도 좋은 방법입니다.
-                    // cancelPayment(impUid, new BigDecimal(portonePaymentData.getAmount()), "DB에 merchant_uid 불일치");
                     return new BasicException(ErrorCode.NOTFOUNT_MERCHANTUID);
                 });
 
@@ -139,13 +147,12 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         // 3. 결제 위변조 최종 검증 및 Payment 엔티티 업데이트
-        // 이 메서드 내에서 예외가 발생하면 completePayment도 예외를 던집니다.
-        validateAndProcessPayment(payment, portonePaymentData);
+        validateAndProcessPayment(payment, portonePaymentData); // 이 메서드 내에서 결제 상태 업데이트 및 저장을 처리합니다.
 
         // 4. 모든 검증 성공: Reservation 정보 업데이트
         Reservation reservation = payment.getReservation();
         if (reservation != null) {
-            reservation.setStatus("예약완료"); // Reservation 엔티티의 status 타입에 맞게
+            reservation.setStatus("예약완료"); // Reservation 엔티티의 status 타입에 맞게 설정
             reservationRepository.save(reservation);
             log.info("Reservation 엔티티 상태 업데이트 (예약완료): reservationId={}", reservation.getReservationId());
         }
@@ -155,55 +162,11 @@ public class PaymentServiceImpl implements PaymentService {
         response.setSuccess(true);
         response.setMerchantUid(merchantUid);
         response.setImpUid(impUid);
-        response.setStatus("PAID"); // 이 상태는 Enums.PaymentStatus.PAID와 일치해야 합니다.
+        response.setStatus(Enums.PaymentStatus.PAID.name()); // Enum의 이름을 String으로 설정
         response.setMessage("결제가 성공적으로 처리되었습니다.");
         log.info("결제 및 예약 정보 DB 저장 완료: impUid={}, merchantUid={}", impUid, merchantUid);
         return response;
     }
-
-//    @Override
-//    @Transactional
-//    public boolean cancelPayment(String impUid, BigDecimal amount, String reason) throws BasicException {
-//        try {
-//            log.warn("PortOne 결제 취소 요청 - impUid: {}, amount: {}, reason: {}", impUid, amount, reason);
-//
-//            // CancelData 객체 생성
-//            CancelData cancelData = new CancelData(impUid, true); // imp_uid를 사용하여 취소, checksum=true
-//            // 필요에 따라 amount, reason 등을 설정
-//            if (amount != null) {
-//                cancelData.setAmount(amount); // BigDecimal 타입으로 설정 가능 (SDK에 따라 doubleValue() 필요할 수도 있음)
-//            }
-//            if (reason != null && !reason.isEmpty()) {
-//                cancelData.setReason(reason);
-//            }
-//            // cancel_request_amount도 필요하면 설정: cancelData.setCancel_request_amount(amount);
-//
-//            // CancelData 객체를 사용하여 취소 API 호출
-//            IamportResponse<Payment> cancelResponse = client.cancelPaymentByImpUid(cancelData);
-//
-//            if (cancelResponse.getCode() == 0) {
-//                log.info("PortOne 결제 취소 성공: impUid={}", impUid);
-//                paymentRepository.findByImpUid(impUid).ifPresent(payment -> {
-//                    payment.setStatus(Enums.PaymentStatus.CANCELLED);
-//                    payment.setPaidAt(LocalDateTime.now());
-//                    paymentRepository.save(payment);
-//
-//                    if (payment.getReservation() != null) {
-//                        Reservation reservation = payment.getReservation();
-//                        reservation.setStatus("예약취소");
-//                        reservationRepository.save(reservation);
-//                    }
-//                });
-//                return true;
-//            } else {
-//                log.error("PortOne 결제 취소 실패: {} - {}", cancelResponse.getCode(), cancelResponse.getMessage());
-//                throw new BasicException(ErrorCode.PAYMENT_CANCEL_FAILED);
-//            }
-//        } catch (IamportResponseException | IOException e) {
-//            log.error("PortOne 결제 취소 중 오류 발생: {}", e.getMessage(), e);
-//            throw new BasicException(ErrorCode.PAYMENT_CANCEL_FAILED);
-//        }
-//    }
 
 
     // private 메서드는 인터페이스에 정의하지 않고 구현체 내부에 유지합니다.
@@ -222,26 +185,28 @@ public class PaymentServiceImpl implements PaymentService {
             throw new BasicException(ErrorCode.PAYMENT_NOT_PAID);
         }
 
-        if (!portonePaymentData.getMerchantUid().equals(payment.getMerchantUid())) {
+        // DB에 저장된 merchantUid와 PortOne 응답의 merchantUid가 일치하는지 확인
+        // Payment 엔티티의 필드명이 'portoneMerchantUid'라고 가정합니다.
+        if (!portonePaymentData.getMerchantUid().equals(payment.getMerchantUid())) { // payment.getPortoneMerchantUid()를 사용
             log.error("Merchant UID 불일치: PortOne={}, DB={}", portonePaymentData.getMerchantUid(), payment.getMerchantUid());
-//            cancelPayment(portonePaymentData.getImpUid(), portonePaymentData.getAmount(), "주문번호 불일치로 인한 자동 환불");
             payment.setStatus(Enums.PaymentStatus.FAILED);
             paymentRepository.save(payment);
             throw new BasicException(ErrorCode.PAYMENT_MERCHANT_UID_MISMATCH);
         }
 
-        if (portonePaymentData.getAmount().intValue() != payment.getAmount().intValue()) {
+        // 금액 비교는 BigDecimal.compareTo()를 사용하여 정확하게 수행
+        if (portonePaymentData.getAmount().compareTo(new BigDecimal(payment.getAmount())) != 0) {
             log.error("결제 금액 불일치: PortOne={}, Expected={}", portonePaymentData.getAmount(), payment.getAmount());
-//            cancelPayment(portonePaymentData.getImpUid(), portonePaymentData.getAmount(), "결제 금액 불일치로 인한 자동 환불");
             payment.setStatus(Enums.PaymentStatus.FAILED);
             paymentRepository.save(payment);
             throw new BasicException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
 
-        payment.setImpUid(portonePaymentData.getImpUid());
-        payment.setPaidAt(LocalDateTime.now());
-        payment.setStatus(Enums.PaymentStatus.PAID);
-        paymentRepository.save(payment);
+        // PortOne에서 받은 impUid를 Payment 엔티티에 저장 (DB 컬럼이 portone_imp_uid라면 엔티티 필드도 portoneImpUid가 적합)
+        payment.setImpUid(portonePaymentData.getImpUid()); // Payment 엔티티에 setPortoneImpUid가 있다고 가정
+        payment.setPaidAt(LocalDateTime.now()); // 결제 완료 시간 설정
+        payment.setStatus(Enums.PaymentStatus.PAID); // 상태를 PAID로 변경
+        paymentRepository.save(payment); // 업데이트된 Payment 엔티티 저장
 
         log.info("결제 유효성 검증 성공 및 Payment 엔티티 업데이트 완료: paymentId={}, impUid={}", payment.getPaymentId(), portonePaymentData.getImpUid());
     }

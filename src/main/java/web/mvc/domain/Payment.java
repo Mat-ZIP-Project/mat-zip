@@ -21,7 +21,7 @@ public class Payment {
 
     // ManyToOne 관계: reservation_payments 테이블의 'reservation_id' 컬럼은 reservations 테이블의 'reservation_id'를 참조
     @ManyToOne
-    @JoinColumn(name = "reservationId", nullable = false)
+    @JoinColumn(name = "reservation_id", nullable = false)
     private Reservation reservation;
 
     @Column(nullable = false)
