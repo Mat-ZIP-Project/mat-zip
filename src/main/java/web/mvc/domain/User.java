@@ -1,10 +1,39 @@
 package web.mvc.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import lombok.*;
+import java.time.LocalDateTime;
 
 @Entity
+@Getter @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Table(name = "users")
 public class User {
+
     @Id
-    private int id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(unique = true, nullable = false)
+    private String userId;
+
+    private String password;
+    private String name;
+
+    @Column(unique = true, nullable = false)
+    private String phone;
+
+    private String role; // USER, OWNER
+
+    private Integer pointBalance;
+
+    private Boolean gpsVerified = false;
+    private Boolean noShow = false;
+
+    private String userStatus;
+
+    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime updatedAt = LocalDateTime.now();
 }
