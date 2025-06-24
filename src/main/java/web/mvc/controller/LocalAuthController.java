@@ -48,5 +48,8 @@ public class LocalAuthController {
     /**
      * 인증 삭제
      */
-
+    @DeleteMapping("/badges")
+    public String deleteBages(@RequestParam Long badgeId,/*@AuthenticationPrincipal*/@RequestParam Long id){
+        return localAuthService.deleteBadges(badgeId,id);
+    }
 }

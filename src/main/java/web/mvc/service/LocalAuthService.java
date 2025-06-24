@@ -24,4 +24,13 @@ public interface LocalAuthService {
      */
     List<ResBadgeDTO> searchBadges(Long id);
 
+    /**
+     * 로컬 뱃지 만료 시 삭제 (SpringScheduler사용)
+     */
+    void deleteExpiredBadges();
+
+    /**
+     * 로컬 인증 뱃지 삭제하기
+     */
+    String deleteBadges(Long badgeId,Long id);
 }

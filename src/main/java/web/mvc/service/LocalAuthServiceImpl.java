@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +20,6 @@ import web.mvc.domain.*;
 import web.mvc.dto.AuthLogDTO;
 import web.mvc.dto.ResAuthDTO;
 import web.mvc.dto.ResBadgeDTO;
-import web.mvc.exception.BasicException;
 import web.mvc.exception.ErrorCode;
 
 import web.mvc.exception.LocalAuthException;
@@ -43,13 +43,13 @@ public class LocalAuthServiceImpl implements LocalAuthService {
 
 
     /**
-     * 인증하기 (JPA 기본)
+     * 인증하기 (JPA 기본 + QueryDSL)
      */
     @Transactional
     @Override
     public String insertAuthLog(AuthLogDTO authLogDTO) {
         Long id = authLogDTO.getId();
-        QUserLocalAuth localAuth = QUserLocalAuth.userLocalAuth;
+
         QUserLocalBadge localBadge = QUserLocalBadge.userLocalBadge;
 
         UserLocalAuth entity = modelMapper.map(authLogDTO, UserLocalAuth.class);
@@ -65,7 +65,7 @@ public class LocalAuthServiceImpl implements LocalAuthService {
 
             if (authRes == null) {
                 log.error("인증 insert 실패 : {}", authLogDTO);
-                throw new BasicException(ErrorCode.FAILED_AUTH);
+                throw new LocalAuthException(ErrorCode.FAILED_AUTH);
             }
         } catch (DataIntegrityViolationException e) {  //중복인증으로 인한 제약조건 위반시 발생하는 RuntimeException
             throw new LocalAuthException(ErrorCode.DUPLICATE_DATE);
@@ -139,6 +139,7 @@ public class LocalAuthServiceImpl implements LocalAuthService {
         QUserLocalBadge localBadge = QUserLocalBadge.userLocalBadge;
         List<ResBadgeDTO> localBadges = jpaQueryFactory
                 .select(Projections.constructor(ResBadgeDTO.class,
+                        localBadge.authId,
                         localBadge.regionName,
                         localBadge.validUntil
                 ))
@@ -148,6 +149,50 @@ public class LocalAuthServiceImpl implements LocalAuthService {
 
         return localBadges;
     }
+
+
+
+    /**
+     * 인증 뱃지 만료 처리(SpringScheduler + QueryDSL + 기본 JPA)
+     */
+    @Override
+    @Transactional
+    @Scheduled(cron = "0 0 0 * * ?") // 매일 새벽 0시 실행
+    public void deleteExpiredBadges() {
+         //1. 만료된 뱃지 검색
+        QUserLocalAuth localAuth = QUserLocalAuth.userLocalAuth;
+        QUserLocalBadge localBadge = QUserLocalBadge.userLocalBadge;
+
+        List<UserLocalBadge> expiredBadges= jpaQueryFactory
+                .selectFrom(localBadge)
+                .where(localBadge.validUntil.before(LocalDate.now()))
+                .fetch();
+
+
+         //2. 만료된 뱃지 & 인증로그 삭제
+        for (UserLocalBadge badge : expiredBadges) {
+            localBadgeRepository.delete(badge); ;
+            jpaQueryFactory.delete(localAuth).where(localAuth.regionName.eq(badge.getRegionName()).and(localAuth.user.id.eq(badge.getUser().getId()))).execute();
+        }
+    }
+
+    /**
+     * 로컬 인증 뱃지 삭제하기
+     */
+    @Transactional
+    @Override
+    public String deleteBadges(Long badgeId,Long id) {
+        QUserLocalAuth localAuth = QUserLocalAuth.userLocalAuth;
+
+        UserLocalBadge badge=localBadgeRepository.findById(badgeId).get();
+
+        jpaQueryFactory.delete(localAuth).where(localAuth.regionName.eq(badge.getRegionName()).and(localAuth.user.id.eq(id))).execute();
+        localBadgeRepository.delete(badge);
+
+
+        return badge.getRegionName()+" 인증 뱃지가 삭제되었습니다.";
+    }
+
 
 
 }
