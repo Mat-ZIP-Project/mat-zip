@@ -33,7 +33,9 @@ public enum ErrorCode { //enum은 'Enumeration' 의 약자로 열거, 목록 이
     PAYMENT_ALREADY_PENDING(619, "이미 진행 중인 결제가 있습니다."), // 선택적, 중복 사전 검증 방지
     PAYMENT_CANCEL_FAILED(620, "결제 취소에 실패했습니다."),
     // --- 기존 오류 코드 ---
-    NOTFOUNT_MERCHANTUID(606, "결제 정보를 찾을 수 없습니다.");
+    NOTFOUNT_MERCHANTUID(606, "결제 정보를 찾을 수 없습니다."),
+
+    INVALID_RESERVATION_STATUS_TRANSITION(700,"현재 예약 상태에서 해당 상태로 변경할 수 없습니다.");
 	
   
 	

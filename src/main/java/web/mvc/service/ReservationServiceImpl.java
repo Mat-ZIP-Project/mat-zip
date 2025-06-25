@@ -39,11 +39,29 @@ public class ReservationServiceImpl implements ReservationService {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new BasicException(ErrorCode.RESERVATION_NOT_FOUND));
 
-        List<String> validStatuses = List.of("PENDING", "APPROVED", "REJECTED", "CONFIRMED");
+        List<String> validStatuses = List.of("PENDING", "PENDING_APPROVAL", "APPROVED", "REJECTED", "CANCELLED");
         String statusToUpdate = newStatus.toUpperCase();
+        String currentStatus = reservation.getStatus();
 
         if (!validStatuses.contains(statusToUpdate)) {
             throw new BasicException(ErrorCode.RESERVATION_NOT_FOUND);
+        }
+        // 2. 예약 상태 전환 유효성 검사 (비즈니스 규칙 강화)
+        // PENDING 또는 PENDING_APPROVAL 상태에서만 APPROVED 또는 REJECTED로 전환 가능
+        if (("APPROVED".equals(statusToUpdate) || "REJECTED".equals(statusToUpdate))) {
+            if (!("PENDING".equals(currentStatus) || "PENDING_APPROVAL".equals(currentStatus))) {
+                log.error("예약 상태 전환 불가: 예약 ID '{}', 현재 상태 '{}' 에서 '{}'로 전환할 수 없음. (승인/거절은 PENDING/PAID_PENDING_APPROVAL 에서만 가능)",
+                        reservationId, currentStatus, statusToUpdate);
+                throw new BasicException(ErrorCode.INVALID_RESERVATION_STATUS_TRANSITION);
+            }
+        }
+        // 이미 APPROVED/REJECTED/CANCELLED 상태인 예약을 PENDING/PENDING_APPROVAL로 되돌리려는 시도 방지
+        if (("PENDING".equals(statusToUpdate) || "PENDING_APPROVAL".equals(statusToUpdate))) {
+            if (("APPROVED".equals(currentStatus) || "REJECTED".equals(currentStatus) || "CANCELLED".equals(currentStatus))) {
+                log.error("예약 상태 전환 불가: 예약 ID '{}', 이미 최종 상태인 '{}' 에서 '{}'로 되돌릴 수 없음.",
+                        reservationId, currentStatus, statusToUpdate);
+                throw new BasicException(ErrorCode.INVALID_RESERVATION_STATUS_TRANSITION);
+            }
         }
 
         reservation.setStatus(statusToUpdate);

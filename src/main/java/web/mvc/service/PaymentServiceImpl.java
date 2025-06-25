@@ -165,9 +165,10 @@ public class PaymentServiceImpl implements PaymentService {
         // 4. 모든 검증 성공: Reservation 정보 업데이트
         Reservation reservation = payment.getReservation();
         if (reservation != null) {
-            reservation.setStatus("예약완료"); // Reservation 엔티티의 status 타입에 맞게 설정
+            // PEDING_APPROVAL 결제 후 사장 승인 대기 중 상태
+            reservation.setStatus("PENDING_APPROVAL"); // Reservation 엔티티의 status 타입에 맞게 설정
             reservationRepository.save(reservation);
-            log.info("Reservation 엔티티 상태 업데이트 (예약완료): reservationId={}", reservation.getReservationId());
+            log.info("Reservation 엔티티 상태 업데이트 (PENDING_APPROVAL): reservationId={}", reservation.getReservationId());
         }
 
         // 응답 DTO를 PaymentCompleteResDto로 반환
@@ -180,6 +181,56 @@ public class PaymentServiceImpl implements PaymentService {
         log.info("결제 및 예약 정보 DB 저장 완료: impUid={}, merchantUid={}", impUid, merchantUid);
         return response;
     }
+
+//    @Override
+//    @Transactional
+//    public com.siot.IamportRestClient.response.Payment cancelPayment(String impUid, BigDecimal amount, String reason) throws BasicException, IamportResponseException, IOException {
+//        log.warn("결제 취소 요청 시작 - impUid: {}, 금액: {}, 사유: {}", impUid, amount, reason);
+//
+//        IamportResponse<com.siot.IamportRestClient.response.Payment> iamportResponse = client.paymentByImpUid(impUid);
+//        if (iamportResponse.getCode() != 0 || iamportResponse.getResponse() == null) {
+//            log.error("아임포트 결제 정보 조회 실패 (취소 대상): {}", iamportResponse.getMessage());
+//            throw new BasicException(ErrorCode.PAYMENT_INFO_NOT_FOUND);
+//        }
+//        com.siot.IamportRestClient.response.Payment targetPayment = iamportResponse.getResponse();
+//
+//        ReservationPayment localPayment = reservationPaymentRepository.findByImpUid(impUid)
+//                .orElseThrow(() -> new BasicException(ErrorCode.NOTFOUNT_MERCHANTUID));
+//
+//        if (localPayment.getStatus() == Enums.PaymentStatus.CANCELLED) {
+//            log.warn("이미 취소된 결제입니다: impUid={}", impUid);
+//            return targetPayment;
+//        }
+//
+//        CancelData cancelData = new CancelData(impUid, true, reason);
+//        if (amount != null && amount.compareTo(BigDecimal.ZERO) > 0) {
+//            cancelData.setAmount(amount);
+//        }
+//
+//        IamportResponse<com.siot.IamportRestClient.response.Payment> cancelResponse = client.cancelPaymentByImpUid(cancelData);
+//
+//        if (cancelResponse.getCode() != 0) {
+//            log.error("아임포트 결제 취소 실패: {}", cancelResponse.getMessage());
+//            throw new BasicException(ErrorCode.PAYMENT_CANCEL_FAILED);
+//        }
+//
+//        com.siot.IamportRestClient.response.Payment canceledIamportPayment = cancelResponse.getResponse();
+//
+//        localPayment.setStatus(Enums.PaymentStatus.CANCELLED);
+//        localPayment.setCancelledAt(LocalDateTime.now());
+//        reservationPaymentRepository.save(localPayment);
+//        log.info("DB의 결제 상태를 CANCELLED로 업데이트 완료: impUid={}", impUid);
+//
+//        Reservation reservation = localPayment.getReservation();
+//        if (reservation != null &&
+//                (!"APPROVED".equals(reservation.getStatus()) && !"REJECTED".equals(reservation.getStatus()))) {
+//            reservation.setStatus("CANCELLED");
+//            reservationRepository.save(reservation);
+//            log.info("Reservation 엔티티 상태 업데이트 (CANCELLED): reservationId={}", reservation.getReservationId());
+//        }
+//
+//        return canceledIamportPayment;
+//    }
 
 
     // private 메서드는 인터페이스에 정의하지 않고 구현체 내부에 유지합니다.
