@@ -21,6 +21,9 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
+    /**
+     *  결제 전 사전 검증을 위해 호출
+     */
     @PostMapping("/prepare")
     public Response<PreparationResDto> prepareValid(@RequestBody PreparationReqDto request) throws IamportResponseException, IOException {
         log.info("사전 검증 요청", request.toString());
@@ -28,6 +31,9 @@ public class PaymentController {
         return Response.success(response);
     }
 
+    /**
+     *  결제 완료 후 최종 검증 및 처리를 위해 호출
+     */
     @PostMapping("/complete")
     public Response<PaymentCompleteResDto> completePayment(@RequestBody PaymentCompleteReqDto request) throws IamportResponseException, IOException {
         log.info("결제 완료 요청", request.toString());

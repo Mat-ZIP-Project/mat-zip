@@ -104,6 +104,13 @@
             <version>0.2.23</version>
         </dependency>
 
+        <!-- Firebase Admin SDK -->
+        <dependency>
+            <groupId>com.google.firebase</groupId>
+            <artifactId>firebase-admin</artifactId>
+            <version>9.5.0</version>
+        </dependency>
+
 
         <!-- ModelMapper -->
         <dependency>

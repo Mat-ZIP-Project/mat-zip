@@ -1,16 +1,12 @@
-//package web.mvc.service;
-//
-//import web.mvc.domain.Reservation;
-//import web.mvc.dto.PreparationReqDto;
-//
-//public interface ReservationService {
-//
-//    // 사용자로부터 예약 신청을 시작
-//    Reservation initiateReservation(PreparationReqDto requestDto);
-//    // PortOne 웹훅 콜백을 처리하고 결제를 검증
-//    boolean handlePortOneWebhook(PortOneWebhookDto webhookDto);
-//    // 사장이 예약 요청을 승인하거나 거절
-//    Reservation handleOwnerAction(Long reservationId, OwnerActionRequestDto actionDto);
-//    // 특정 예약 정보를 조회
-//    Reservation getReservationById(Long reservationId);
-//}
+package web.mvc.service;
+
+import web.mvc.exception.BasicException;
+
+public interface ReservationService {
+
+    /**
+     *  예약 상태를 업데이트하고, 상태 변경에 따라 사용자에게 알림을 전송
+     *  식당 점주가 예약을 승인하거나 거절할 때 호출된다.
+     */
+    void updateReservationStatus(Long reservationId, String newStatus, String ownerNotes) throws BasicException;
+}

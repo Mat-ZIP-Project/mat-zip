@@ -1,6 +1,7 @@
 package web.mvc.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 import web.mvc.domain.Reservation;
 import web.mvc.domain.User;
 import web.mvc.util.Enums;
@@ -8,6 +9,7 @@ import web.mvc.util.Enums;
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface ReservationRepository extends JpaRepository<Reservation,Long> {
     // 특정 사용자의 모든 예약 조회
     List<Reservation> findByUser(User user);

@@ -1,6 +1,7 @@
 package web.mvc.service;
 
 import com.siot.IamportRestClient.exception.IamportResponseException;
+import com.siot.IamportRestClient.response.Payment;
 import web.mvc.dto.PaymentCompleteReqDto;
 import web.mvc.dto.PaymentCompleteResDto;
 import web.mvc.dto.PreparationReqDto;
@@ -8,7 +9,6 @@ import web.mvc.dto.PreparationResDto;
 import web.mvc.exception.BasicException;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 
 public interface PaymentService {
 
