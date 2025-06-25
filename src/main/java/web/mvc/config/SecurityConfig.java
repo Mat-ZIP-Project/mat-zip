@@ -77,7 +77,7 @@ public class SecurityConfig {
                         // [4] DELETE 요청: 인증 필요
                         // .requestMatchers(HttpMethod.DELETE, "/user/**").authenticated()
 
-                        .requestMatchers("/admin").hasRole("ADMIN") // 자동으로 ROLE_ 붙는다.
+                        .requestMatchers("/admin").hasRole("ADMIN") //ROLE_ADMIN만 접근 가능
                         .anyRequest().authenticated());
 
         http.addFilterBefore(new JWTFilter(jwtTokenProvider, userDetailsService),

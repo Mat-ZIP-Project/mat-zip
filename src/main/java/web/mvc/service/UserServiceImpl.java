@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import web.mvc.domain.RefreshToken;
@@ -27,6 +28,7 @@ public class UserServiceImpl implements UserService {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public TokenResponse login(LoginRequest request) {
@@ -74,14 +76,46 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new BasicException(ErrorCode.REFRESH_NOT_FOUND));
 
         String userId = jwtTokenProvider.getUserId(oldRefresh);
-        String role   = userRepository.findById(entity.getUser().getId())
-                .orElseThrow().getRole();
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new BasicException(ErrorCode.USER_NOT_FOUND));
+        String role = user.getRole();
 
+        //AccessToken, RefreshToken 재발급
         String newAccess = jwtTokenProvider.createAccessToken(userId, role);
+        String newRefresh = jwtTokenProvider.createRefreshToken(userId);
+
+        //새로 발급한 refreshToken 저장
+        entity.setToken(newRefresh);
+        refreshTokenRepository.save(entity);
 
         return TokenResponse.builder()
                 .accessToken(newAccess)
                 .refreshToken(oldRefresh)
                 .build();
+    }
+
+    @Override
+    public void logout(User user) {
+        refreshTokenRepository.findByUser(user)
+                .ifPresent(refreshTokenRepository::delete);
+    }
+
+    /** 비밀번호 변경/탈퇴 시 토큰 무효화 */
+    @Transactional
+    public void changePassword(User user, String newPassword) {
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        // 비밀번호 변경 시 refreshToken 삭제(무효화)
+        refreshTokenRepository.findByUser(user)
+                .ifPresent(refreshTokenRepository::delete);
+    }
+
+    @Transactional
+    public void withdraw(User user) {
+        user.setUserStatus("탈퇴");
+        userRepository.save(user);
+        // 탈퇴 시 refreshToken 삭제(무효화)
+        refreshTokenRepository.findByUser(user)
+                .ifPresent(refreshTokenRepository::delete);
     }
 }

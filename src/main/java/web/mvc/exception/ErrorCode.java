@@ -2,6 +2,7 @@ package web.mvc.exception;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 
 @Getter
 @RequiredArgsConstructor
@@ -11,22 +12,23 @@ import lombok.RequiredArgsConstructor;
  * 
  * */
 public enum ErrorCode { //enum은 'Enumeration' 의 약자로 열거, 목록 이라는 뜻
- 
-	ACCESS_DENIED(600, "로그인하고 이용해주세요."),
-	NOTFOUND_ID(601, "존재하지 않는 ID입니다."),
-	WRONG_PASS( 602, "비밀번호 오류입니다.."),
+
+    DUPLICATED(HttpStatus.CONFLICT , "Duplicate Id", "아이디가 중복입니다."),
+    WRONG_PASS( HttpStatus.BAD_REQUEST, "password wrong","비밀번호 오류입니다.."),
+
+    ACCESS_DENIED(HttpStatus.UNAUTHORIZED, "Access denied","로그인하고 이용해주세요."),
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED,"Invalid access token", "토큰이 만료되었습니다."),
+    REFRESH_NOT_FOUND(HttpStatus.UNAUTHORIZED,"Invalid refresh token",  "refresh 토큰이 만료되었습니다."),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND,"Not found userId", "사용자를 찾을 수 없습니다."),
+
+    UPDATE_FAILED(HttpStatus.BAD_REQUEST, "Update fail","수정할수 없습니다."),
+    DELETE_FAILED( HttpStatus.BAD_REQUEST, "Delete fail","삭제할 수 없습니다."),
+    INSERT_FAILED( HttpStatus.BAD_REQUEST, "Insert fail","등록할 수 없습니다.");
 
 
-   FAILED_DETAIL(603, "상세보기 오류입니다."),
-   FAILED_UPDATE(604, "글번호 오류로 수정할수 없습니다."),
-   FAILED_DELETE(605, "글을 삭제할수 없습니다.^^."),
-    INVALID_TOKEN(606, "토큰이 만료되었습니다."),
-    REFRESH_NOT_FOUND(607, "refresh 토큰이 만료되었습니다.");
-	
-  
-	
-  private final int status;
-  private final String msg;
+    private final HttpStatus httpStatus;
+    private  final String title;
+    private final String message;
 }
 
 

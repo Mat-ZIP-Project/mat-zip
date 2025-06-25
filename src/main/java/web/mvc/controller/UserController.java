@@ -25,8 +25,8 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("login")
-    public ResponseEntity<TokenResponse> login(@RequestBody LoginRequest req) {
-        return ResponseEntity.ok(userService.login(req));
+    public ResponseEntity<TokenResponse> login(@RequestBody LoginRequest request) {
+        return ResponseEntity.ok(userService.login(request));
     }
 
     @PostMapping("refresh")
@@ -34,6 +34,12 @@ public class UserController {
         return ResponseEntity.ok(
                 userService.refresh(body.getRefreshToken())
         );
+    }
+
+    @PostMapping("logout")
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal CustomUserDetails principal) {
+        userService.logout(principal.getUser());
+        return ResponseEntity.ok().build();
     }
 
     /** 로그인된 사용자 정보 조회 */

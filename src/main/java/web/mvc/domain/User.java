@@ -20,7 +20,7 @@ public class User {
     private Long id;
 
     @Column(name = "user_id", unique = true, nullable = false)
-    private String  userId;
+    private String userId;
 
     @Column(nullable = false)
     private String password;
@@ -36,6 +36,9 @@ public class User {
 
     @Column(name = "user_status", length = 10)
     private String userStatus = "활성";
+
+    @Column(name = "user_grade", length = 10)
+    private String userGrade = "새싹";
 
     @Column(name = "point_balance")
     private Integer pointBalance = 0;

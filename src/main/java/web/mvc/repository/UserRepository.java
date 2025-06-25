@@ -11,7 +11,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByUserId(String userId);
 
-    //사용자 활성 상태 체크
+    /** 활성상태인 userId 찾기 */
     @Query("SELECT u FROM User u WHERE u.userId = :userId AND u.userStatus = '활성'")
     Optional<User> findActiveUserByUserId(@Param("userId") String userId);
+
+    /** 아이디 중복체크 */
+
+    /** 휴대폰번호 중복체크 */
+    Optional<User> findByPhone(String phone);
+
 }

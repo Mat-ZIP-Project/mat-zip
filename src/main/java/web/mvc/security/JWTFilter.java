@@ -14,6 +14,7 @@ import web.mvc.domain.User;
 
 import java.io.IOException;
 
+/** 모든 요청의 JWT 토큰 검증 */
 @RequiredArgsConstructor
 @Slf4j
 public class JWTFilter extends OncePerRequestFilter {
@@ -34,13 +35,13 @@ public class JWTFilter extends OncePerRequestFilter {
             log.debug("Authorization 헤더 없음 or Bearer 미포함");
             filterChain.doFilter(request, response); //다음 필터를 호출...
 
-            //조건이 해당되면 메소드 종료 (필수)
-            return;//더이상 아래 문장을 실행하지 않는다.
+            //조건이 해당되면 메소드 종료
+            return;
         }
 
         //Bearer 부분 제거 후 순수 토큰만 획득
         String token = header.substring(7);
-        // 토큰 만료 검사
+        // 토큰 유효성 검사 (서명·만료 확인)
         if (!jwtTokenProvider.validateToken(token)) {
             log.info("유효하지 않은 토큰: {}", token);
             filterChain.doFilter(request, response);
@@ -56,15 +57,15 @@ public class JWTFilter extends OncePerRequestFilter {
 //        user.setUserId(userId);
 //        user.setRole(role);
 
-        CustomUserDetails userDetails = (CustomUserDetails)
-                userDetailsService.loadUserByUsername(userId);
         //UserDetails에 회원 정보 객체 담기
         //CustomUserDetails userDetails = new CustomUserDetails(user);
+        CustomUserDetails userDetails = (CustomUserDetails)
+                userDetailsService.loadUserByUsername(userId);
 
-        //스프링 시큐리티 인증 토큰 생성 (Authentication 생성)
+        //Authentication 객체 생성 및 SecurityContext에 저장
         Authentication authToken =
                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-        //세션에 사용자 등록 - 세션이 만들어짐.
+
         SecurityContextHolder.getContext().setAuthentication(authToken); //저장
 
         filterChain.doFilter(request, response);//다음 필터를 호출

@@ -34,10 +34,12 @@ public class SwaggerConfig {
 
     private Info apiInfo() {
         return new Info()
-                .title("Spring Boot REST API Member Board Security Specifications")
+                .title("Spring Boot REST API")
                 .description("Specification")
-                .version("1.0.0").contact(new Contact().name("HeeJung Jang")
-                        .email( "8253jang@daum.net"));
+                .version("1.0.0")
+                .contact(new Contact()
+                        .name("홍길동")
+                        .email( "hong@company.com"));
     }
 
     private SecurityScheme createAPIKeyScheme() {
