@@ -9,12 +9,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PreparationResDto {
-
+public class ReservationCreateResDto {
     private Long reservationId;
-    private String merchantUid;
-    private Integer amount;
     private String message;
     private boolean success;
-
 }

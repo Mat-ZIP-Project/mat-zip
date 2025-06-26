@@ -9,10 +9,14 @@ import web.mvc.domain.Notification;
 import web.mvc.domain.Reservation;
 import web.mvc.domain.Restaurant;
 import web.mvc.domain.User;
+import web.mvc.dto.ReservationCreateReqDto;
+import web.mvc.dto.ReservationCreateResDto;
 import web.mvc.exception.BasicException;
 import web.mvc.exception.ErrorCode;
 import web.mvc.repository.NotificationRepository;
 import web.mvc.repository.ReservationRepository;
+import web.mvc.repository.RestaurantRepository;
+import web.mvc.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,7 +29,33 @@ public class ReservationServiceImpl implements ReservationService {
     private final ReservationRepository reservationRepository;
     private final FcmService fcmService;
     private final NotificationRepository notificationRepository;
+    private final RestaurantRepository restaurantRepository;
+    private final UserRepository userRepository;
 
+    @Override
+    @Transactional
+    public ReservationCreateResDto createReservation(ReservationCreateReqDto request) throws BasicException {
+        User user = userRepository.findById(request.getId())
+                .orElseThrow(() -> new BasicException(ErrorCode.NOTFOUND_ID));
+
+        Restaurant restaurant = restaurantRepository.findByRestaurantName(request.getRestaurantName())
+                .orElseThrow(() -> new BasicException(ErrorCode.NOTFOUND_ID));
+
+        Reservation reservation = Reservation.builder()
+                .date(request.getDate())
+                .time(request.getTime())
+                .numPeople(request.getNumPeople())
+                .status("PENDING")
+                .user(user)
+                .restaurant(restaurant)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        // DB에 저장
+        Reservation savedReservation = reservationRepository.save(reservation);
+
+        return new ReservationCreateResDto(savedReservation.getReservationId(), "예약이 성공적으로 신청되었습니다.", true);
+    }
 
     /**
      *  특정 예약 상태를 승인( APPROVED ) 또는 거절( REJECTED ) 등으로 업데이트

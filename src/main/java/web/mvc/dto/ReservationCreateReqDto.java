@@ -9,12 +9,11 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PreparationResDto {
-
-    private Long reservationId;
-    private String merchantUid;
-    private Integer amount;
-    private String message;
-    private boolean success;
+public class ReservationCreateReqDto {
+    private String date;
+    private String time;
+    private Integer numPeople;
+    private String restaurantName;
+    private Long id;
 
 }
