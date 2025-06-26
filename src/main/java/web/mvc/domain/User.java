@@ -32,7 +32,7 @@ public class User {
     private String phone;
 
     @Column(nullable = false, length = 10)
-    private String role;
+    private String role; //USER, OWNER, ADMIN
 
     @Column(name = "user_status", length = 10)
     private String userStatus = "활성";
@@ -56,5 +56,11 @@ public class User {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "terms_agreed")
+    private Boolean termsAgreed;
+
+    @Column(name = "privacy_agreed")
+    private Boolean privacyAgreed;
 
 }

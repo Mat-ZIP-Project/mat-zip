@@ -5,14 +5,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.Response;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import web.mvc.dto.LoginRequest;
 import web.mvc.dto.TokenResponse;
 import web.mvc.dto.UserDTO;
 import web.mvc.security.CustomUserDetails;
+import web.mvc.service.TokenService;
 import web.mvc.service.UserService;
 
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -23,16 +26,12 @@ public class UserController {
 
     private final ModelMapper modelMapper;
     private final UserService userService;
-
-    @PostMapping("login")
-    public ResponseEntity<TokenResponse> login(@RequestBody LoginRequest request) {
-        return ResponseEntity.ok(userService.login(request));
-    }
+    private final TokenService tokenService;
 
     @PostMapping("refresh")
     public ResponseEntity<TokenResponse> refresh(@RequestBody TokenResponse body) {
         return ResponseEntity.ok(
-                userService.refresh(body.getRefreshToken())
+                tokenService.refreshTokens(body.getRefreshToken())
         );
     }
 

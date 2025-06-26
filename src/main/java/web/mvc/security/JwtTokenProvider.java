@@ -63,9 +63,6 @@ public class JwtTokenProvider {
 
     //검증 Id
     public String getUserId(String token) {
-//        String re = Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("userId", String.class);
-//        log.info("getIds(String token)  re = {}" ,re);
-//        return re;
         return Jwts.parser()
                 .setSigningKey(secretKey)
                 .build()
@@ -77,9 +74,8 @@ public class JwtTokenProvider {
 
     //검증 Role
     public String getRole(String token) {
-        String re = Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("role", String.class);
-        log.info("getRole(String token)  re = {} " , re);
-        return re;
+        return Jwts.parser().verifyWith(secretKey).build()
+                .parseSignedClaims(token).getPayload().get("role", String.class);
     }
 
 }

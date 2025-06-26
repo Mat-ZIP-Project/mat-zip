@@ -12,9 +12,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import web.mvc.security.CustomUserDetailsService;
-import web.mvc.security.JWTFilter;
-import web.mvc.security.JwtTokenProvider;
+import web.mvc.security.*;
+import web.mvc.service.TokenService;
 
 @Configuration
 @EnableWebSecurity
@@ -22,19 +21,24 @@ import web.mvc.security.JwtTokenProvider;
 @Slf4j
 public class SecurityConfig {
 
+    private final AuthenticationConfiguration authenticationConfiguration;
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
+    private final TokenService tokenService;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
+    /** 비밀번호 암호화 */
     @Bean
-    public BCryptPasswordEncoder bCryptPasswordEncoder() { //비밀번호 암호화 담당
+    public BCryptPasswordEncoder bCryptPasswordEncoder() {
         log.info("bCryptPasswordEncoder call.....");
         return new BCryptPasswordEncoder();
     }
 
-    //AuthenticationManager Bean 등록
+    /** AuthenticationManager Bean 등록 */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-        log.info("authenticationManager ---= {}", configuration);
+        log.info("authenticationManager --- {}", configuration);
         return configuration.getAuthenticationManager();
     }
 
@@ -44,27 +48,21 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-        //csrf 비활성화
+        // csrf, formLogin, httpBasic 비활성화
         http.csrf((auth)-> auth.disable());
-
-        //form 로그인 방식 disable -> React, JWT 인증 방식으로 변경예정
-        //UsernamePasswordAuthenticationFilter 비활성
         http.formLogin((auth)-> auth.disable());
-
-        //http basic 인증 방식 disable
         http.httpBasic((auth)-> auth.disable());
 
-        http.authorizeHttpRequests((auth) ->
+        http    //401, 403에러 처리
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .accessDeniedHandler(jwtAccessDeniedHandler)
+                )
+
+                .authorizeHttpRequests((auth) ->
                 auth
-                        .requestMatchers("/login", "/refresh").permitAll() //컨트롤러로 바로 접근, path 추가하기
-                /* swagger API  .requestMatchers(
-                                "/v3/api-docs",
-                                "/v3/api-docs/**",
-                                "/swagger-ui.html",
-                                "/swagger-ui/**",
-                                "/swagger-resources/**",
-                                "/webjars/**"
-                        ).permitAll() */
+                        .requestMatchers("/refresh").permitAll() //컨트롤러로 바로 접근
+
                         // [1] GET 요청: 누구나 접근 가능
                         .requestMatchers(HttpMethod.GET, "/user").permitAll()
 
@@ -77,12 +75,20 @@ public class SecurityConfig {
                         // [4] DELETE 요청: 인증 필요
                         // .requestMatchers(HttpMethod.DELETE, "/user/**").authenticated()
 
-                        .requestMatchers("/admin").hasRole("ADMIN") //ROLE_ADMIN만 접근 가능
+                        // 권한별 접근제한
+                        .requestMatchers("/owner/**").hasRole("OWNER")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated());
 
-        http.addFilterBefore(new JWTFilter(jwtTokenProvider, userDetailsService),
+
+        http.addFilterAt(
+                new LoginFilter(
+                        this.authenticationManager(authenticationConfiguration),
+                        jwtTokenProvider, tokenService),
                 UsernamePasswordAuthenticationFilter.class);
 
+        http.addFilterBefore(new JWTFilter(jwtTokenProvider, userDetailsService),
+                LoginFilter.class);
 
         return http.build();
     }

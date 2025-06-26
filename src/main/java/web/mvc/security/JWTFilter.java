@@ -8,11 +8,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import web.mvc.domain.User;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 /** 모든 요청의 JWT 토큰 검증 */
 @RequiredArgsConstructor
@@ -33,7 +39,7 @@ public class JWTFilter extends OncePerRequestFilter {
         //Authorization 헤더 검증
         if (header == null || !header.startsWith("Bearer ")) {
             log.debug("Authorization 헤더 없음 or Bearer 미포함");
-            filterChain.doFilter(request, response); //다음 필터를 호출...
+            filterChain.doFilter(request, response); //다음 필터 호출
 
             //조건이 해당되면 메소드 종료
             return;
@@ -50,21 +56,19 @@ public class JWTFilter extends OncePerRequestFilter {
 
         // 토큰(클레임)에서 사용자 정보 추출
         String userId = jwtTokenProvider.getUserId(token);
-        String role   = jwtTokenProvider.getRole(token);
 
-        // User 엔티티 생성하여 값 set
-//        User user = new User();
-//        user.setUserId(userId);
-//        user.setRole(role);
+        // 토큰에서 다중 권한 파싱
+        String role = jwtTokenProvider.getRole(token);
+        Collection<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(role));
 
         //UserDetails에 회원 정보 객체 담기
-        //CustomUserDetails userDetails = new CustomUserDetails(user);
         CustomUserDetails userDetails = (CustomUserDetails)
                 userDetailsService.loadUserByUsername(userId);
 
         //Authentication 객체 생성 및 SecurityContext에 저장
         Authentication authToken =
-                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
 
         SecurityContextHolder.getContext().setAuthentication(authToken); //저장
 
