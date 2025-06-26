@@ -13,7 +13,7 @@ import web.mvc.dto.ResponseErrorDTO;
 public class GlobalRestExceptionAdvice {
 
 
-	@ExceptionHandler(LocalAuthException.class)
+/*	@ExceptionHandler(LocalAuthException.class)
 	public ResponseEntity<?> error(LocalAuthException e) {
 
 		log.error("Error Message error {} " , e.getErrorCode().getMsg() );
@@ -25,5 +25,6 @@ public class GlobalRestExceptionAdvice {
 						.status(e.getErrorCode().getStatus())
 						.build());
 	}
+*/
 
 }
