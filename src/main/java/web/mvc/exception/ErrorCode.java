@@ -11,13 +11,10 @@ import lombok.RequiredArgsConstructor;
  * 
  * */
 public enum ErrorCode { //enum은 'Enumeration' 의 약자로 열거, 목록 이라는 뜻
- 
-	ACCESS_DENIED(600, "로그인하고 이용해주세요."),
-	NOTFOUND_ID(601, "존재하지 않는 ID입니다."),
-	WRONG_PASS( 602, "비밀번호 오류입니다.."),
-	
-   FAILED_DETAIL(603, "상세보기 오류입니다."),
-   FAILED_UPDATE(604, "글번호 오류로 수정할수 없습니다."),
+
+
+    FAILED_AUTH(603, "인증 실패입니다."),
+    DUPLICATE_DATE(604, "하루에 한번만 인증 가능합니다. 내일 재인증 해주세요."),
     NO_AUTH_LOGS(605, "인증 기록이 없습니다."),
 
     // 식당 관련 예외처리
