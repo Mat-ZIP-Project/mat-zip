@@ -27,6 +27,7 @@ import web.mvc.util.Enums;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -52,7 +53,7 @@ public class PaymentServiceImpl implements PaymentService {
         Long reservationId = request.getReservationId();
         Integer amount = request.getAmount();
 
-        log.info("사전 검증 요청 - reservationId: {}, amount: {}", reservationId, amount); // 로그 형식 개선
+        log.info("사전 검증 요청 사전 검증 prepareValid - reservationId: {}, amount: {}", reservationId, amount); // 로그 형식 개선
 
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new BasicException(ErrorCode.RESERVATION_NOT_FOUND));
@@ -85,7 +86,10 @@ public class PaymentServiceImpl implements PaymentService {
             throw new BasicException(ErrorCode.PAYMENT_DB_ERROR);
         }
 
-        PrepareData prepareData = new PrepareData(merchantUid, new BigDecimal(amount));
+        BigDecimal amountToSendToPortOne = new BigDecimal(amount).setScale(0, RoundingMode.UNNECESSARY);
+        log.info("[PaymentServiceImpl] PortOne에 보낼 최종 금액 (BigDecimal): {}, merchantUid: {}", amountToSendToPortOne, merchantUid);
+
+        PrepareData prepareData = new PrepareData(merchantUid, amountToSendToPortOne);
         IamportResponse<Prepare> iamportResponse; // try-catch 외부에서 선언하여 이후에도 접근 가능하게 함
 
         try {
