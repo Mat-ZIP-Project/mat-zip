@@ -18,7 +18,7 @@ public enum ErrorCode { //enum은 'Enumeration' 의 약자로 열거, 목록 이
 	
    FAILED_DETAIL(603, "상세보기 오류입니다."),
    FAILED_UPDATE(604, "글번호 오류로 수정할수 없습니다."),
-   FAILED_DELETE(605, "글을 삭제할수 없습니다.^^."),
+    NO_AUTH_LOGS(605, "인증 기록이 없습니다."),
 
     // 식당 관련 예외처리
     RESTAURANT_NOT_FOUND(700, "식당을 찾을 수 없습니다."),
