@@ -63,16 +63,17 @@ public class SecurityConfig {
                 auth
                         .requestMatchers("/refresh").permitAll() //컨트롤러로 바로 접근
 
-                        // [1] GET 요청: 누구나 접근 가능
+                        // [1] GET 요청
                         .requestMatchers(HttpMethod.GET, "/user").permitAll()
 
-                        // [2] POST 요청: 인증 필요
+                        // [2] POST 요청
+                        .requestMatchers(HttpMethod.POST, "/signup/sms/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/user").authenticated()
 
-                        // [3] PUT 요청: 인증 필요
+                        // [3] PUT 요청
                         // .requestMatchers(HttpMethod.PUT, "/user/**").authenticated()
 
-                        // [4] DELETE 요청: 인증 필요
+                        // [4] DELETE 요청
                         // .requestMatchers(HttpMethod.DELETE, "/user/**").authenticated()
 
                         // 권한별 접근제한

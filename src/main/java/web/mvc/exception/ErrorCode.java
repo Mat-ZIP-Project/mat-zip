@@ -21,7 +21,7 @@ public enum ErrorCode { //enum은 'Enumeration' 의 약자로 열거, 목록 이
     DUPLICATED(HttpStatus.CONFLICT , "Duplicate Id", "아이디가 중복입니다."),
 
     // 로그인 관련 예외처리
-    WRONG_PASS( HttpStatus.BAD_REQUEST, "Password wrong","비밀번호 오류입니다.."),
+    WRONG_PASS( HttpStatus.BAD_REQUEST, "Password wrong","비밀번호 오류입니다."),
     ACCESS_DENIED(HttpStatus.UNAUTHORIZED, "Access denied","로그인하고 이용해주세요."),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED,"Invalid access token", "토큰이 만료되었습니다."),
     REFRESH_NOT_FOUND(HttpStatus.UNAUTHORIZED,"Invalid refresh token",  "refresh 토큰이 만료되었습니다."),
@@ -35,8 +35,14 @@ public enum ErrorCode { //enum은 'Enumeration' 의 약자로 열거, 목록 이
     // 식당 관련 예외처리
     RESTAURANT_NOT_FOUND(HttpStatus.NOT_FOUND,"Restaurant Not found", "식당을 찾을 수 없습니다."),
     ALREADY_LIKED(HttpStatus.CONFLICT, "Duplcate like", "이미 찜한 식당입니다."),
-    LIKE_NOT_FOUND(HttpStatus.NOT_FOUND, "Not found Like", "찜 내역이 없습니다.");
+    LIKE_NOT_FOUND(HttpStatus.NOT_FOUND, "Not found Like", "찜 내역이 없습니다."),
 
+    // SMS 인증 관련 예외처리
+    SMS_SENDING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Failed SMS sending", "문자 발송에 실패했습니다."),
+    VERIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "Not found Verification data", "인증 기록이 없습니다."),
+    ALREADY_VERIFIED(HttpStatus.CONFLICT, "Already Verified sms code", "이미 인증된 코드입니다."),
+    EXPIRED_CODE(HttpStatus.REQUEST_TIMEOUT, "Expired verification code", "인증 코드가 만료되었습니다."),
+    INVALID_VERIFICATION_CODE( HttpStatus.BAD_REQUEST, "Invalid verification code", "인증 코드가 일치하지 않습니다.");
 
     private final HttpStatus httpStatus;
     private  final String title;

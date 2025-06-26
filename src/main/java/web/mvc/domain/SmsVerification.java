@@ -37,9 +37,4 @@ public class SmsVerification {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "terms_agreed")
-    private Boolean termsAgreed;
-    @Column(name = "privacy_agreed")
-    private Boolean privacyAgreed;
-
 }
