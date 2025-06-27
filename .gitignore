@@ -14,6 +14,9 @@ local.properties
 .loadpath
 .recommenders
 
+#Spring Boot secret config
+application.properties
+
 # External tool builders
 .externalToolBuilders/
 

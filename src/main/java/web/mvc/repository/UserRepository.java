@@ -18,5 +18,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     /** 휴대폰번호 중복체크 */
     Optional<User> findByPhone(String phone);
-
 }
