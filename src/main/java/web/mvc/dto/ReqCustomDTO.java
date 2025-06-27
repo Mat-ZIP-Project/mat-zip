@@ -9,8 +9,11 @@ import web.mvc.domain.CustomCourse;
 @Setter
 @Getter
 public class ReqCustomDTO {
+    private Long id;
     private Long restaurantId;
     private String restaurantName;
     private int visitOrder;
-    private CustomCourse customCourse;
+    private String title;
+
+
 }

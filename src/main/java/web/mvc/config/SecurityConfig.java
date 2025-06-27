@@ -62,7 +62,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests((auth) ->
                 auth
                         .requestMatchers("/auth/refresh").permitAll() // 접근 허용
-
+//                        .requestMatchers("/course/**").permitAll()
                         // 권한별 접근제한
                         .requestMatchers("/owner/**").hasRole("OWNER")
                         .requestMatchers("/admin/**").hasRole("ADMIN")

@@ -19,6 +19,8 @@ public class CourseSpots {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurantId")
     private Restaurant restaurant;
+
+    private String restaurantName;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="courseId")
     private CustomCourse customCourse;

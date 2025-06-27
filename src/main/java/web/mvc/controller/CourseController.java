@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import web.mvc.dto.ReqCustomDTO;
 import web.mvc.dto.ReqTempDTO;
 import web.mvc.dto.ResTempDTO;
 import web.mvc.service.CourseService;
@@ -27,11 +28,25 @@ public class CourseController {
     /**
      * Temp 코스에 추가
      */
-    @PostMapping("temp")
+    @PostMapping("/temp")
     public ResponseEntity<?> insertTempCourse(/*@AuthenticationPrincipal*/ @RequestParam Long id, @RequestBody ReqTempDTO course) {
         course.setId(id);
-        courseService.insertTempCourse(course);
+        return ResponseEntity.ok().body(courseService.insertTempCourse(course));
+    }
 
-        return null;
+    /**
+     * Custom 코스 저장
+     */
+    @PostMapping("/custom")
+    public ResponseEntity<?> saveCustomCourse(@RequestParam Long id,@RequestBody List<ReqCustomDTO> list ) {
+        list.forEach(dto->dto.setId(id));
+        return ResponseEntity.ok(courseService.insertCustomCourse(list));
+    }
+    /**
+     * custom 코스 상세보기
+     */
+    @GetMapping("/custom/details")
+    public ResponseEntity<?> searchCustomCourseDetails(@RequestParam Long id,@RequestParam Long courseId) {
+        return ResponseEntity.ok(courseService.searchCustomCourse(id,courseId));
     }
 }

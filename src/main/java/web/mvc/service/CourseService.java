@@ -28,7 +28,7 @@ public interface CourseService {
     /**
      * Custom 코스 검색
      */
-    ResCustomDTO searchCustomCourse(Long courseId);
+    ResCustomDTO searchCustomCourse(Long id,Long courseId);
     /**
      * Custom 코스 수정하기
      */

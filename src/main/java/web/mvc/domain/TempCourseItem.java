@@ -16,13 +16,17 @@ import java.time.LocalDateTime;
 public class TempCourseItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long temp_id;
+    @Column(name = "temp_course_id")
+    private Long tempId;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id")
     private User user;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurantId")
     private Restaurant restaurant;
+
+    @Column(name = "restaurant_name", nullable = false)
+    private String restaurantName;
 
     private int visitOrder;
 
