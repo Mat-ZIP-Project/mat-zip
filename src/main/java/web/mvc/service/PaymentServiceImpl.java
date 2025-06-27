@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import web.mvc.domain.Reservation;
 import web.mvc.domain.ReservationPayment;
-import web.mvc.domain.User;
 import web.mvc.dto.PaymentCompleteReqDto;
 import web.mvc.dto.PaymentCompleteResDto;
 import web.mvc.dto.PreparationReqDto;

@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 import web.mvc.domain.Notification;
 import web.mvc.domain.Reservation;
 import web.mvc.domain.Restaurant;
-import web.mvc.domain.User;
 import web.mvc.dto.ReservationCreateReqDto;
 import web.mvc.dto.ReservationCreateResDto;
 import web.mvc.exception.BasicException;

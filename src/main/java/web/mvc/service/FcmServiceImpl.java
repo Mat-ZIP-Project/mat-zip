@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import web.mvc.domain.FcmToken;
-import web.mvc.domain.User;
 import web.mvc.repository.FcmTokenRepository;
 
 import java.util.List;

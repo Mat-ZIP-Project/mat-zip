@@ -1,7 +1,5 @@
 package web.mvc.service;
 
-import web.mvc.domain.User;
-
 public interface FcmService {
 
     /**
