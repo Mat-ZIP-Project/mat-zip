@@ -2,8 +2,8 @@ package web.mvc.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import web.mvc.domain.Restaurant;
-
 import java.util.List;
+import java.util.Optional;
 
 public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
@@ -15,4 +15,8 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     // 지역(구)만 필터링
     List<Restaurant> findByRegionSigungu(String regionSigungu);
+
+    // 식당 이름으로 식당 조회
+//    Optional<Restaurant> findByRestaurantName(String restaurantName);
+
 }
