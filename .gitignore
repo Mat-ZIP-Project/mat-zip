@@ -828,3 +828,6 @@ $RECYCLE.BIN/
 # Java heap dump
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,intellij,java,react,reactnative,visualstudiocode,node,nextjs,python,eclipse,maven,gradle
+
+# Secret key file
+matzip-google-key.json
