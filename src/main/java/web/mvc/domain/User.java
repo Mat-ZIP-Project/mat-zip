@@ -2,6 +2,7 @@ package web.mvc.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -19,6 +20,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
 
     @Column(name = "user_id", unique = true, nullable = false)
     private String userId;
@@ -63,5 +65,6 @@ public class User {
 
     @Column(name = "privacy_agreed")
     private Boolean privacyAgreed;
+
 
 }
