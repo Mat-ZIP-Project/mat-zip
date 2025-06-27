@@ -13,7 +13,6 @@ import java.util.List;
 @Builder
 @Table(name = "restaurants")
 public class Restaurant {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long restaurantId;
@@ -22,6 +21,7 @@ public class Restaurant {
     @JoinColumn(name = "owner_id", nullable = false)
     private OwnerInfo owner; // 식당 주인
 
+    @Column(name = "restaurant_name")
     private String restaurantName;
     private String address;
     private String regionSido; // 서울특별시, 경기도
