@@ -832,5 +832,8 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,intellij,java,react,reactnative,visualstudiocode,node,nextjs,python,eclipse,maven,gradle
 
+# Secret key file
+matzip-google-key.json
+
 # 설정파일 제외
 application-secret.properties

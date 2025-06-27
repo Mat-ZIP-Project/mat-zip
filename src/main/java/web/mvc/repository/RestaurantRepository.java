@@ -18,5 +18,4 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     // 식당 이름으로 식당 조회
 //    Optional<Restaurant> findByRestaurantName(String restaurantName);
-
 }
