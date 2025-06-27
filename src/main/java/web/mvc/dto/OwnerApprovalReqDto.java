@@ -9,11 +9,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReservationCreateReqDto {
-    private String date;
-    private String time;
-    private Integer numPeople;
-    private String restaurantName;
-//    private Long id;
-
+public class OwnerApprovalReqDto {
+    private Long reservationId;
+    private String reservationStatus;
+    private String ownerNotes;
 }

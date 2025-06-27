@@ -17,9 +17,12 @@ import web.mvc.repository.NotificationRepository;
 import web.mvc.repository.ReservationRepository;
 import web.mvc.repository.RestaurantRepository;
 import web.mvc.repository.UserRepository;
+import web.mvc.util.Enums;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,11 +35,15 @@ public class ReservationServiceImpl implements ReservationService {
     private final RestaurantRepository restaurantRepository;
     private final UserRepository userRepository;
 
+    /**
+     * 새로운 예약 정보를 생성하는 메서드
+     */
     @Override
     @Transactional
     public ReservationCreateResDto createReservation(ReservationCreateReqDto request) throws BasicException {
-        User user = userRepository.findById(request.getId())
-                .orElseThrow(() -> new BasicException(ErrorCode.NOTFOUND_ID));
+//        User user = userRepository.findById(request.getId())
+//                .orElseThrow(() -> new BasicException(ErrorCode.NOTFOUND_ID));
+        // 사용자의 id값 가져와서 user값 추가
 
         Restaurant restaurant = restaurantRepository.findByRestaurantName(request.getRestaurantName())
                 .orElseThrow(() -> new BasicException(ErrorCode.NOTFOUND_ID));
@@ -45,8 +52,8 @@ public class ReservationServiceImpl implements ReservationService {
                 .date(request.getDate())
                 .time(request.getTime())
                 .numPeople(request.getNumPeople())
-                .status("PENDING")
-                .user(user)
+                .status(Enums.ReservationStatus.PENDING.name())
+//                .user(user)
                 .restaurant(restaurant)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -69,25 +76,34 @@ public class ReservationServiceImpl implements ReservationService {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new BasicException(ErrorCode.RESERVATION_NOT_FOUND));
 
-        List<String> validStatuses = List.of("PENDING", "PENDING_APPROVAL", "APPROVED", "REJECTED", "CANCELLED");
+        // 유효한 상태 Enum 값들을 List로 변환
+        List<String> validStatuses = Arrays.stream(Enums.ReservationStatus.values())
+                .map(Enum::name)
+                .collect(Collectors.toList());
+
         String statusToUpdate = newStatus.toUpperCase();
         String currentStatus = reservation.getStatus();
 
+        // 1. 요청된 상태가 유효한 상태 목록에 있는지 검사
         if (!validStatuses.contains(statusToUpdate)) {
-            throw new BasicException(ErrorCode.RESERVATION_NOT_FOUND);
+            log.error("유효하지 않은 예약 상태 요청: 예약 ID '{}', 요청 상태 '{}'", reservationId, statusToUpdate);
+            throw new BasicException(ErrorCode.RESERVATION_NOT_FOUND); // 에러 코드 세분화
         }
+
         // 2. 예약 상태 전환 유효성 검사 (비즈니스 규칙 강화)
-        // PENDING 또는 PENDING_APPROVAL 상태에서만 APPROVED 또는 REJECTED로 전환 가능
-        if (("APPROVED".equals(statusToUpdate) || "REJECTED".equals(statusToUpdate))) {
-            if (!("PENDING".equals(currentStatus) || "PENDING_APPROVAL".equals(currentStatus))) {
-                log.error("예약 상태 전환 불가: 예약 ID '{}', 현재 상태 '{}' 에서 '{}'로 전환할 수 없음. (승인/거절은 PENDING/PAID_PENDING_APPROVAL 에서만 가능)",
+        // 승인 또는 거절은 PENDING 또는 PENDING_APPROVAL 상태에서만 가능
+        if (Enums.ReservationStatus.APPROVED.name().equals(statusToUpdate) || Enums.ReservationStatus.REJECTED.name().equals(statusToUpdate)) {
+            if (!(currentStatus.equals(Enums.ReservationStatus.PENDING.name()) || currentStatus.equals(Enums.ReservationStatus.PENDING_APPROVAL.name()))) {
+                log.error("예약 상태 전환 불가: 예약 ID '{}', 현재 상태 '{}' 에서 '{}'로 전환할 수 없음. (승인/거절은 PENDING/PENDING_APPROVAL 에서만 가능)",
                         reservationId, currentStatus, statusToUpdate);
                 throw new BasicException(ErrorCode.INVALID_RESERVATION_STATUS_TRANSITION);
             }
         }
-        // 이미 APPROVED/REJECTED/CANCELLED 상태인 예약을 PENDING/PENDING_APPROVAL로 되돌리려는 시도 방지
-        if (("PENDING".equals(statusToUpdate) || "PENDING_APPROVAL".equals(statusToUpdate))) {
-            if (("APPROVED".equals(currentStatus) || "REJECTED".equals(currentStatus) || "CANCELLED".equals(currentStatus))) {
+        // 이미 최종 상태(APPROVED/REJECTED/CANCELLED)인 예약을 PENDING/PENDING_APPROVAL로 되돌리려는 시도 방지
+        if (Enums.ReservationStatus.PENDING.name().equals(statusToUpdate) || Enums.ReservationStatus.PENDING_APPROVAL.name().equals(statusToUpdate)) {
+            if (currentStatus.equals(Enums.ReservationStatus.APPROVED.name()) ||
+                    currentStatus.equals(Enums.ReservationStatus.REJECTED.name()) ||
+                    currentStatus.equals(Enums.ReservationStatus.CANCELLED.name())) {
                 log.error("예약 상태 전환 불가: 예약 ID '{}', 이미 최종 상태인 '{}' 에서 '{}'로 되돌릴 수 없음.",
                         reservationId, currentStatus, statusToUpdate);
                 throw new BasicException(ErrorCode.INVALID_RESERVATION_STATUS_TRANSITION);
@@ -97,8 +113,11 @@ public class ReservationServiceImpl implements ReservationService {
         reservation.setStatus(statusToUpdate);
         reservation.setOwnerNotes(ownerNotes);
 
-        if ("APPROVED".equals(statusToUpdate) || "REJECTED".equals(statusToUpdate)) {
+        if (Enums.ReservationStatus.APPROVED.name().equals(statusToUpdate) || Enums.ReservationStatus.REJECTED.name().equals(statusToUpdate)) {
             reservation.setApprovedAt(LocalDateTime.now());
+            // 💡 TODO: REJECTED 시 환불 로직 필요
+            // 만약 PaymentService를 통해 환불을 진행한다면, 여기에 로직 추가
+            // 예: if (Enums.ReservationStatus.REJECTED.name().equals(statusToUpdate)) { paymentService.cancelPayment(...); }
         }
 
         reservationRepository.save(reservation);    // DB에 변경된 예약 정보 저장
@@ -110,20 +129,20 @@ public class ReservationServiceImpl implements ReservationService {
             String title;
             String body;
 
-            String restaurantName = "맛있는 식당";
-            Restaurant restaurant = reservation.getRestaurant();
-            if (restaurant != null && restaurant.getRestaurantName() != null) {
-                restaurantName = restaurant.getRestaurantName();
-            }
+            String restaurantName = reservation.getRestaurant().getRestaurantName();
 
             // 새로운 상태에 따라 알림 제목과 본문 설정
-            if ("APPROVED".equals(statusToUpdate)) {
-                title ="예약 완료 알림입니다.";
-                body = restaurantName + "식당 예약이 완료되었습니다.";
-            } else if ("REJECTED".equals(statusToUpdate)) {
+            if (Enums.ReservationStatus.APPROVED.name().equals(statusToUpdate)) {
+                title ="예약 승인 알림입니다.";
+                body = String.format("🎉 고객님의 %s 예약이 승인되었습니다! %s %s에 만나요!",
+                        restaurantName, reservation.getDate(), reservation.getTime());
+            } else if (Enums.ReservationStatus.REJECTED.name().equals(statusToUpdate)) {
                 title = "예약 거절 알림입니다.";
-                body = restaurantName + "예약이 거절되었습니다." + (ownerNotes != null && !ownerNotes.isEmpty() ? ownerNotes : "영업 종료 시간입니다.");
+                body = String.format("😅 고객님의 %s 예약이 거절되었습니다. 사유: %s",
+                        restaurantName, (ownerNotes != null && !ownerNotes.isEmpty() ? ownerNotes : "자세한 내용은 식당에 문의해주세요."));
             } else {
+                // 승인/거절 외의 상태 변화는 알림 보내지 않음 (필요시 추가)
+                log.info("예약 ID '{}' 상태 '{}'는 알림 전송 대상이 아닙니다.", reservationId, statusToUpdate);
                 return;
             }
 
