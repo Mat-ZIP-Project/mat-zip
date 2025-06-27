@@ -5,6 +5,11 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public class BasicException extends RuntimeException {
+public class BasicException extends RuntimeException implements ErrorCodeProvider {
 	  private final ErrorCode errorCode;
+
+	@Override
+	public ErrorCode getErrorCode() {
+		return errorCode;
+	}
 }

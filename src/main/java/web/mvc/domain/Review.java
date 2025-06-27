@@ -2,7 +2,6 @@ package web.mvc.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -14,6 +13,7 @@ import java.time.LocalDateTime;
 @Builder
 @Table(name = "reviews",
         uniqueConstraints = @UniqueConstraint(name = "uniq_user_restaurant_visit", columnNames = {"id", "restaurant_id", "visit_date"}))
+
 public class Review {
 
     @Id
@@ -45,4 +45,9 @@ public class Review {
     private User user;
 
     private Long sourceId;
+
+    @Column(name = "local_review")
+    private boolean localReview;
+
+
 }
