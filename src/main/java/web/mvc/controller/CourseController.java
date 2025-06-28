@@ -30,7 +30,7 @@ public class CourseController {
      */
     @PostMapping("/temp")
     public ResponseEntity<?> insertTempCourse(/*@AuthenticationPrincipal*/ @RequestParam Long id, @RequestBody ReqTempDTO course) {
-        course.setId(id);
+        course.setUserId(id);
         return ResponseEntity.ok().body(courseService.insertTempCourse(course));
     }
 
@@ -48,5 +48,28 @@ public class CourseController {
     @GetMapping("/custom/details")
     public ResponseEntity<?> searchCustomCourseDetails(@RequestParam Long id,@RequestParam Long courseId) {
         return ResponseEntity.ok(courseService.searchCustomCourse(id,courseId));
+    }
+
+    /**
+     * custom 코스 목록 보기
+     */
+    @GetMapping("/custom/list")
+    public ResponseEntity<?> searchCustomCourseList(@RequestParam Long id) {
+        return ResponseEntity.ok(courseService.searchCustomCourseList(id));
+    }
+    /**
+     * custom 코스 수정하기
+     */
+    @PutMapping("/custom/update")
+    public void updateCustomCourse(@RequestParam Long courseId,@RequestBody List<ReqCustomDTO> list) {
+        courseService.updateCustomCourse(courseId,list);
+
+    }
+    /**
+     * cutom 코스 삭제하기
+     */
+    @DeleteMapping("/custom/delete")
+    public void deleteCustomCourse(@RequestParam Long courseId) {
+        courseService.deleteCustomCourse(courseId);
     }
 }

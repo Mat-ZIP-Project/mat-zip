@@ -20,7 +20,7 @@ public interface CourseService {
     /**
      * Custom 코스 리스트 검색
      */
-    List<ResCustomDTO> searchCustomCourseList(ReqTempDTO reqTempDTO);
+    List<ResCustomDTO> searchCustomCourseList(Long id);
     /**
      * Custom 코스 저장
      */

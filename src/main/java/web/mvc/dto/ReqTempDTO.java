@@ -8,7 +8,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReqTempDTO {
-    private Long id; //user테이블의 pk
+    private Long userId; //user테이블의 pk
     private Long restaurantId;
     private String restaurantName;
     private int visitOrder;
