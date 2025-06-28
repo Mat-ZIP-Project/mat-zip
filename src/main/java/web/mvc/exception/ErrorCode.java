@@ -42,7 +42,23 @@ public enum ErrorCode { //enum은 'Enumeration' 의 약자로 열거, 목록 이
     VERIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "Not found Verification data", "인증 기록이 없습니다."),
     ALREADY_VERIFIED(HttpStatus.CONFLICT, "Already Verified sms code", "이미 인증된 코드입니다."),
     EXPIRED_CODE(HttpStatus.REQUEST_TIMEOUT, "Expired verification code", "인증 코드가 만료되었습니다."),
-    INVALID_VERIFICATION_CODE( HttpStatus.BAD_REQUEST, "Invalid verification code", "인증 코드가 일치하지 않습니다.");
+    INVALID_VERIFICATION_CODE( HttpStatus.BAD_REQUEST, "Invalid verification code", "인증 코드가 일치하지 않습니다."),
+
+    // --- PortOne 결제 관련 오류 코드 추가 ---
+    PAYMENT_PREPARE_FAILED(HttpStatus.BAD_REQUEST, "PAYMENT_PREPARE_FAILED","결제 사전 검증에 실패했습니다."),
+    PAYMENT_INFO_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT_INFO_NOT_FOUND","PortOne에서 결제 정보를 조회할 수 없습니다."),
+    PAYMENT_NOT_PAID(HttpStatus.BAD_REQUEST, "","결제가 완료되지 않았습니다."),
+    PAYMENT_MERCHANT_UID_MISMATCH(HttpStatus.BAD_REQUEST,"", "주문 번호가 일치하지 않습니다. 위변조 가능성."),
+    PAYMENT_AMOUNT_MISMATCH(HttpStatus.NOT_FOUND, "","결제 금액이 일치하지 않습니다. 위변조 가능성."),
+    PAYMENT_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "","이미 처리된 결제입니다."),
+    RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "","해당 예약을 찾을 수 없습니다."),
+    PAYMENT_DB_ERROR(HttpStatus.BAD_REQUEST, "","결제 정보를 DB에 저장하는 중 오류가 발생했습니다."),
+    PAYMENT_ALREADY_PENDING(HttpStatus.BAD_REQUEST, "","이미 진행 중인 결제가 있습니다."), // 선택적, 중복 사전 검증 방지
+    PAYMENT_CANCEL_FAILED(HttpStatus.BAD_REQUEST, "","결제 취소에 실패했습니다."),
+    // --- 기존 오류 코드 ---
+    NOTFOUNT_MERCHANTUID(HttpStatus.NOT_FOUND, "","결제 정보를 찾을 수 없습니다."),
+
+    INVALID_RESERVATION_STATUS_TRANSITION(HttpStatus.BAD_REQUEST,"","현재 예약 상태에서 해당 상태로 변경할 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private  final String title;

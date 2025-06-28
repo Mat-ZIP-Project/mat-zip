@@ -61,20 +61,7 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests((auth) ->
                 auth
-                        .requestMatchers("/refresh").permitAll() //컨트롤러로 바로 접근
-
-                        // [1] GET 요청
-                        .requestMatchers(HttpMethod.GET, "/user").permitAll()
-
-                        // [2] POST 요청
-                        .requestMatchers(HttpMethod.POST, "/signup/sms/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/user").authenticated()
-
-                        // [3] PUT 요청
-                        // .requestMatchers(HttpMethod.PUT, "/user/**").authenticated()
-
-                        // [4] DELETE 요청
-                        // .requestMatchers(HttpMethod.DELETE, "/user/**").authenticated()
+                        .requestMatchers("/auth/refresh", "/api/reviews/**").permitAll() // 접근 허용
 
                         // 권한별 접근제한
                         .requestMatchers("/owner/**").hasRole("OWNER")
