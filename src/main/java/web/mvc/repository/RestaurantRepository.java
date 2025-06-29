@@ -17,5 +17,5 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     List<Restaurant> findByRegionSigungu(String regionSigungu);
 
     // 식당 이름으로 식당 조회
-//    Optional<Restaurant> findByRestaurantName(String restaurantName);
+    Optional<Restaurant> findByRestaurantName(String restaurantName);
 }
