@@ -1,4 +1,4 @@
-package web.mvc.service;
+/*package web.mvc.service;
 
 import com.google.cloud.translate.Translate;
 import com.google.cloud.translate.TranslateOptions;
@@ -20,4 +20,4 @@ public class TranslateService {
         );
         return translation.getTranslatedText();
     }
-}
+}*/

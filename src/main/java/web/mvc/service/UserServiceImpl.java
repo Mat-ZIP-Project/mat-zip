@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import web.mvc.domain.RefreshToken;
 import web.mvc.domain.User;
 import web.mvc.dto.LoginRequest;
+import web.mvc.dto.SignupRequest;
 import web.mvc.dto.TokenResponse;
 import web.mvc.exception.BasicException;
 import web.mvc.exception.ErrorCode;
@@ -25,12 +26,24 @@ import web.mvc.security.JwtTokenProvider;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final SmsVerificationService smsVerificationService;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
+    private final SignupService signupService;
+
 
     @Override
     public void logout(User user) {
         tokenService.invalidateToken(user);
+    }
+
+    @Override
+    public void signUp(SignupRequest signupRequest) {
+        if ("ROLE_OWNER".equals(signupRequest.getRole())) {
+            signupService.signupOwner(signupRequest);
+        } else {
+            signupService.signupUser(signupRequest);
+        }
     }
 
 }

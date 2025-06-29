@@ -21,4 +21,8 @@ public interface SmsVerificationRepository extends JpaRepository<SmsVerification
     @Modifying
     @Query("UPDATE SmsVerification s SET s.verified = true WHERE s.smsId = :id")
     int verifySmsById(@Param("id") Long id);
+
+    /** 인증 여부 확인 - 회원가입 진행시 필요 */
+    @Query("SELECT s FROM SmsVerification s WHERE s.phone = :phone AND s.purpose = :purpose AND s.verified = true ORDER BY s.createdAt DESC LIMIT 1")
+    Optional<SmsVerification> findLatestVerifiedSms(@Param("phone") String phone, @Param("purpose") String purpose);
 }
