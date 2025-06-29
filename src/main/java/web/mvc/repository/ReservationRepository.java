@@ -14,10 +14,7 @@ import java.util.Optional;
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation,Long> {
     // 특정 사용자의 모든 예약 조회
-//    List<Reservation> findByUser(Long id);
-
-    // 특정 식당의 모든 예약 조회
-//    List<Reservation> findByReservationId(Long reservationId);
+    List<Reservation> findByUserIdAndStatus(Long id, String status);
 
     // 특정 식당의 예약 조회
     Optional<Reservation> findByReservationId(Long reservationId);
