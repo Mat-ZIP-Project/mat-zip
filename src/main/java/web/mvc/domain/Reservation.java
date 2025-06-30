@@ -44,6 +44,7 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 
@@ -87,6 +88,10 @@ public class Reservation {
 
     @Column(nullable = false)
     private boolean reminded = false;
+
+    @Column(name = "point_awarded", nullable = false)
+    @ColumnDefault("false") // 포인트 지급 여부 기본값 false
+    private boolean pointsAwarded; // ✅ 이 예약에 대해 포인트가 지급되었는지 여부
 
     // users 테이블의 id를 참조
     @ManyToOne

@@ -6,16 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import web.mvc.domain.Reservation;
-import web.mvc.domain.ReservationPayment;
-import web.mvc.domain.Review;
+import web.mvc.domain.*;
 import web.mvc.dto.ReservationDetailDto;
 import web.mvc.exception.BasicException;
 import web.mvc.exception.ErrorCode;
-import web.mvc.repository.ReservationPaymentRepository;
-import web.mvc.repository.ReservationRepository;
-import web.mvc.repository.ReviewRepository;
-import web.mvc.repository.UserRepository;
+import web.mvc.repository.*;
 import web.mvc.util.Enums;
 
 import java.io.IOException;
@@ -39,6 +34,7 @@ public class MyPageServiceImpl implements MyPageService {
     private final PaymentService paymentService;
     // 모임 rep 주입 필요
     private final ReservationPaymentRepository reservationPaymentRepository;
+    private final PointRepository pointRepository;
 
     /**
      *  사용자 전체 예약 내역 조회
@@ -162,7 +158,38 @@ public class MyPageServiceImpl implements MyPageService {
 
         // 예약 상태 변경
         reservation.setStatus(Enums.ReservationStatus.CANCELLED.name());
+        User user = reservation.getUser();
+
+        // ✅ 포인트 회수 로직 추가 (취소 시)
+        if (reservation.isPointsAwarded()) { // 포인트가 지급된 상태라면 회수
+            int refundedPoints = 200;
+            int currentPointBalance = (user.getPointBalance() != null) ? user.getPointBalance() : 0;
+            int newPointBalance = currentPointBalance - refundedPoints;
+
+            if (newPointBalance < 0) newPointBalance = 0; // 잔액이 마이너스가 되지 않도록 방지
+
+            user.setPointBalance(newPointBalance); // 사용자 포인트 잔액 업데이트
+            userRepository.save(user); // 사용자 정보 저장
+
+            // 포인트 로그 기록 (사용/회수)
+            Point pointLog = Point.builder()
+                    .user(user)
+                    .isEarned(false) // 사용 (false)
+                    .pointAmount(refundedPoints) // 회수된 금액
+                    .createdAt(LocalDateTime.now())
+                    .pointLog(newPointBalance) // 이 시점의 총 포인트 잔액
+                    .build();
+            pointRepository.save(pointLog); // 포인트 로그 저장
+
+            reservation.setPointsAwarded(false); // 포인트 회수 완료 표시
+            log.info("사용자 ID '{}'에게 예약 ID '{}' 취소로 {} 포인트 회수. 현재 포인트: {}",
+                    user.getUserId(), reservationId, refundedPoints, newPointBalance);
+        } else {
+            log.info("예약 ID '{}'는 포인트가 지급되지 않았으므로 회수할 포인트가 없습니다.", reservationId);
+        }
+
         reservationRepository.save(reservation);
+        log.info("예약 ID '{}'가 '{}' 상태로 취소 완료.", reservationId, reservation.getStatus());
 
         // 취소된 예약 정보를 DTO로 변환하여 반환
         return ReservationDetailDto.builder()
