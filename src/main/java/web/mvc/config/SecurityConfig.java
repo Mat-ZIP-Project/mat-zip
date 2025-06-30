@@ -61,6 +61,8 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests((auth) ->
                 auth
+
+                        .requestMatchers("/auth/refresh").permitAll() // 접근 허용
                         .requestMatchers("/auth/refresh", "/api/reviews/**").permitAll() // 접근 허용
 
                         // 권한별 접근제한
