@@ -9,7 +9,7 @@ import web.mvc.service.ReviewService;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/reviews")
-public class ReviewController {
+public class  ReviewController {
 
     private final ReviewService reviewService;
 
