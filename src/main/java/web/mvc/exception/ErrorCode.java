@@ -51,13 +51,14 @@ public enum ErrorCode { //enum은 'Enumeration' 의 약자로 열거, 목록 이
     // --- 기존 오류 코드 ---
     NOTFOUNT_MERCHANTUID(HttpStatus.NOT_FOUND, "","결제 정보를 찾을 수 없습니다."),
     UNAUTHORIZED_ACCESS(HttpStatus.UNAUTHORIZED, "","예약에 대한 취소 권한이 없습니다."),
+    INVALID_RESERVATION_STATUS(HttpStatus.BAD_REQUEST,"","예약을 취소할 수 없습니다."),
 
 
-    INVALID_RESERVATION_STATUS(HttpStatus.BAD_REQUEST,"","예약을 취소할 수 없습니다.");
+    //커스텀 코스 예외처리
+    COURSE_NOT_FOUND(HttpStatus.NOT_FOUND,"","해당 코스가 존재하지 않습니다.");
+
 
     private final HttpStatus httpStatus;
     private  final String title;
     private final String message;
 }
-
-

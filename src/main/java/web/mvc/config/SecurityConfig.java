@@ -61,6 +61,8 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests((auth) ->
                 auth
+
+                        .requestMatchers("/auth/refresh").permitAll() // 접근 허용
                         .requestMatchers("/auth/refresh", "/api/reviews/**",
                                 "/api/v1/fcm/registerToken", "/api/payment/complete").permitAll() // 접근 허용
 
