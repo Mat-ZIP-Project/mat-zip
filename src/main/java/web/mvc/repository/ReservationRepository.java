@@ -22,9 +22,6 @@ public interface ReservationRepository extends JpaRepository<Reservation,Long> {
     boolean existsByUser_UserIdAndRestaurant_RestaurantIdAndStatus(String userUserId, Long restaurantRestaurantId, String status);
     boolean existsByUser_IdAndRestaurant_RestaurantIdAndStatus(Long userId, Long restaurantRestaurantId, String status);
 
-    // 영수증 인증된 예약자만 조회 (리뷰 작성 조건용)
-    boolean existsByUser_IdAndRestaurant_RestaurantIdAndStatusAndReceiptVerifiedTrue(Long userId, Long restaurantId, String status);
-
     /**
      *  예약 알림을 보낼 대상을 조회하는 메서드
      *  상태가 'approved'이고, 아직 알림을 보내지 않은.

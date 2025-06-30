@@ -23,4 +23,6 @@ public interface MyPageService {
      */
 //    List<Group> getUserGroups(Long id) throws BasicException;
 
+    ReservationDetailDto cancelReservation(Long id, Long reservationId) throws BasicException;
+
 }

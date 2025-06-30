@@ -88,8 +88,6 @@ public class Reservation {
     @Column(nullable = false)
     private boolean reminded = false;
 
-    private boolean receiptVerified;
-
     // users 테이블의 id를 참조
     @ManyToOne
     @JoinColumn(name="id", nullable = false)

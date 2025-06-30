@@ -93,7 +93,7 @@ public class ReservationServiceImpl implements ReservationService {
             if (!(currentStatus.equals(Enums.ReservationStatus.PENDING.name()) || currentStatus.equals(Enums.ReservationStatus.PENDING_APPROVAL.name()))) {
                 log.error("예약 상태 전환 불가: 예약 ID '{}', 현재 상태 '{}' 에서 '{}'로 전환할 수 없음. (승인/거절은 PENDING/PENDING_APPROVAL 에서만 가능)",
                         reservationId, currentStatus, statusToUpdate);
-                throw new BasicException(ErrorCode.INVALID_RESERVATION_STATUS_TRANSITION);
+                throw new BasicException(ErrorCode.INVALID_RESERVATION_STATUS);
             }
         }
         // 이미 최종 상태(APPROVED/REJECTED/CANCELLED)인 예약을 PENDING/PENDING_APPROVAL로 되돌리려는 시도 방지
@@ -103,7 +103,7 @@ public class ReservationServiceImpl implements ReservationService {
                     currentStatus.equals(Enums.ReservationStatus.CANCELLED.name())) {
                 log.error("예약 상태 전환 불가: 예약 ID '{}', 이미 최종 상태인 '{}' 에서 '{}'로 되돌릴 수 없음.",
                         reservationId, currentStatus, statusToUpdate);
-                throw new BasicException(ErrorCode.INVALID_RESERVATION_STATUS_TRANSITION);
+                throw new BasicException(ErrorCode.INVALID_RESERVATION_STATUS);
             }
         }
 
@@ -177,11 +177,11 @@ public class ReservationServiceImpl implements ReservationService {
             // 새로운 상태에 따라 알림 제목과 본문 설정
             if (Enums.ReservationStatus.APPROVED.name().equals(statusToUpdate)) {
                 title ="예약 승인 알림입니다.";
-                body = String.format("🎉 고객님의 %s 예약이 승인되었습니다! %s %s에 만나요!",
+                body = String.format("🎉 고객님!  %s 식당 예약이 승인되었습니다! %s %s에 만나요!",
                         restaurantName, reservation.getDate(), reservation.getTime());
             } else if (Enums.ReservationStatus.REJECTED.name().equals(statusToUpdate)) {
                 title = "예약 거절 알림입니다.";
-                body = String.format("😅 고객님의 %s 예약이 거절되었습니다. 사유: %s",
+                body = String.format("😅 고객님.. %s 식당 예약이 거절되었습니다. 사유: %s",
                         restaurantName, (ownerNotes != null && !ownerNotes.isEmpty() ? ownerNotes : "자세한 내용은 식당에 문의해주세요."));
             } else {
                 // 승인/거절 외의 상태 변화는 알림 보내지 않음 (필요시 추가)

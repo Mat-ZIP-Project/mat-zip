@@ -101,7 +101,7 @@ public class NotificationRemindedService {
             }
 
             String title = "🔔 예약 알림입니다!";
-            String body = String.format("🎉 고객님의 %s 예약이 1시간 뒤인 %s 입니다! 잊지 마세요!",
+            String body = String.format("🎉 고객님 %s 식당 예약이 1시간 뒤인 %s 입니다! 잊지 마세요!",
                     reservation.getRestaurant().getRestaurantName(),
                     reservation.getTime()); // String 그대로 사용
 
