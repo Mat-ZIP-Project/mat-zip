@@ -52,9 +52,9 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional(rollbackFor = {IamportResponseException.class, IOException.class, BasicException.class}) // <-- 여기에 rollbackFor 속성 추가!
     public PreparationResDto prepareValid(User user, PreparationReqDto request) throws BasicException, IamportResponseException, IOException {
         Long reservationId = request.getReservationId();
-        Integer amount = request.getAmount();
+        Integer originalAmount = request.getOriginalAmount();
 
-        log.info("사전 검증 요청 사전 검증 prepareValid - reservationId: {}, amount: {}", reservationId, amount); // 로그 형식 개선
+        log.info("사전 검증 요청 사전 검증 prepareValid - reservationId: {}, amount: {}", reservationId, originalAmount); // 로그 형식 개선
 
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new BasicException(ErrorCode.RESERVATION_NOT_FOUND));
@@ -73,11 +73,31 @@ public class PaymentServiceImpl implements PaymentService {
             throw new BasicException(ErrorCode.PAYMENT_ALREADY_PROCESSED);
         }
 
+        int discountAmount = 0;
+        int finalPaymentAmount = originalAmount;
+
+        if ("먹짱".equals(user.getUserGrade())) {
+            discountAmount = (int) (originalAmount * 0.05);
+            finalPaymentAmount = originalAmount - discountAmount;
+            log.info("사용자 ID '{}'는 '먹짱' 등급으로 {}원 할인 적용. 최종 결제 금액: {}원",
+                    user.getUserId(), discountAmount, finalPaymentAmount);
+        } else if ("실버".equals(user.getUserGrade())) {
+              discountAmount = (int) (originalAmount * 0.03);
+              finalPaymentAmount = originalAmount - discountAmount;
+            log.info("사용자 ID '{}'는 '실버' 등급으로 {}원 할인 적용. 최종 결제 금액: {}원",
+                    user.getUserId(), discountAmount, finalPaymentAmount);
+        } else {
+            log.info("사용자 ID '{}'는 '먹짱' 등급이 아님. 할인 없음. 최종 결제 금액: {}원",
+                    user.getUserId(), finalPaymentAmount);
+        }
+
         String merchantUid = generateMerchantUid(reservationId);
 
         ReservationPayment newPayment = ReservationPayment.builder()
                 .reservation(reservation)
-                .amount(amount)
+                .originalAmount(originalAmount)
+                .discountAmount(discountAmount)
+//                .amount(amount)
                 .status(Enums.PaymentStatus.READY)
                 .user(user)
                 .merchantUid(merchantUid) // Payment 엔티티의 DB 컬럼명이 portone_merchant_uid라면 이렇게 사용하는 것이 일관적입니다. Payment 엔티티의 필드명을 확인하세요.
@@ -90,7 +110,7 @@ public class PaymentServiceImpl implements PaymentService {
             throw new BasicException(ErrorCode.PAYMENT_DB_ERROR);
         }
 
-        BigDecimal amountToSendToPortOne = new BigDecimal(amount).setScale(0, RoundingMode.UNNECESSARY);
+        BigDecimal amountToSendToPortOne = new BigDecimal(finalPaymentAmount).setScale(0, RoundingMode.UNNECESSARY);
         log.info("[PaymentServiceImpl] PortOne에 보낼 최종 금액 (BigDecimal): {}, merchantUid: {}", amountToSendToPortOne, merchantUid);
 
         PrepareData prepareData = new PrepareData(merchantUid, amountToSendToPortOne);
@@ -111,7 +131,9 @@ public class PaymentServiceImpl implements PaymentService {
             response.setSuccess(true);
             response.setReservationId(reservationId);
             response.setMerchantUid(merchantUid);
-            response.setAmount(amount);
+            response.setOriginalAmount(finalPaymentAmount);
+            response.setDiscountAmount(finalPaymentAmount);
+//            response.setAmount(amount);
             response.setMessage("PortOne 사전 검증 성공. 결제창을 띄울 수 있습니다.");
             log.info("PortOne 사전 검증 최종 성공: merchantUid={}", merchantUid);
             return response;
