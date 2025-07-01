@@ -88,7 +88,7 @@ public class MyPageServiceImpl implements MyPageService {
      *  마이페이지에서 사용자가 예약 취소
      */
     @Override
-    public ReservationDetailDto cancelReservation(Long id, Long reservationId) throws BasicException {
+    public void cancelReservation(Long id, Long reservationId) throws BasicException {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new BasicException(ErrorCode.RESERVATION_NOT_FOUND));
 
@@ -174,7 +174,7 @@ public class MyPageServiceImpl implements MyPageService {
             // 포인트 로그 기록 (사용/회수)
             Point pointLog = Point.builder()
                     .user(user)
-                    .isEarned(false) // 사용 (false)
+                    .isEarned("취소") // 사용 (false)
                     .pointAmount(refundedPoints) // 회수된 금액
                     .createdAt(LocalDateTime.now())
                     .pointLog(newPointBalance) // 이 시점의 총 포인트 잔액
@@ -190,19 +190,32 @@ public class MyPageServiceImpl implements MyPageService {
 
         reservationRepository.save(reservation);
         log.info("예약 ID '{}'가 '{}' 상태로 취소 완료.", reservationId, reservation.getStatus());
+    }
 
-        // 취소된 예약 정보를 DTO로 변환하여 반환
-        return ReservationDetailDto.builder()
-                .reservationId(reservation.getReservationId())
-                .restaurantName(reservation.getRestaurant().getRestaurantName())
-                .date(LocalDateTime.parse(reservation.getDate()))
-                .time(LocalDateTime.parse(reservation.getTime()))
-                .numPeople(reservation.getNumPeople())
-                .status(reservation.getStatus())
-                .ownerNotes(reservation.getOwnerNotes())
-                .createdAt(reservation.getCreatedAt())
-                .paymentStatus(finalPaymentStatus)
-                .build();
+    /**
+     *  사용자의 등급을 확인하고 필요시 업데이트합니다.
+     */
+    @Override
+    public void checkAndUpdateUserGrade(User user) throws BasicException {
+        String currentGrade = user.getUserGrade();
 
+       int maxPoints = pointRepository.findMaxPointLogByUser(user);
+
+       String newGrade = currentGrade;
+
+       // 등급 상승 로직
+        if ("브론즈".equals(currentGrade) && maxPoints >= 3000) {
+            newGrade = "실버";
+        } else if ("실버".equals(currentGrade) && maxPoints >= 10000) {
+            newGrade = "먹짱";
+        }
+
+        if (!currentGrade.equals(newGrade)) {
+            user.setUserGrade(newGrade);
+            userRepository.save(user);
+            log.info("등급이 상승하였습니다.");
+        } else {
+            log.info("등급이 변경되지 않았습니다.");
+        }
     }
 }

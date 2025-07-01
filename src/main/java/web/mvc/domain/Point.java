@@ -16,11 +16,11 @@ public class Point {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "point_log_id")
-    private Long point_id;
+    private Long pointId;
 
-    // 적립 = 1, 사용 = 0으로
+    // "적립" / "사용" / "취소"
     @Column(name = "is_earned", nullable = false)
-    private boolean isEarned;
+    private String isEarned;
 
     // 적립 / 사용 한 금액량
     @Column(name = "amount")

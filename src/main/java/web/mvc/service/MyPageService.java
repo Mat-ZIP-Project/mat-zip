@@ -1,6 +1,7 @@
 package web.mvc.service;
 
 import web.mvc.domain.Review;
+import web.mvc.domain.User;
 import web.mvc.dto.ReservationDetailDto;
 import web.mvc.exception.BasicException;
 
@@ -23,6 +24,8 @@ public interface MyPageService {
      */
 //    List<Group> getUserGroups(Long id) throws BasicException;
 
-    ReservationDetailDto cancelReservation(Long id, Long reservationId) throws BasicException;
+    void cancelReservation(Long id, Long reservationId) throws BasicException;
+
+    void checkAndUpdateUserGrade(User user) throws BasicException;
 
 }

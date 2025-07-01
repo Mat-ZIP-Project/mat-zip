@@ -127,7 +127,7 @@ public class ReservationServiceImpl implements ReservationService {
                 // 포인트 로그 기록
                 Point pointLog = Point.builder()
                         .user(user)
-                        .isEarned(true)
+                        .isEarned("적립")
                         .pointAmount(earnedPoints)
                         .createdAt(LocalDateTime.now())
                         .pointLog(newPointBalance)
@@ -137,6 +137,8 @@ public class ReservationServiceImpl implements ReservationService {
                 reservation.setPointsAwarded(true);
                 log.info("사용자 ID '{}'에게 예약 ID '{}' 승인으로 {} 포인트 적립. 현재 포인트: {}",
                         user.getUserId(), reservationId, earnedPoints, newPointBalance);
+
+//                myPageService.checkAndUpdateUserGrade(user);
             }
         } else if (Enums.ReservationStatus.REJECTED.name().equals(statusToUpdate)) {
             reservation.setApprovedAt(LocalDateTime.now());
@@ -155,7 +157,7 @@ public class ReservationServiceImpl implements ReservationService {
                 // 포인트 로그 기록 (사용/회수)
                 Point pointLog = Point.builder()
                         .user(user)
-                        .isEarned(false) // 사용 (false)
+                        .isEarned("취소")
                         .pointAmount(refundedPoints) // 회수된 금액
                         .createdAt(LocalDateTime.now())
                         .pointLog(newPointBalance) // 이 시점의 총 포인트 잔액
