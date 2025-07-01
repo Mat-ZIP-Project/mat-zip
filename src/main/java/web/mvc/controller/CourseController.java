@@ -36,6 +36,16 @@ public class CourseController {
     }
 
     /**
+     * Temp 코스 변경하기
+     */
+    @PutMapping("/temp")
+    public ResponseEntity<?> updateTempCourse(@AuthenticationPrincipal CustomUserDetails userDetails,@RequestBody List<ReqTempDTO> list) {
+        list.get(0).setUserId(userDetails.getUser().getId());
+        courseService.updateTempCorse(list);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * Custom 코스 저장
      */
     @PostMapping("/custom")

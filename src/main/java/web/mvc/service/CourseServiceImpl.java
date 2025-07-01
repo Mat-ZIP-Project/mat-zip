@@ -46,7 +46,7 @@ public class CourseServiceImpl implements CourseService {
     }
     //JPA 기본
     @Override
-    @Transactional/*(propagation = Propagation.REQUIRES_NEW)*/
+    @Transactional
     public String insertTempCourse(ReqTempDTO reqTempDTO) {
         TempCourseItem addItem = TempCourseItem.builder()
                 .user(userRepository.findById(reqTempDTO.getUserId()).orElseThrow(()->new BasicException(ErrorCode.USER_NOT_FOUND)))
@@ -58,6 +58,30 @@ public class CourseServiceImpl implements CourseService {
         tempCourseRepository.save(addItem);
         return "코스에 추가되었습니다.";
     }
+
+    @Override
+    @Transactional
+    public void updateTempCorse(List<ReqTempDTO> reqTempDTOList) {
+        long id = reqTempDTOList.get(0).getUserId();
+        QTempCourseItem qTempCourseItem = QTempCourseItem.tempCourseItem;
+        jpaQueryFactory.delete(qTempCourseItem).where(qTempCourseItem.user.id.eq(id)).execute();
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new BasicException(ErrorCode.USER_NOT_FOUND));
+
+        List<TempCourseItem> toSave=reqTempDTOList.stream().map(dto->
+            TempCourseItem.builder()
+                    .restaurant(restaurantRepository.findById(dto.getRestaurantId()).get())
+                    .restaurantName(dto.getRestaurantName())
+                    .visitOrder(dto.getVisitOrder())
+                    .user(user)
+                    .build()
+        ).toList();
+
+        tempCourseRepository.saveAll(toSave);
+
+    }
+
     //Query DSL
     @Transactional(readOnly = true)
     @Override
