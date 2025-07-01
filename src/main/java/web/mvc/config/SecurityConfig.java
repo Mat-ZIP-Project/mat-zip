@@ -61,7 +61,11 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests((auth) ->
                 auth
-                        .requestMatchers("/auth/refresh", "/api/reviews/**", "/signup/**").permitAll() // 접근 허용
+                        // 인증 필요
+                        .requestMatchers("/auth/logout").authenticated()
+
+                        // 접근 허용
+                        .requestMatchers("/auth/**", "/api/reviews/**", "/signup/**").permitAll()
 
                         // 권한별 접근제한
                         .requestMatchers("/owner/**").hasRole("OWNER")

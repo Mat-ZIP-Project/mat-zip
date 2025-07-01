@@ -85,7 +85,13 @@ public class TokenServiceImpl implements TokenService {
     @Transactional
     public void invalidateToken(User user) {
         refreshTokenRepository.findByUser(user)
-                .ifPresent(refreshTokenRepository::delete);
+                .ifPresentOrElse(
+                        token -> {
+                            refreshTokenRepository.delete(token);
+                            log.info("사용자 {}의 토큰 무효화 완료", user.getUserId());
+                        },
+                        () -> log.info("사용자 {}의 토큰이 이미 존재하지 않음", user.getUserId())
+                );
     }
 
     @Override
@@ -93,4 +99,5 @@ public class TokenServiceImpl implements TokenService {
         return jwtTokenProvider.validateToken(refreshToken) &&
                 refreshTokenRepository.findByToken(refreshToken).isPresent();
     }
+
 }

@@ -3,17 +3,13 @@ package web.mvc.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import web.mvc.dto.SendSmsRequest;
-import web.mvc.dto.SignupDuplicateRequest;
-import web.mvc.dto.SignupRequest;
-import web.mvc.dto.VerifySmsRequest;
+import org.springframework.web.bind.annotation.*;
+import web.mvc.dto.*;
 import web.mvc.service.SignupService;
 import web.mvc.service.SmsVerificationService;
 import web.mvc.service.UserService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/signup")
@@ -32,11 +28,11 @@ public class SignupController {
     }
 
     /** 휴대폰번호 중복체크 */
-/*    @PostMapping("/check/phone")
-    public ResponseEntity<Void> checkPhoneDuplicate(@RequestBody CheckDuplicateRequest request) {
+    @PostMapping("/check/phone")
+    public ResponseEntity<Void> checkPhoneDuplicate(@RequestBody SignupDuplicateRequest  request) {
         signupService.checkPhoneDuplicate(request.getPhone());
         return ResponseEntity.ok().build();
-    }*/
+    }
 
     /** 사업자등록번호 유효성 검증 */
     @PostMapping("/verify/business")
@@ -59,19 +55,26 @@ public class SignupController {
         return ResponseEntity.ok().build();
     }
 
+    /** 식당 주소 검색 (식당 사장용) */
+    @GetMapping("/address")
+    public ResponseEntity<List<AddressResponse>> searchAddress(@RequestParam("query") String query) {
+        List<AddressResponse> list = signupService.searchAddress(query);
+        return ResponseEntity.ok(list);
+    }
+
     /** 일반 사용자 회원가입 */
     @PostMapping("/user")
     public ResponseEntity<Void> signupUser(@Valid @RequestBody SignupRequest request) {
         request.setRole("ROLE_USER");
-        userService.signUp(request);
+        signupService.signupUser(request);
         return ResponseEntity.ok().build();
     }
 
-    /** 사업주 회원가입 */
+    /** 식당주 회원가입 */
     @PostMapping("/owner")
-    public ResponseEntity<Void> signupOwner(@Valid @RequestBody SignupRequest request) {
+    public ResponseEntity<Void> signupOwner(@Valid @RequestBody SignupOwnerRequest request) {
         request.setRole("ROLE_OWNER");
-        userService.signUp(request);
+        signupService.signupOwner(request);
         return ResponseEntity.ok().build();
     }
 }

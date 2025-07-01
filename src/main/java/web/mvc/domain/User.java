@@ -64,4 +64,7 @@ public class User {
     @Column(name = "privacy_agreed")
     private Boolean privacyAgreed;
 
+    @Column(name = "preference_category")
+    private String preferenceCategory; // 카테고리 : 한식, 일식, 중식, 양식, 카페
+
 }
