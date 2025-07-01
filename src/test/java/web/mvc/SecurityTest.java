@@ -57,6 +57,46 @@ public class SecurityTest {
                     .build());
     }
 
+    @Test
+    @DisplayName("사용자 계정추가")
+    void insertSampleUsers2() {
+        userRepository.save(
+                User.builder()
+                        .userId("user2")
+                        .password(passwordEncoder.encode("1234"))
+                        .name("서경찬")
+                        .phone("010-5678-5678")
+                        .role("ROLE_USER")
+                        .userStatus("활성")
+                        .pointBalance(0)
+                        .noShow(false)
+                        .gpsVerified(false)
+                        .userGrade("새싹")
+                        .termsAgreed(true)
+                        .privacyAgreed(true)
+                        .build());
+    }
+
+    @Test
+    @DisplayName("사용자 계정추가")
+    void insertSampleUsers3() {
+        userRepository.save(
+                User.builder()
+                        .userId("user3")
+                        .password(passwordEncoder.encode("1234"))
+                        .name("문경찬")
+                        .phone("010-5678-1234")
+                        .role("ROLE_USER")
+                        .userStatus("활성")
+                        .pointBalance(0)
+                        .noShow(false)
+                        .gpsVerified(false)
+                        .userGrade("새싹")
+                        .termsAgreed(true)
+                        .privacyAgreed(true)
+                        .build());
+    }
+
 
     /**
      * 관리자 등록
@@ -77,6 +117,9 @@ public class SecurityTest {
                         .pointBalance(0)
                         .noShow(false)
                         .gpsVerified(false)
+                        .privacyAgreed(true)
+                        .termsAgreed(true)
+                        .userGrade("새싹")
                         .build());
     }
 
