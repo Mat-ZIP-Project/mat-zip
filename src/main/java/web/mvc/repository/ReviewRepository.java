@@ -1,6 +1,7 @@
 package web.mvc.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import web.mvc.domain.Restaurant;
 import web.mvc.domain.Review;
 
 import java.time.LocalDate;
@@ -13,4 +14,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
      * 사용자가 작성한 리뷰 내역
      */
     List<Review> findByUserId(Long id);
+
+    long countReiviewByRestaurant(Restaurant restaurant);
+
+    long countReviewByRestaurant(Restaurant restaurant);
 }

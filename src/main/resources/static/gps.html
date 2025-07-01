@@ -29,8 +29,8 @@
                 const location = `${result[0].region_1depth_name} ${result[0].region_2depth_name}`;
                 document.getElementById("locationDisplay").innerText = location;
 
-                fetch("http://localhost:8080/local", {
-                    method: "POST",
+                fetch("http://localhost:8080/map/position", {
+                    method: "get",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         regionName: location,
