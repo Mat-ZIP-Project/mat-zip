@@ -16,6 +16,7 @@ import web.mvc.exception.BasicException;
 import web.mvc.exception.ErrorCode;
 import web.mvc.repository.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 @Slf4j
-@Transactional
+
 public class CourseServiceImpl implements CourseService {
     private final JPAQueryFactory jpaQueryFactory;
     private final CourseSpotRepository courseSpotRepository;
@@ -34,6 +35,7 @@ public class CourseServiceImpl implements CourseService {
     private final ModelMapper modelMapper;
     //QueryDSL
     @Override
+    @Transactional(readOnly = true)
     public List<ResTempDTO> searchTempCourses(Long id) {
         QTempCourseItem qTempCourseItem = QTempCourseItem.tempCourseItem;
         QRestaurant qRestaurant = QRestaurant.restaurant;
@@ -44,7 +46,7 @@ public class CourseServiceImpl implements CourseService {
     }
     //JPA 기본
     @Override
-    @Transactional/*(propagation = Propagation.REQUIRES_NEW)*/
+    @Transactional
     public String insertTempCourse(ReqTempDTO reqTempDTO) {
         TempCourseItem addItem = TempCourseItem.builder()
                 .user(userRepository.findById(reqTempDTO.getUserId()).orElseThrow(()->new BasicException(ErrorCode.USER_NOT_FOUND)))
@@ -56,7 +58,32 @@ public class CourseServiceImpl implements CourseService {
         tempCourseRepository.save(addItem);
         return "코스에 추가되었습니다.";
     }
+
+    @Override
+    @Transactional
+    public void updateTempCorse(List<ReqTempDTO> reqTempDTOList) {
+        long id = reqTempDTOList.get(0).getUserId();
+        QTempCourseItem qTempCourseItem = QTempCourseItem.tempCourseItem;
+        jpaQueryFactory.delete(qTempCourseItem).where(qTempCourseItem.user.id.eq(id)).execute();
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new BasicException(ErrorCode.USER_NOT_FOUND));
+
+        List<TempCourseItem> toSave=reqTempDTOList.stream().map(dto->
+            TempCourseItem.builder()
+                    .restaurant(restaurantRepository.findById(dto.getRestaurantId()).get())
+                    .restaurantName(dto.getRestaurantName())
+                    .visitOrder(dto.getVisitOrder())
+                    .user(user)
+                    .build()
+        ).toList();
+
+        tempCourseRepository.saveAll(toSave);
+
+    }
+
     //Query DSL
+    @Transactional(readOnly = true)
     @Override
     public List<ResCustomDTO> searchCustomCourseList(Long id) {
         QCustomCourse customCourse = QCustomCourse.customCourse;
@@ -69,6 +96,7 @@ public class CourseServiceImpl implements CourseService {
 
     //기본 JPA
     @Override
+    @Transactional
     public String insertCustomCourse(List<ReqCustomDTO> list) {
         QTempCourseItem  qTempCourseItem = QTempCourseItem.tempCourseItem;
         Long id = list.get(0).getId();
@@ -87,6 +115,7 @@ public class CourseServiceImpl implements CourseService {
     }
     //JPQL Query작성
     @Override
+    @Transactional(readOnly = true)
     public ResCustomDTO searchCustomCourse(Long id,Long courseId) {
         CustomCourse customCourse=customCourseRepository.searchCustomCourse(id,courseId);
         List<ResTempDTO> spots=customCourse.getCourseSpotsList().stream()
@@ -104,6 +133,7 @@ public class CourseServiceImpl implements CourseService {
     }
     //QueryDSL + JPA기본
     @Override
+    @Transactional
     public void updateCustomCourse(Long courseId, List<ReqCustomDTO> list) {
         //custom_courses update
         CustomCourse customCourse=customCourseRepository.findById(courseId).orElseThrow(()->new BasicException(ErrorCode.COURSE_NOT_FOUND));
@@ -116,13 +146,21 @@ public class CourseServiceImpl implements CourseService {
         QCourseSpots courseSpots = QCourseSpots.courseSpots;
         List<CourseSpots> spotList =jpaQueryFactory.selectFrom(courseSpots)
                 .where(courseSpots.customCourse.courseId.eq(courseId)).fetch();
+
+        // 삭제 대상과 업데이트 대상 분리
+        List<CourseSpots> toRemove = new ArrayList<>();
+
         spotList.forEach(spot->{
                 Integer newVisitOrder = map.get(spot.getRestaurantName());
-                spot.setVisitOrder(newVisitOrder);
+                if(newVisitOrder == null ||newVisitOrder==0) toRemove.add(spot);
+                else spot.setVisitOrder(newVisitOrder);
         });
+        // 삭제 처리
+        toRemove.forEach(courseSpotRepository::delete);
     }
     //JPA 기본
     @Override
+    @Transactional
     public void deleteCustomCourse(Long courseId) {
         customCourseRepository.deleteById(courseId);
 

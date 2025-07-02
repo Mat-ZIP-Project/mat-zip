@@ -17,6 +17,12 @@ public interface CourseService {
      * Temp 코스에 추가
      */
     String insertTempCourse(ReqTempDTO reqTempDTO);
+
+    /**
+     * Temp코스 변경하기
+     */
+    void updateTempCorse(List<ReqTempDTO> reqTempDTOList);
+
     /**
      * Custom 코스 리스트 검색
      */
