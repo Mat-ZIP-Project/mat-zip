@@ -34,9 +34,12 @@ public class SmsVerificationServiceImpl implements SmsVerificationService {
     // Nurigo SDK 초기화
     @PostConstruct
     public void init() {
-        this.messageService = NurigoApp.INSTANCE.initialize(
-                props.getKey(), props.getSecret(), "https://api.coolsms.co.kr");
-        log.info("Nurigo SDK 초기화 완료");
+        try {
+            this.messageService = NurigoApp.INSTANCE.initialize(
+                    props.getKey(), props.getSecret(), "https://api.coolsms.co.kr");
+            log.info("Nurigo SDK 초기화 완료");
+        } catch (Throwable ex) {
+        }
     }
 
 
