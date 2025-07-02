@@ -5,9 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import web.mvc.domain.Reservation;
 import web.mvc.domain.Review;
 import web.mvc.dto.ReservationDetailDto;
@@ -61,4 +59,25 @@ public class MyPageController {
             return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
         }
     }
+
+    /**
+     * 사용자 예약 취소
+     */
+    @PostMapping("/reservations/{reservationId}/cancel")
+    public ResponseEntity<String> cancelReservation(@AuthenticationPrincipal CustomUserDetails principal,
+                                                    @PathVariable Long reservationId) {
+        if (principal == null || principal.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long id = principal.getUser().getId();
+
+        try {
+            myPageService.cancelReservation(id, reservationId);
+            log.info("예약 ID 취소 처리가 성공적으로 완료되었습니다.");
+            return ResponseEntity.ok("성공");
+        } catch (BasicException e) {
+            return ResponseEntity.status(e.getErrorCode().getHttpStatus()).body(e.getMessage());
+        }
+    }
+
 }

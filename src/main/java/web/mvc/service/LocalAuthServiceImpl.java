@@ -25,6 +25,7 @@ import web.mvc.exception.ErrorCode;
 import web.mvc.exception.LocalAuthException;
 import web.mvc.repository.LocalAuthRepository;
 import web.mvc.repository.LocalBadgeRepository;
+import web.mvc.repository.UserRepository;
 
 
 import java.time.LocalDate;
@@ -38,6 +39,7 @@ public class LocalAuthServiceImpl implements LocalAuthService {
     private final JPAQueryFactory jpaQueryFactory;
     private final LocalAuthRepository localAuthRepository;
     private final LocalBadgeRepository localBadgeRepository;
+    private final UserRepository userRepository;
     private final ModelMapper modelMapper;
 
 
@@ -49,11 +51,12 @@ public class LocalAuthServiceImpl implements LocalAuthService {
     @Override
     public String insertAuthLog(AuthLogDTO authLogDTO) {
         Long id = authLogDTO.getId();
+        User user = userRepository.findById(id).orElseThrow(() -> new LocalAuthException(ErrorCode.USER_NOT_FOUND));
 
         QUserLocalBadge localBadge = QUserLocalBadge.userLocalBadge;
 
         UserLocalAuth entity = modelMapper.map(authLogDTO, UserLocalAuth.class);
-        entity.setUser(User.builder().id(id).build());
+        entity.setUser(user);
         entity.setRegionName(authLogDTO.getRegionName().trim());
         entity.setAuthDate(LocalDate.now());
         try {
@@ -97,8 +100,12 @@ public class LocalAuthServiceImpl implements LocalAuthService {
         log.info("count = {}", count);
 
         if(badgeList.size()<2 && count>=3 ) {// 로컬뱃지가 2개미만+ 30일 이내 인증횟수 3회 이상 일때
-            localBadgeRepository.save(UserLocalBadge.builder().user(User.builder().id(id).build()).regionName(authLogDTO.getRegionName()).build());// local_badges 테이블에 뱃지 추가
-             // Users 테이블에 인증여부 1로 update
+            // Users 테이블에 인증여부 1로 update+ 등급 "브론즈"
+            user.setGpsVerified(true);
+            if(user.getUserGrade().equals("새싹")) user.setUserGrade("브론즈");
+            localBadgeRepository.save(UserLocalBadge.builder().user(user).regionName(authLogDTO.getRegionName()).build());// local_badges 테이블에 뱃지 추가
+
+
             return "현지인 인증뱃지가 발급되었습니다.";
         }
 
@@ -114,6 +121,7 @@ public class LocalAuthServiceImpl implements LocalAuthService {
     /**
      * 인증기록 검색 (QueryDSL)
      */
+    @Transactional(readOnly = true)
     @Override
     public List<ResAuthDTO> searchAuthLogs( Long id) {
         QUserLocalAuth localAuth = QUserLocalAuth.userLocalAuth;
@@ -133,6 +141,7 @@ public class LocalAuthServiceImpl implements LocalAuthService {
     /**
      * 로컬 인증 뱃지 검색 (QueryDSL)
      */
+    @Transactional(readOnly = true)
     @Override
     public List<ResBadgeDTO> searchBadges(Long id) {
 
@@ -162,6 +171,7 @@ public class LocalAuthServiceImpl implements LocalAuthService {
          //1. 만료된 뱃지 검색
         QUserLocalAuth localAuth = QUserLocalAuth.userLocalAuth;
         QUserLocalBadge localBadge = QUserLocalBadge.userLocalBadge;
+        QUser user = QUser.user;
 
         List<UserLocalBadge> expiredBadges= jpaQueryFactory
                 .selectFrom(localBadge)
@@ -174,6 +184,10 @@ public class LocalAuthServiceImpl implements LocalAuthService {
             localBadgeRepository.delete(badge); ;
             jpaQueryFactory.delete(localAuth).where(localAuth.regionName.eq(badge.getRegionName()).and(localAuth.user.id.eq(badge.getUser().getId()))).execute();
         }
+
+        // 인증뱃지가 하나도 없는 사용자는 "gps_verified : 1->0"
+        List<User> list = jpaQueryFactory.selectFrom(user).leftJoin(localBadge).on(localBadge.user.id.eq(user.id)).where(localBadge.authId.isNull()).fetch();
+        list.forEach(user1->user1.setGpsVerified(false));
     }
 
     /**
@@ -183,11 +197,18 @@ public class LocalAuthServiceImpl implements LocalAuthService {
     @Override
     public String deleteBadges(Long badgeId,Long id) {
         QUserLocalAuth localAuth = QUserLocalAuth.userLocalAuth;
-
+        QUserLocalBadge localBadge = QUserLocalBadge.userLocalBadge;
+        User user = userRepository.findById(id).orElseThrow(()->new LocalAuthException(ErrorCode.USER_NOT_FOUND));
         UserLocalBadge badge=localBadgeRepository.findById(badgeId).get();
 
         jpaQueryFactory.delete(localAuth).where(localAuth.regionName.eq(badge.getRegionName()).and(localAuth.user.id.eq(id))).execute();
         localBadgeRepository.delete(badge);
+
+        //로컬 뱃지가 하나도 없으면 gps_verified : 1->0 바꾸기
+        int cnt = jpaQueryFactory.selectFrom(localBadge).where(localBadge.user.eq(user)).fetch().size();
+        if(cnt==0){
+            user.setGpsVerified(false);
+        }
 
 
         return badge.getRegionName()+" 인증 뱃지가 삭제되었습니다.";
