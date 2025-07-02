@@ -837,3 +837,6 @@ matzip-google-key.json
 
 # 설정파일 제외
 application-secret.properties
+
+firebase-admin.json
+matzip-google-key.json

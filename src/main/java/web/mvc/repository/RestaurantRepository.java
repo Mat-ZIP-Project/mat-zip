@@ -1,7 +1,11 @@
 package web.mvc.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import web.mvc.domain.Restaurant;
+import web.mvc.dto.ReqPositionDTO;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -17,5 +21,13 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     List<Restaurant> findByRegionSigungu(String regionSigungu);
 
     // 식당 이름으로 식당 조회
-//    Optional<Restaurant> findByRestaurantName(String restaurantName);
+    Optional<Restaurant> findByRestaurantName(String restaurantName);
+
+    //좌표, 반경 기반 식당 리스트 조회
+    @Query(value = "select * from restaurants " +
+            "where ST_Distance_Sphere(\n" +
+            "        POINT(longitude, latitude),\n" +
+            "        POINT(:longitude, :latitude)\n" +
+            "    ) < :radius;",nativeQuery = true)
+    List<Restaurant> searchByPosition(@Param("longitude")  double longitude, @Param("latitude") double latitude, @Param("radius") long radius);
 }

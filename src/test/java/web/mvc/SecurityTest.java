@@ -45,7 +45,7 @@ public class SecurityTest {
                     .userId("user1")
                     .password(passwordEncoder.encode("1234")) //비번 암호화
                     .name("홍길동")
-                    .phone("010-1234-5678")
+                    .phone("010-1252-5678")
                     .role("ROLE_USER")
                     .userStatus("활성")
                     .pointBalance(0)

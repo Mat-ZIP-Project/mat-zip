@@ -2,6 +2,7 @@ package web.mvc.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -19,6 +20,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
 
     @Column(name = "user_id", unique = true, nullable = false)
     private String userId;
@@ -66,5 +68,6 @@ public class User {
 
     @Column(name = "preference_category")
     private String preferenceCategory; // 카테고리 : 한식, 일식, 중식, 양식, 카페
+
 
 }
