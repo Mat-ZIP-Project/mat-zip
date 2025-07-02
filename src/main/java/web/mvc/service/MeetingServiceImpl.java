@@ -6,11 +6,14 @@ import org.springframework.transaction.annotation.Transactional;
 import web.mvc.domain.Meeting;
 import web.mvc.domain.User;
 import web.mvc.domain.Restaurant;
+import web.mvc.domain.Point;
 import web.mvc.dto.MeetingRequestDto;
 import web.mvc.repository.MeetingRepository;
 import web.mvc.repository.UserRepository;
 import web.mvc.repository.RestaurantRepository;
+import web.mvc.repository.PointRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -20,6 +23,7 @@ public class MeetingServiceImpl implements MeetingService {
     private final MeetingRepository meetingRepository;
     private final UserRepository userRepository;
     private final RestaurantRepository restaurantRepository;
+    private final PointRepository pointRepository;
 
     @Override
     @Transactional
@@ -38,9 +42,22 @@ public class MeetingServiceImpl implements MeetingService {
         if (user.getPointBalance() == null || user.getPointBalance() < 500) {
             throw new IllegalStateException("마일리지가 부족합니다. [500P 필요]");
         }
-        user.setPointBalance(user.getPointBalance() - 500);
+        int before = user.getPointBalance();
+        int after = before - 500;
+        user.setPointBalance(after);
         userRepository.save(user);
 
+        // Point 로그 차감
+        Point pointLog = Point.builder()
+                .isEarned("사용")                // "적립", "사용", "취소"
+                .pointAmount(500)                // 차감 금액 (항상 양수)
+                .pointLog(after)                 // 차감 후 잔액
+                .createdAt(LocalDateTime.now())
+                .user(user)
+                .build();
+        pointRepository.save(pointLog);
+
+        // 3. 모임 생성
         Meeting meeting = Meeting.builder()
                 .title(dto.getTitle())
                 .description(dto.getDescription())
