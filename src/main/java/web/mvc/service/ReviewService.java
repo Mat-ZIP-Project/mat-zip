@@ -1,4 +1,3 @@
-// web.mvc.service.ReviewService.java
 package web.mvc.service;
 
 import lombok.RequiredArgsConstructor;
@@ -18,7 +17,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
     private final RestaurantRepository restaurantRepository;
-    private final PointLogRepository pointLogRepository;
+    private final PointRepository pointRepository;
 
     /**
      * 리뷰 작성
@@ -27,14 +26,14 @@ public class ReviewService {
      */
     @Transactional
     public void writeReview(ReviewRequestDto dto) {
-        // 1. 중복 리뷰 방지: 동일 날짜 + 식당 + 사용자
+        // 1. 중복 리뷰 방지
         boolean isDuplicate = reviewRepository.existsByUser_IdAndRestaurant_RestaurantIdAndVisitDate(
                 dto.getUserId(), dto.getRestaurantId(), dto.getVisitDate());
         if (isDuplicate) {
             throw new IllegalStateException("해당 날짜에는 이미 리뷰를 작성하셨습니다.");
         }
 
-        // 2. 예약 리뷰(현장 방문은 제외)라면 예약 이력 체크
+        // 2. 예약 리뷰라면 예약 이력 체크
         if (!dto.isSiteReview()) {
             boolean hasReservation = reservationRepository
                     .existsByUser_IdAndRestaurant_RestaurantIdAndStatus(
@@ -77,13 +76,14 @@ public class ReviewService {
         user.setPointBalance(after);
         userRepository.save(user);
 
-        PointLog pointLog = PointLog.builder()
-                .isEarned(true)
-                .amount(100)
-                .pointLog(after)
+        // Point 로그 적립
+        Point pointLog = Point.builder()
+                .isEarned("적립")              // "적립", "사용", "취소"
+                .pointAmount(100)              // 적립 금액
+                .pointLog(after)               // 적립 후 잔액
                 .createdAt(LocalDateTime.now())
                 .user(user)
                 .build();
-        pointLogRepository.save(pointLog);
+        pointRepository.save(pointLog);
     }
 }
