@@ -1,3 +1,4 @@
+/*
 package web.mvc.controller;
 
 import lombok.RequiredArgsConstructor;
@@ -24,3 +25,4 @@ public class TranslateController {
         }
     }
 }
+*/

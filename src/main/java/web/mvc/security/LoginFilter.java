@@ -82,13 +82,12 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter{ //폼값 
 		log.info("username={}",username);
 		log.info("password={}",password);
 		
-		//2. 스프링 시큐러티에서는 username, password를 검증하기 위해서 ~~token에 담는다.
-		//지금은 authorization은 없어서  null 로 담았다.
+		// 검증하기 위해서 token에 username, password를 담음 (authorization은 없어서  null)
 		UsernamePasswordAuthenticationToken authToken = 
 				new UsernamePasswordAuthenticationToken(username, password,null);
 		
-		//3. token을 ~Manager에 전달...Provoder...DetailsServicve...db연결...CustomMemberDetails생성..Back/Back/...
-		Authentication authentication = authenticationManager.authenticate(authToken);//CustomMemberDetails정보를 반환...
+		// token을 ~Manager에 전달...Provoder...DetailsServicve...db연결...CustomUserDetails생성..Back/Back/...
+		Authentication authentication = authenticationManager.authenticate(authToken);
 
         log.info("authentication={}",authentication);
 		return authentication;
@@ -135,7 +134,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter{ //폼값 
         response.getWriter().print(gson.toJson(responseData));
     }
 
-    // 로그인 실패시 실행하는 메소드 (CustomMemberDetailsService에서 null)
+    // 로그인 실패시 실행하는 메소드 (CustomUserDetailsService에서 null)
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
                                               AuthenticationException failed) throws IOException {

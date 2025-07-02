@@ -1,3 +1,4 @@
+/*
 package web.mvc.config;
 
 import com.google.auth.oauth2.GoogleCredentials;
@@ -21,3 +22,4 @@ public class TranslateConfig {
         return TranslateOptions.newBuilder().setCredentials(credentials).build().getService();
     }
 }
+*/

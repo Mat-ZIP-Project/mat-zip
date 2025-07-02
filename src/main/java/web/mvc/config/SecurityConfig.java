@@ -61,12 +61,12 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests((auth) ->
                 auth
+                        // 인증 필요
+                        .requestMatchers("/auth/logout").authenticated()
 
-                        .requestMatchers("/auth/refresh").permitAll() // 접근 허용
-                        .requestMatchers("/auth/refresh", "/api/reviews/**",
-                                "/api/v1/fcm/registerToken", "/api/payment/complete").permitAll() // 접근 허용
-                        .requestMatchers("/map/**").permitAll() //비회원 기능
-
+                        // 접근 허용
+                        .requestMatchers("/auth/**", "/api/reviews/**", "/signup/**",
+                                "/api/v1/fcm/registerToken", "/api/payment/complete", "/map/**").permitAll()
 
                         // 권한별 접근제한
                         .requestMatchers("/owner/**").hasRole("OWNER")

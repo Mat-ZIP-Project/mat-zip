@@ -15,4 +15,5 @@ public interface TokenService {
 
     /** Refresh Token의 유효성 검증 (만료 여부 + DB 존재 여부) 만료시 false */
     boolean validateRefreshToken(String refreshToken);
+
 }
