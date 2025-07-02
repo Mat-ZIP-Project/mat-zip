@@ -131,7 +131,6 @@ public class RestaurantServiceImpl implements RestaurantService {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         Long userId = userDetails.getUser().getId();
 
-        // 기존 로직 그대로 사용
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
         User user = userRepository.findById(userId)
