@@ -93,11 +93,28 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public List<ResCustomDTO> searchCustomCourseList(Long id) {
         QCustomCourse customCourse = QCustomCourse.customCourse;
+        QCourseSpots courseSpots = QCourseSpots.courseSpots;
         List<CustomCourse> list =jpaQueryFactory.selectFrom(customCourse)
-                .where(customCourse.user.id.eq(id)).fetch();
+                .leftJoin(customCourse.courseSpotsList, courseSpots).fetchJoin()
+                .where(customCourse.user.id.eq(id))
+                .distinct() // 중복 방지 (중요)
+                .fetch();
 
 
-        return list.stream().map(CustomCourseItem->modelMapper.map(CustomCourseItem,ResCustomDTO.class)).toList();
+        return list.stream().map(course -> ResCustomDTO.builder()
+                .title(course.getTitle())
+                .courseId(course.getCourseId())
+                .resTempDTOList(
+                        course.getCourseSpotsList().stream().map(spot -> ResTempDTO.builder()
+                                .restaurantId(spot.getRestaurant().getRestaurantId())
+                                .restaurantName(spot.getRestaurant().getRestaurantName())
+                                .visitOrder(spot.getVisitOrder())
+                                .latitude(spot.getRestaurant().getLatitude())
+                                .longitude(spot.getRestaurant().getLongitude())
+                                .build()
+                        ).toList()
+                )
+                .build()).toList();
     }
 
     //기본 JPA
