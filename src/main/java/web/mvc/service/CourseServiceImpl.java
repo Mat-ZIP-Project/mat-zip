@@ -42,7 +42,13 @@ public class CourseServiceImpl implements CourseService {
         List<TempCourseItem> list = jpaQueryFactory.selectFrom(qTempCourseItem).join(qRestaurant)
                 .on(qTempCourseItem.restaurant.eq(qRestaurant))
                                                     .where(qTempCourseItem.user.id.eq(id)).fetch();
-        return list.stream().map(TempCourseItem->modelMapper.map(TempCourseItem,ResTempDTO.class)).toList();
+        return list.stream().map(dto ->ResTempDTO.builder()
+                .visitOrder(dto.getVisitOrder())
+                .restaurantId(dto.getRestaurant().getRestaurantId())
+                .latitude(dto.getRestaurant().getLatitude())
+                .longitude(dto.getRestaurant().getLongitude())
+                .restaurantName(dto.getRestaurant().getRestaurantName())
+                .build()).toList();
     }
     //JPA 기본
     @Override
