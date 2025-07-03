@@ -88,6 +88,14 @@ public class CourseServiceImpl implements CourseService {
 
     }
 
+    @Transactional
+    @Override
+    public void deleteTempCorse(Long id) {
+        QTempCourseItem qTempCourseItem = QTempCourseItem.tempCourseItem;
+        jpaQueryFactory.delete(qTempCourseItem).where(qTempCourseItem.user.id.eq(id)).execute();
+
+    }
+
     //Query DSL
     @Transactional(readOnly = true)
     @Override

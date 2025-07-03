@@ -40,8 +40,11 @@ public class CourseController {
      */
     @PutMapping("/temp")
     public ResponseEntity<?> updateTempCourse(@AuthenticationPrincipal CustomUserDetails userDetails,@RequestBody List<ReqTempDTO> list) {
-        list.get(0).setUserId(userDetails.getUser().getId());
-        courseService.updateTempCorse(list);
+        if(list == null || list.isEmpty() || list.get(0) == null) {
+            courseService.deleteTempCorse(userDetails.getUser().getId());
+        }
+       else{ list.get(0).setUserId(userDetails.getUser().getId());
+        courseService.updateTempCorse(list);}
         return ResponseEntity.ok().build();
     }
 
