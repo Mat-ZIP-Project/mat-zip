@@ -56,8 +56,9 @@ public class CourseController {
     /**
      * custom 코스 상세보기
      */
-    @GetMapping("/custom/details/{couseId}")
+    @GetMapping("/details/{courseId}")
     public ResponseEntity<?> searchCustomCourseDetails(@AuthenticationPrincipal CustomUserDetails userDetails,@PathVariable Long courseId) {
+        System.out.println(courseId);
         return ResponseEntity.ok(courseService.searchCustomCourse(userDetails.getUser().getId(),courseId));
     }
 
