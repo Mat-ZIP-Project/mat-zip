@@ -77,6 +77,9 @@ public class SecurityTest {
                         .pointBalance(0)
                         .noShow(false)
                         .gpsVerified(false)
+                        .privacyAgreed(true)
+                        .termsAgreed(true)
+                        .userGrade("새싹")
                         .build());
     }
 

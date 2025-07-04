@@ -45,24 +45,20 @@ public class RestaurantController {
     /**
      * 찜 등록
      * @param restaurantId
-     * @param userId 로그인 사용자 (임시 방식)
      */
     @PostMapping("/{restaurantId}/like")
-    public ResponseEntity<Void> likeRestaurant(@PathVariable Long restaurantId,
-                                               @RequestParam Long userId) {
-        restaurantService.likeRestaurant(restaurantId, userId);
+    public ResponseEntity<Void> likeRestaurant(@PathVariable Long restaurantId) {
+        restaurantService.likeRestaurant(restaurantId);
         return ResponseEntity.ok().build();
     }
 
     /**
      * 찜 취소
      * @param restaurantId
-     * @param userId 로그인 사용자 (임시 방식)
      */
     @DeleteMapping("/{restaurantId}/like")
-    public ResponseEntity<Void> unlikeRestaurant(@PathVariable Long restaurantId,
-                                                 @RequestParam Long userId) {
-        restaurantService.unlikeRestaurant(restaurantId, userId);
+    public ResponseEntity<Void> unlikeRestaurant(@PathVariable Long restaurantId) {
+        restaurantService.unlikeRestaurant(restaurantId);
         return ResponseEntity.ok().build();
     }
 }

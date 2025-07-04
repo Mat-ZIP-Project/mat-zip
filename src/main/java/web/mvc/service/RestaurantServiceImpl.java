@@ -1,6 +1,8 @@
 package web.mvc.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import web.mvc.domain.*;
@@ -8,6 +10,7 @@ import web.mvc.dto.*;
 import web.mvc.exception.BasicException;
 import web.mvc.exception.ErrorCode;
 import web.mvc.repository.*;
+import web.mvc.security.CustomUserDetails;
 
 import java.util.List;
 import java.util.Optional;
@@ -122,7 +125,12 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     @Override
-    public void likeRestaurant(Long restaurantId, Long userId) {
+    public void likeRestaurant(Long restaurantId) {
+        // 현재 로그인한 유저 정보 가져오기
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = userDetails.getUser().getId();
+
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
         User user = userRepository.findById(userId)
@@ -140,7 +148,12 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     @Override
-    public void unlikeRestaurant(Long restaurantId, Long userId) {
+    public void unlikeRestaurant(Long restaurantId) {
+        // 현재 로그인한 유저 정보 가져오기
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = userDetails.getUser().getId();
+
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
         User user = userRepository.findById(userId)
