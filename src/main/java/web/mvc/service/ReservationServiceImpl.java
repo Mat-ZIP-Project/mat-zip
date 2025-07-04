@@ -179,7 +179,7 @@ public class ReservationServiceImpl implements ReservationService {
 
                 ReservationPayment paymentToRefund = paymentOpt.get();
                 String impUidToRefund = paymentToRefund.getImpUid();
-                Integer amountToRefund = paymentToRefund.getAmount();
+                Integer amountToRefund = paymentToRefund.getOriginalAmount();
 
                 if (impUidToRefund == null || impUidToRefund.isEmpty()) {
                     log.warn("예약 ID '{}'의 결제 정보(impUid)가 불완전하여 환불을 진행할 수 없습니다. impUid: {}", reservationId, impUidToRefund);

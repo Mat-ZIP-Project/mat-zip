@@ -12,8 +12,13 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import web.mvc.security.*;
 import web.mvc.service.TokenService;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -66,7 +71,7 @@ public class SecurityConfig {
 
                         // 접근 허용
                         .requestMatchers("/auth/**", "/api/reviews/**", "/signup/**",
-                                "/api/v1/fcm/registerToken", "/api/payment/complete", "/map/**").permitAll()
+                                "/api/v1/fcm/registerToken", "/api/payment/complete", "/map/**", "/api/**").permitAll()
 
                         // 권한별 접근제한
                         .requestMatchers("/owner/**").hasRole("OWNER")
