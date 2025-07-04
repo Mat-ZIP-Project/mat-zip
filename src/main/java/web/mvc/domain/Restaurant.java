@@ -26,6 +26,8 @@ public class Restaurant {
     private String address;
     private String regionSido; // 서울특별시, 경기도
     private String regionSigungu; // 서울시 내 각 구 (25개) , 성남시, 용인시, 수원시
+    private double latitude;   //위도
+    private double longitude;  //경도
 
     private double avgRating = 0.0;
     private String phone;
