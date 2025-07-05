@@ -32,6 +32,7 @@ public class ReservationController {
     public ResponseEntity<ReservationCreateResDto> createReservation(
             @AuthenticationPrincipal CustomUserDetails principal,
             @RequestBody ReservationCreateReqDto request) {
+        log.info(request.toString());
 //        log.info("예약 생성 요청 수신: 날짜={}, 시간={}, 인원={}, 식당이름={}, userId={}",
 //                request.getDate(), request.getTime(), request.getNumPeople(),
 //                request.getRestaurantName(), request.getId());

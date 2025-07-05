@@ -1,5 +1,6 @@
 package web.mvc.config;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -14,11 +15,11 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import web.mvc.security.*;
 import web.mvc.service.TokenService;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
@@ -52,7 +53,30 @@ public class SecurityConfig {
      * */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        /////////////////////////////////
+        //CORS 설정
+        http.cors((corsCustomizer ->
+                corsCustomizer.configurationSource(new CorsConfigurationSource()
+                {
+                    @Override
+                    public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
+                        CorsConfiguration configuration = new CorsConfiguration();
+                        // configuration.setAllowedOrigins(Collections.singletonList("http://localhost:5173"));
+                        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:4173"));
+                        // configuration.setAllowedOrigins(Arrays.asList("http://15.165.235.157", "http://15.165.235.157:80"));
+                        // configuration.setAllowedOrigins(Arrays.asList("http://grace24.o-r.kr", "https://grace24.o-r.kr"));
+                        configuration.setAllowedMethods(Collections.singletonList("*"));
+                        configuration.setAllowCredentials(true);
 
+                        configuration.setAllowedHeaders(Collections.singletonList("*"));
+                        configuration.setMaxAge(3600L);
+
+                        configuration.setExposedHeaders(Collections.singletonList("Authorization"));
+                        return configuration;
+                    }
+                })));
+        ////////////////////////////////////
+        /////////////////////////////////
         // csrf, formLogin, httpBasic 비활성화
         http.csrf((auth)-> auth.disable());
         http.formLogin((auth)-> auth.disable());
@@ -65,18 +89,18 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests((auth) ->
-                auth
-                        // 인증 필요
-                        .requestMatchers("/auth/logout").authenticated()
+                        auth
+                                // 인증 필요
+                                .requestMatchers("/auth/logout").authenticated()
 
-                        // 접근 허용
-                        .requestMatchers("/auth/**", "/api/reviews/**", "/signup/**",
-                                "/api/v1/fcm/registerToken", "/api/payment/complete", "/map/**", "/api/**").permitAll()
+                                // 접근 허용
+                                .requestMatchers("/auth/**", "/api/reviews/**", "/signup/**",
+                                        "/api/v1/fcm/registerToken", "/api/payment/complete", "/map/**").permitAll()
 
-                        // 권한별 접근제한
-                        .requestMatchers("/owner/**").hasRole("OWNER")
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated());
+                                // 권한별 접근제한
+                                .requestMatchers("/owner/**").hasRole("OWNER")
+                                .requestMatchers("/admin/**").hasRole("ADMIN")
+                                .anyRequest().authenticated());
 
 
         http.addFilterAt(
