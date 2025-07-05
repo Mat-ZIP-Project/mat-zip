@@ -31,9 +31,10 @@ public class MapSearchController {
      * 행정동 기반 식당검색
      */
     @GetMapping("/region")
-    public ResponseEntity<?> searchByRegionName(@RequestBody ReqRegionDTO reqRegionDTO) {
+    public ResponseEntity<?> searchByRegionName(@RequestParam String regionSido,
+                                                @RequestParam String regionSigungu) {
 
 
-        return ResponseEntity.ok().body(mapSearchService.searchByRegionName(reqRegionDTO));
+        return ResponseEntity.ok().body(mapSearchService.searchByRegionName(ReqRegionDTO.builder().regionSido(regionSido).regionSigungu(regionSigungu).build()));
     }
 }
