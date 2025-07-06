@@ -27,12 +27,12 @@ class MatzipApplicationTests {
 
     @Test
     void insertLocalAuth(){
-        localAuthRepository.save(UserLocalAuth.builder().regionName("경기도 성남시 분당구").user(User.builder().id(1L).build()).authDate(LocalDate.of(2025,6,19)).build());
-        localAuthRepository.save(UserLocalAuth.builder().regionName("경기도 성남시 분당구").user(User.builder().id(1L).build()).authDate(LocalDate.of(2025,6,20)).build());
+        localAuthRepository.save(UserLocalAuth.builder().regionName("경기도 용인시 수지구").user(User.builder().id(7L).build()).authDate(LocalDate.of(2025,6,19)).build());
+        localAuthRepository.save(UserLocalAuth.builder().regionName("경기도 용인시 수지구").user(User.builder().id(7L).build()).authDate(LocalDate.of(2025,6,20)).build());
     }
     @Test
     void insertBadge(){
-        badgeRepository.save(UserLocalBadge.builder().regionName("경기도 성남시 분당구").user(User.builder().id(1L).build()).build());
+        badgeRepository.save(UserLocalBadge.builder().regionName("경기도 용인시 수지구").user(User.builder().id(7L).build()).build());
     }
 
 
