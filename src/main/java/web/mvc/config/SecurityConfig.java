@@ -50,21 +50,16 @@ public class SecurityConfig {
 
     /**
      * SecurityFilterChain - security 정책
-     * */
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        /////////////////////////////////
-        //CORS 설정
+        // CORS 설정
         http.cors((corsCustomizer ->
-                corsCustomizer.configurationSource(new CorsConfigurationSource()
-                {
+                corsCustomizer.configurationSource(new CorsConfigurationSource() {
                     @Override
                     public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                         CorsConfiguration configuration = new CorsConfiguration();
-                        // configuration.setAllowedOrigins(Collections.singletonList("http://localhost:5173"));
                         configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:4173"));
-                        // configuration.setAllowedOrigins(Arrays.asList("http://15.165.235.157", "http://15.165.235.157:80"));
-                        // configuration.setAllowedOrigins(Arrays.asList("http://grace24.o-r.kr", "https://grace24.o-r.kr"));
                         configuration.setAllowedMethods(Collections.singletonList("*"));
                         configuration.setAllowCredentials(true);
 
@@ -74,34 +69,35 @@ public class SecurityConfig {
                         configuration.setExposedHeaders(Collections.singletonList("Authorization"));
                         return configuration;
                     }
-                })));
-        ////////////////////////////////////
-        /////////////////////////////////
+                })
+        ));
+
         // csrf, formLogin, httpBasic 비활성화
         http.csrf((auth)-> auth.disable());
         http.formLogin((auth)-> auth.disable());
         http.httpBasic((auth)-> auth.disable());
 
-        http    //401, 403에러 처리
+        http
+                // 401, 403 에러 처리
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                         .accessDeniedHandler(jwtAccessDeniedHandler)
                 )
 
                 .authorizeHttpRequests((auth) ->
-                auth
-                        // 인증 필요
-                        .requestMatchers("/auth/logout").authenticated()
+                        auth
+                                // 인증 필요
+                                .requestMatchers("/auth/logout", "/api/reviews/**").authenticated()
 
-                        // 접근 허용
-                        .requestMatchers("/auth/**", "/api/reviews/**", "/signup/**",
-                                "/api/v1/fcm/registerToken", "/api/payment/complete", "/map/**").permitAll()
+                                // 접근 허용
+                                .requestMatchers("/auth/**", "/signup/**",
+                                        "/api/v1/fcm/registerToken", "/api/payment/complete", "/map/**").permitAll()
 
-                        // 권한별 접근제한
-                        .requestMatchers("/owner/**").hasRole("OWNER")
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated());
-
+                                // 권한별 접근 제한
+                                .requestMatchers("/owner/**").hasRole("OWNER")
+                                .requestMatchers("/admin/**").hasRole("ADMIN")
+                                .anyRequest().authenticated()
+                );
 
         http.addFilterAt(
                 new LoginFilter(
