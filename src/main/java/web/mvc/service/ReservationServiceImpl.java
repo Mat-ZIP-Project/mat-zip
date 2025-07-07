@@ -179,7 +179,7 @@ public class ReservationServiceImpl implements ReservationService {
 
                 ReservationPayment paymentToRefund = paymentOpt.get();
                 String impUidToRefund = paymentToRefund.getImpUid();
-                Integer amountToRefund = paymentToRefund.getAmount();
+                Integer amountToRefund = paymentToRefund.getOriginalAmount();
 
                 if (impUidToRefund == null || impUidToRefund.isEmpty()) {
                     log.warn("예약 ID '{}'의 결제 정보(impUid)가 불완전하여 환불을 진행할 수 없습니다. impUid: {}", reservationId, impUidToRefund);
@@ -215,49 +215,48 @@ public class ReservationServiceImpl implements ReservationService {
                     throw new BasicException(ErrorCode.NOTFOUNT_MERCHANTUID);
                 }
             }
+        }
 
-            reservationRepository.save(reservation);    // DB에 변경된 예약 정보 저장
-            log.info("예약 ID '{}' 의 상태가 '{}' 에서 '{}'(으)로 변경되었습니다. 사장님 메모: '{}'",
-                    reservationId, reservation.getStatus(), statusToUpdate, ownerNotes);
+        reservationRepository.save(reservation);    // DB에 변경된 예약 정보 저장
+        log.info("예약 ID '{}' 의 상태가 '{}' 에서 '{}'(으)로 변경되었습니다. 사장님 메모: '{}'",
+                reservationId, reservation.getStatus(), statusToUpdate, ownerNotes);
 
 
-            if (user != null) {
-                String title;
-                String body;
+        if (user != null) {
+            String title;
+            String body;
 
-                String restaurantName = reservation.getRestaurant().getRestaurantName();
+            String restaurantName = reservation.getRestaurant().getRestaurantName();
 
-                // 새로운 상태에 따라 알림 제목과 본문 설정
-                if (Enums.ReservationStatus.APPROVED.name().equals(statusToUpdate)) {
-                    title = "예약 승인 알림입니다.";
-                    body = String.format("🎉 고객님!  %s 식당 예약이 승인되었습니다! %s %s에 만나요!",
-                            restaurantName, reservation.getDate(), reservation.getTime());
-                } else if (Enums.ReservationStatus.REJECTED.name().equals(statusToUpdate)) {
-                    title = "예약 거절 알림입니다.";
-                    body = String.format("😅 고객님.. %s 식당 예약이 거절되었습니다. 사유: %s",
-                            restaurantName, (ownerNotes != null && !ownerNotes.isEmpty() ? ownerNotes : "자세한 내용은 식당에 문의해주세요."));
-                } else {
-                    // 승인/거절 외의 상태 변화는 알림 보내지 않음 (필요시 추가)
-                    log.info("예약 ID '{}' 상태 '{}'는 알림 전송 대상이 아닙니다.", reservationId, statusToUpdate);
-                    return;
-                }
-
-                fcmService.sendNotificationToUser(user, title, body);
-                log.info("사용자 ID '{}'에게 알림 전송 시도: 제목='{}', 내용='{}'", user.getId(), title, body);
-
-                Notification notification = Notification.builder()
-                        .user(user) // 알림을 받은 사용자
-                        .reservation(reservation) // 관련된 예약 정보
-                        .title(title) // 알림 제목
-                        .body(body) // 알림 본문
-                        .isRead(false) // 초기 상태는 '읽지 않음'
-                        .build();
-                notificationRepository.save(notification);
-                log.info("알림 내역이 DB에 저장되었습니다: 사용자 ID '{}', 예약 ID '{}'", user.getId(), reservationId);
+            // 새로운 상태에 따라 알림 제목과 본문 설정
+            if (Enums.ReservationStatus.APPROVED.name().equals(statusToUpdate)) {
+                title = "예약 승인 알림입니다.";
+                body = String.format("🎉 고객님!  %s 식당 예약이 승인되었습니다! %s %s에 만나요!",
+                        restaurantName, reservation.getDate(), reservation.getTime());
+            } else if (Enums.ReservationStatus.REJECTED.name().equals(statusToUpdate)) {
+                title = "예약 거절 알림입니다.";
+                body = String.format("😅 고객님.. %s 식당 예약이 거절되었습니다. 사유: %s",
+                        restaurantName, (ownerNotes != null && !ownerNotes.isEmpty() ? ownerNotes : "자세한 내용은 식당에 문의해주세요."));
             } else {
-                log.warn("예약 ID '{}' 에 연결된 사용자 정보가 없어 알림을 보낼 수 없습니다.", reservationId);
+                // 승인/거절 외의 상태 변화는 알림 보내지 않음 (필요시 추가)
+                log.info("예약 ID '{}' 상태 '{}'는 알림 전송 대상이 아닙니다.", reservationId, statusToUpdate);
+                return; // 메서드 종료
             }
 
+            fcmService.sendNotificationToUser(user, title, body);
+            log.info("사용자 ID '{}'에게 알림 전송 시도: 제목='{}', 내용='{}'", user.getId(), title, body);
+
+            Notification notification = Notification.builder()
+                    .user(user) // 알림을 받은 사용자
+                    .reservation(reservation) // 관련된 예약 정보
+                    .title(title) // 알림 제목
+                    .body(body) // 알림 본문
+                    .isRead(false) // 초기 상태는 '읽지 않음'
+                    .build();
+            notificationRepository.save(notification);
+            log.info("알림 내역이 DB에 저장되었습니다: 사용자 ID '{}', 예약 ID '{}'", user.getId(), reservationId);
+        } else {
+            log.warn("예약 ID '{}' 에 연결된 사용자 정보가 없어 알림을 보낼 수 없습니다.", reservationId);
         }
-    }
+    } // <<-- updateReservationStatus 메서드의 닫는 중괄호
 }
