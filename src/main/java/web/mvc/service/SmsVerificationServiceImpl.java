@@ -157,7 +157,7 @@ public class SmsVerificationServiceImpl implements SmsVerificationService {
                     body.put("from", props.getFromNumber());
                     body.put("to", to);
                     body.put("text", "[MatZip] 인증번호 [" + code + "]를 입력해주세요.");
-
+                    System.out.println("SMS REST API 호출 - [MatZip] 인증번호 [" + code + "]를 입력해주세요.");
                     HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
             try {
                     ResponseEntity<String> resp = restTemplate.postForEntity(url, request, String.class);
