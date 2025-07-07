@@ -18,7 +18,7 @@ import web.mvc.security.CustomUserDetails;
 import web.mvc.service.ReservationService;
 
 @RestController
-@RequestMapping("/api/reservation")
+@RequestMapping("/reservation")
 @RequiredArgsConstructor
 @Slf4j
 public class ReservationController {
