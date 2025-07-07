@@ -9,6 +9,7 @@ import web.mvc.repository.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -85,5 +86,26 @@ public class ReviewService {
                 .user(user)
                 .build();
         pointRepository.save(pointLog);
+    }
+
+    /** 리뷰 삭제 */
+    @Transactional
+    public void deleteReview(Long reviewId) {
+        Optional<Review> reviewOpt = reviewRepository.findById(reviewId);
+        if (reviewOpt.isEmpty()) {
+            throw new IllegalStateException("해당 리뷰를 찾을 수 없습니다.");
+        }
+        reviewRepository.deleteById(reviewId);
+    }
+
+    /** 리뷰 수정 */
+    @Transactional
+    public void updateReview(Long reviewId, ReviewRequestDto dto) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalStateException("해당 리뷰를 찾을 수 없습니다."));
+        if (dto.getContent() != null) review.setContent(dto.getContent());
+        if (dto.getRating() != null) review.setRating(dto.getRating());
+        review.setReviewedAt(LocalDateTime.now()); // 수정시 수정일 갱신
+        reviewRepository.save(review);
     }
 }
