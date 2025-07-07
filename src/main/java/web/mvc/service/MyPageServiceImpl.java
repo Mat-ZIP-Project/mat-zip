@@ -131,7 +131,7 @@ public class MyPageServiceImpl implements MyPageService {
                 try {
                     paymentService.cancelPayment(
                             payment.getImpUid(),
-                            new BigDecimal(payment.getAmount()), // ReservationPayment의 amount를 사용
+                            new BigDecimal(payment.getOriginalAmount()), // ReservationPayment의 amount를 사용
                             "사용자 요청에 의한 예약 취소 환불"
                     );
 
