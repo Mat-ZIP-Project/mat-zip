@@ -2,6 +2,7 @@ package web.mvc.security;
 
 import com.google.gson.Gson;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -93,7 +94,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter{ //폼값 
 		return authentication;
 	}//
 	
-	// 로그인 성공시 실행하는 메소드 (JWT를 발급)
+	/** 로그인 성공시 실행하는 메소드 (JWT를 발급) */
     @Override
     protected void successfulAuthentication(HttpServletRequest request,
                                             HttpServletResponse response,
@@ -116,11 +117,20 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter{ //폼값 
         // 토큰 생성 및 저장
         TokenResponse tokenResponse = tokenService.generateTokens(user);
 
+        // RefreshToken을 HttpOnly 쿠키로 설정
+        Cookie refreshCookie = new Cookie("refreshToken", tokenResponse.getRefreshToken());
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setSecure(false); // 개발환경용, 프로덕션에서는 true
+        refreshCookie.setMaxAge(14 * 24 * 60 * 60); // 14일
+        refreshCookie.setPath("/");
+        refreshCookie.setAttribute("SameSite", "Lax");
+        response.addCookie(refreshCookie);
+
         // 응답 데이터 구성
         Map<String, Object> responseData = new HashMap<>();
         responseData.put("success", true);
         responseData.put("accessToken", tokenResponse.getAccessToken());
-        responseData.put("refreshToken", tokenResponse.getRefreshToken());
+        //responseData.put("refreshToken", tokenResponse.getRefreshToken());
         responseData.put("user", Map.of(
                 "id", user.getId(),
                 "userId", user.getUserId(),
@@ -134,12 +144,12 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter{ //폼값 
         response.getWriter().print(gson.toJson(responseData));
     }
 
-    // 로그인 실패시 실행하는 메소드 (CustomUserDetailsService에서 null)
+    /** 로그인 실패시 실행하는 메소드 (CustomUserDetailsService에서 null) */
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
                                               AuthenticationException failed) throws IOException {
 
-        response.setContentType("text/html;charset=UTF-8");
+        response.setContentType("application/json;charset=UTF-8");
         log.info("로그인 실패......");
         // 로그인 실패시 401 응답 코드 반환
         response.setStatus(401);

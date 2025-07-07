@@ -95,9 +95,9 @@ public class PaymentServiceImpl implements PaymentService {
 
         ReservationPayment newPayment = ReservationPayment.builder()
                 .reservation(reservation)
-                .originalAmount(originalAmount)
-                .discountAmount(discountAmount)
-//                .amount(amount)
+                .originalAmount(originalAmount) // 초기 금액 저장
+                .discountAmount(discountAmount) // 할인 금액 저장
+                .finalPaymentAmount(finalPaymentAmount) // 총 결제 금액 저장
                 .status(Enums.PaymentStatus.READY)
                 .user(user)
                 .merchantUid(merchantUid) // Payment 엔티티의 DB 컬럼명이 portone_merchant_uid라면 이렇게 사용하는 것이 일관적입니다. Payment 엔티티의 필드명을 확인하세요.
@@ -131,9 +131,9 @@ public class PaymentServiceImpl implements PaymentService {
             response.setSuccess(true);
             response.setReservationId(reservationId);
             response.setMerchantUid(merchantUid);
-            response.setOriginalAmount(finalPaymentAmount);
-            response.setDiscountAmount(finalPaymentAmount);
-//            response.setAmount(amount);
+            response.setOriginalAmount(originalAmount);
+            response.setDiscountAmount(discountAmount);
+            response.setFinalPaymentAmount(finalPaymentAmount);
             response.setMessage("PortOne 사전 검증 성공. 결제창을 띄울 수 있습니다.");
             log.info("PortOne 사전 검증 최종 성공: merchantUid={}", merchantUid);
             return response;
@@ -238,8 +238,8 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         // 금액 비교는 BigDecimal.compareTo()를 사용하여 정확하게 수행
-        if (portonePaymentData.getAmount().compareTo(new BigDecimal(payment.getAmount())) != 0) {
-            log.error("결제 금액 불일치: PortOne={}, Expected={}", portonePaymentData.getAmount(), payment.getAmount());
+        if (portonePaymentData.getAmount().compareTo(new BigDecimal(payment.getFinalPaymentAmount())) != 0) {
+            log.error("결제 금액 불일치: PortOne={}, Expected={}", portonePaymentData.getAmount(), payment.getFinalPaymentAmount());
             payment.setStatus(Enums.PaymentStatus.FAILED);
             reservationPaymentRepository.save(payment);
             throw new BasicException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);

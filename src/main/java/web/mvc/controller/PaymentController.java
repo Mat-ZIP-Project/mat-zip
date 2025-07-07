@@ -18,7 +18,7 @@ import web.mvc.service.PaymentService;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/api/payment")
+@RequestMapping("/payment")
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentController {

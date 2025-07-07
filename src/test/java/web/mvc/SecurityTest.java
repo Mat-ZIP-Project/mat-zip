@@ -51,7 +51,7 @@ public class SecurityTest {
                     .pointBalance(0)
                     .noShow(false)
                     .gpsVerified(false)
-                        .userGrade("새싹")
+                        .userGrade("먹짱")
                         .termsAgreed(true)
                         .privacyAgreed(true)
                     .build());
