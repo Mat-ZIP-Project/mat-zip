@@ -24,6 +24,11 @@ public interface CourseService {
     void updateTempCorse(List<ReqTempDTO> reqTempDTOList);
 
     /**
+     * Temp코스 삭제하기
+     */
+    void deleteTempCorse(Long id);
+    
+    /**
      * Custom 코스 리스트 검색
      */
     List<ResCustomDTO> searchCustomCourseList(Long id);

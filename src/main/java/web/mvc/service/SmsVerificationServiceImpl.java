@@ -8,8 +8,14 @@ import net.nurigo.sdk.message.model.Message;
 import net.nurigo.sdk.message.request.SingleMessageSendingRequest;
 import net.nurigo.sdk.message.response.SingleMessageSentResponse;
 import net.nurigo.sdk.message.service.DefaultMessageService;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 import web.mvc.config.CoolsmsProperties;
 import web.mvc.domain.SmsVerification;
 import web.mvc.exception.BasicException;
@@ -18,6 +24,8 @@ import web.mvc.repository.SmsVerificationRepository;
 import web.mvc.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 @Service
@@ -28,19 +36,20 @@ public class SmsVerificationServiceImpl implements SmsVerificationService {
     private final UserRepository userRepository;
     private final SmsVerificationRepository smsRepository;
     private final CoolsmsProperties props;
-    private DefaultMessageService messageService;
+    //private DefaultMessageService messageService;
     private final Random random = new Random();
+    private final RestTemplate restTemplate;
 
     // Nurigo SDK 초기화
-    @PostConstruct
+ /*   @PostConstruct
     public void init() {
-        try {
+       // try {
             this.messageService = NurigoApp.INSTANCE.initialize(
                     props.getKey(), props.getSecret(), "https://api.coolsms.co.kr");
             log.info("Nurigo SDK 초기화 완료");
-        } catch (Throwable ex) {
-        }
-    }
+       // } catch (Throwable ex) {
+       // }
+    }*/
 
 
     @Override
@@ -113,7 +122,7 @@ public class SmsVerificationServiceImpl implements SmsVerificationService {
     }
 
     /** 문자 발송 */
-    private void sendSms(String to, String code) {
+/*    private void sendSms(String to, String code) {
 
         Message message = new Message();
         message.setFrom(props.getFromNumber()); // 발신자 번호
@@ -129,7 +138,35 @@ public class SmsVerificationServiceImpl implements SmsVerificationService {
             log.error("SMS 전송 실패", e);
             throw new BasicException(ErrorCode.SMS_SENDING_FAILED);
         }
-    }
+    }*/
+
+    private void sendSms(String to, String code) {
+                    // CoolSMS REST API v4 엔드포인트
+                   String url = "https://api.coolsms.co.kr" + "/messages/v4/send";
+
+                    // HTTP 헤더 설정
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setContentType(MediaType.APPLICATION_JSON);
+                    // REST API v4 requires “user” scheme, not Basic
+                    headers.set("Authorization",
+                                    "user " + props.getKey() + ":" + props.getSecret());
+
+                    // 요청 바디 구성
+                    Map<String, Object> body = new HashMap<>();
+                    body.put("type", "SMS");
+                    body.put("from", props.getFromNumber());
+                    body.put("to", to);
+                    body.put("text", "[MatZip] 인증번호 [" + code + "]를 입력해주세요.");
+
+                    HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+            try {
+                    ResponseEntity<String> resp = restTemplate.postForEntity(url, request, String.class);
+                    log.info("SMS REST API 호출 성공 - phone: {}, status: {}", to, resp.getStatusCode());
+                } catch (Exception e) {
+                    log.error("SMS REST API 호출 실패", e);
+                    throw new BasicException(ErrorCode.SMS_SENDING_FAILED);
+               }
+        }
 
 
     @Override

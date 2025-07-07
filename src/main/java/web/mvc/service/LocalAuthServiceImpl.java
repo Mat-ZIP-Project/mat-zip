@@ -134,7 +134,7 @@ public class LocalAuthServiceImpl implements LocalAuthService {
                 .where(localAuth.user.id.eq(id).and(localAuth.authDate.between(LocalDate.now().minusDays(30), LocalDate.now())))
                 .groupBy(localAuth.regionName)
                 .fetch();
-        if(localAuths.size()==0) throw new LocalAuthException(ErrorCode.NO_AUTH_LOGS);
+        //if(localAuths.size()==0) throw new LocalAuthException(ErrorCode.NO_AUTH_LOGS);
 
         return localAuths;
     }

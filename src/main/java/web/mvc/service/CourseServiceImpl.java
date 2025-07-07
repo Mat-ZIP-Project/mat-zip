@@ -42,7 +42,13 @@ public class CourseServiceImpl implements CourseService {
         List<TempCourseItem> list = jpaQueryFactory.selectFrom(qTempCourseItem).join(qRestaurant)
                 .on(qTempCourseItem.restaurant.eq(qRestaurant))
                                                     .where(qTempCourseItem.user.id.eq(id)).fetch();
-        return list.stream().map(TempCourseItem->modelMapper.map(TempCourseItem,ResTempDTO.class)).toList();
+        return list.stream().map(dto ->ResTempDTO.builder()
+                .visitOrder(dto.getVisitOrder())
+                .restaurantId(dto.getRestaurant().getRestaurantId())
+                .latitude(dto.getRestaurant().getLatitude())
+                .longitude(dto.getRestaurant().getLongitude())
+                .restaurantName(dto.getRestaurant().getRestaurantName())
+                .build()).toList();
     }
     //JPA 기본
     @Override
@@ -82,16 +88,41 @@ public class CourseServiceImpl implements CourseService {
 
     }
 
+    @Transactional
+    @Override
+    public void deleteTempCorse(Long id) {
+        QTempCourseItem qTempCourseItem = QTempCourseItem.tempCourseItem;
+        jpaQueryFactory.delete(qTempCourseItem).where(qTempCourseItem.user.id.eq(id)).execute();
+
+    }
+
     //Query DSL
     @Transactional(readOnly = true)
     @Override
     public List<ResCustomDTO> searchCustomCourseList(Long id) {
         QCustomCourse customCourse = QCustomCourse.customCourse;
+        QCourseSpots courseSpots = QCourseSpots.courseSpots;
         List<CustomCourse> list =jpaQueryFactory.selectFrom(customCourse)
-                .where(customCourse.user.id.eq(id)).fetch();
+                .leftJoin(customCourse.courseSpotsList, courseSpots).fetchJoin()
+                .where(customCourse.user.id.eq(id))
+                .distinct() // 중복 방지 (중요)
+                .fetch();
 
 
-        return list.stream().map(CustomCourseItem->modelMapper.map(CustomCourseItem,ResCustomDTO.class)).toList();
+        return list.stream().map(course -> ResCustomDTO.builder()
+                .title(course.getTitle())
+                .courseId(course.getCourseId())
+                .resTempDTOList(
+                        course.getCourseSpotsList().stream().map(spot -> ResTempDTO.builder()
+                                .restaurantId(spot.getRestaurant().getRestaurantId())
+                                .restaurantName(spot.getRestaurant().getRestaurantName())
+                                .visitOrder(spot.getVisitOrder())
+                                .latitude(spot.getRestaurant().getLatitude())
+                                .longitude(spot.getRestaurant().getLongitude())
+                                .build()
+                        ).toList()
+                )
+                .build()).toList();
     }
 
     //기본 JPA

@@ -1,5 +1,6 @@
 package web.mvc.exception;
 
+import com.google.api.Http;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -77,7 +78,20 @@ public enum ErrorCode { //enum은 'Enumeration' 의 약자로 열거, 목록 이
 
 
     //커스텀 코스 예외처리
-    COURSE_NOT_FOUND(HttpStatus.NOT_FOUND,"","해당 코스가 존재하지 않습니다.");
+    COURSE_NOT_FOUND(HttpStatus.NOT_FOUND,"","해당 코스가 존재하지 않습니다."),
+
+    INVALID_RESERVATION_STATUS_TRANSITION(HttpStatus.BAD_REQUEST,"","현재 예약 상태에서 해당 상태로 변경할 수 없습니다."),
+
+    // 테스트
+    FORBIDDEN(HttpStatus.FORBIDDEN, "", "FORBIDDEN"),
+    INVALID_INPUT(HttpStatus.BAD_REQUEST, "", "INVALID_INPUT"),
+
+    // Waiting 관련 에러코드 추가
+    WAITING_ALREADY_EXISTS(HttpStatus.CONFLICT, "Waiting Exists", "이미 입장 대기 중인 웨이팅이 존재합니다."),
+    WAITING_NOT_FOUND(HttpStatus.NOT_FOUND, "Waiting Not Found", "웨이팅 정보를 찾을 수 없습니다."),
+    INVALID_STATUS_CHANGE(HttpStatus.BAD_REQUEST, "INVALID_STATUS_CHANGE", "웨이팅 상태가 변경할 수 없는 상황입니다."),
+    NOT_EXPIRED_YET(HttpStatus.BAD_REQUEST, "NOT_EXPIRED_YET", "아직 15분이 다 경과하지 않았습니다."),
+    WAITING_STATUS_NOT_FOUND(HttpStatus.NOT_FOUND, "WaitingStatus Not Found", "waiting_status가 존재하지 않습니다.");
 
 
     private final HttpStatus httpStatus;
