@@ -30,24 +30,23 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class LoginFilter extends UsernamePasswordAuthenticationFilter{ //폼값 받는 컨트롤러 역할의 필터
-	private final AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenService tokenService;
     private final Gson gson = new Gson();
 
-	public LoginFilter(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider, TokenService tokenService) {
-		this.authenticationManager = authenticationManager;
+    public LoginFilter(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider, TokenService tokenService) {
+        this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;
         this.tokenService = tokenService;
     }
 
-    /**
-     *  /login을 요청하면 호출되는 메소드
-     * */
+    /** 로그인 시도 */
     @Override
-	public Authentication attemptAuthentication(HttpServletRequest request,
+    public Authentication attemptAuthentication(HttpServletRequest request,
                                                 HttpServletResponse response)
-													throws AuthenticationException{
+            throws AuthenticationException{
+        log.info("LoginFilter - 로그인 요청");
         String username = null;
         String password = null;
 
@@ -79,34 +78,29 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter{ //폼값 
             log.error("로그인 요청 파싱 오류", e);
             throw new RuntimeException("로그인 요청을 처리할 수 없습니다.", e);
         }
-		
-		log.info("username={}",username);
-		log.info("password={}",password);
-		
-		// 검증하기 위해서 token에 username, password를 담음 (authorization은 없어서  null)
-		UsernamePasswordAuthenticationToken authToken = 
-				new UsernamePasswordAuthenticationToken(username, password,null);
-		
-		// token을 ~Manager에 전달...Provoder...DetailsServicve...db연결...CustomUserDetails생성..Back/Back/...
-		Authentication authentication = authenticationManager.authenticate(authToken);
 
-        log.info("authentication={}",authentication);
-		return authentication;
-	}//
-	
-	/** 로그인 성공시 실행하는 메소드 (JWT를 발급) */
+        log.info("username={}",username);
+        log.info("password={}",password);
+
+        UsernamePasswordAuthenticationToken authToken =
+                new UsernamePasswordAuthenticationToken(username, password, null);
+
+        return authenticationManager.authenticate(authToken);
+    }
+
+    /** 로그인 성공시 실행하는 메소드 (JWT를 발급) */
     @Override
     protected void successfulAuthentication(HttpServletRequest request,
                                             HttpServletResponse response,
                                             FilterChain chain,
                                             Authentication authentication) throws  IOException{
-        response.setContentType("text/html;charset=UTF-8");
-       log.info("로그인 성공 ......");
+        response.setContentType("application/json;charset=UTF-8");
+        log.info("LoginFilter - 로그인 성공");
 
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
         User user = customUserDetails.getUser();
 
-        // 다중 role 처리
+        // 사용자 권한 추출
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
         GrantedAuthority auth = iterator.next();
@@ -120,17 +114,16 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter{ //폼값 
         // RefreshToken을 HttpOnly 쿠키로 설정
         Cookie refreshCookie = new Cookie("refreshToken", tokenResponse.getRefreshToken());
         refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(false); // 개발환경용, 프로덕션에서는 true
-        refreshCookie.setMaxAge(14 * 24 * 60 * 60); // 14일
+        refreshCookie.setSecure(false); // 배포환경에서 true (HTTPS)
+        refreshCookie.setMaxAge(60 * 60 * 24 * 14); // 14일
         refreshCookie.setPath("/");
-        refreshCookie.setAttribute("SameSite", "Lax");
+        refreshCookie.setAttribute("SameSite", "Lax"); //크로스사이트 POST에도 쿠키가 전송
         response.addCookie(refreshCookie);
 
-        // 응답 데이터 구성
+        // 응답 Body에는 AccessToken만 포함
         Map<String, Object> responseData = new HashMap<>();
         responseData.put("success", true);
         responseData.put("accessToken", tokenResponse.getAccessToken());
-        //responseData.put("refreshToken", tokenResponse.getRefreshToken());
         responseData.put("user", Map.of(
                 "id", user.getId(),
                 "userId", user.getUserId(),
@@ -139,20 +132,19 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter{ //폼값 
         ));
 
         // 응답할 헤더를 설정 (베어러 뒤에 공백 - 관례적인  prefix)
-        response.addHeader("Authorization", "Bearer " + tokenResponse.getAccessToken());
+        //response.addHeader("Authorization", "Bearer " + tokenResponse.getAccessToken());
 
         response.getWriter().print(gson.toJson(responseData));
     }
 
-    /** 로그인 실패시 실행하는 메소드 (CustomUserDetailsService에서 null) */
+    /** 로그인 실패 */
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
                                               AuthenticationException failed) throws IOException {
 
         response.setContentType("application/json;charset=UTF-8");
-        log.info("로그인 실패......");
-        // 로그인 실패시 401 응답 코드 반환
         response.setStatus(401);
+        log.info("로그인 실패");
 
         Map<String, Object> map = new HashMap<>();
         map.put("success", false);
@@ -161,12 +153,3 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter{ //폼값 
         response.getWriter().print(gson.toJson(map));
     }
 }
- 
-
-
-
-
-
-
-
-
