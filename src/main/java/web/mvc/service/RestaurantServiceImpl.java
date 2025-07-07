@@ -26,6 +26,8 @@ public class RestaurantServiceImpl implements RestaurantService {
     private final RestaurantImageRepository restaurantImageRepository;
     private final UserLikeRepository userLikeRepository;
     private final UserRepository userRepository;
+    private final ReviewRepository reviewRepository;
+    private final ReservationRepository reservationRepository;
 
     @Override
     public List<RestaurantListResponseDTO> getRestaurants(String category, String regionSigungu, String sortBy) {
@@ -45,8 +47,9 @@ public class RestaurantServiceImpl implements RestaurantService {
         List<RestaurantListResponseDTO> result = restaurants.stream()
                 .map(restaurant -> {
                     int likeCount = userLikeRepository.countByRestaurant(restaurant);
-                    int reviewCount = 0;       // 리뷰 수 연동
-                    int reservationCount = 0;  // 예약 수 연동
+                    int reviewCount = (int) reviewRepository.countReviewByRestaurant(restaurant);       // 리뷰 수 연동
+                    int reservationCount = reservationRepository.countByRestaurant_RestaurantId(restaurant.getRestaurantId());
+
 
                     return RestaurantListResponseDTO.builder()
                             .restaurantId(restaurant.getRestaurantId())
@@ -120,7 +123,7 @@ public class RestaurantServiceImpl implements RestaurantService {
                 .menus(menus)
                 .imageUrls(imageUrls)
                 .likeCount(userLikeRepository.countByRestaurant(restaurant))
-                .reviewCount(0) // 리뷰 수 추후 연동
+                .reviewCount((int) reviewRepository.countReviewByRestaurant(restaurant))
                 .build();
     }
 
