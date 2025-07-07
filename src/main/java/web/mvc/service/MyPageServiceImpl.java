@@ -31,6 +31,10 @@ public class MyPageServiceImpl implements MyPageService {
     private final UserRepository userRepository;
     private final ReservationRepository reservationRepository;
     private final ReviewRepository reviewRepository;
+    private final MeetingRepository meetingRepository;
+    private final MeetupReviewRepository meetupReviewRepository;
+    private final MeetupParticipantRepository meetupParticipantRepository;
+
     private final PaymentService paymentService;
     // 모임 rep 주입 필요
     private final ReservationPaymentRepository reservationPaymentRepository;
@@ -79,9 +83,49 @@ public class MyPageServiceImpl implements MyPageService {
     @Override
     @Transactional(readOnly = true)
     public List<Review> getUserReviews(Long id) throws BasicException {
+        try {
+            List<Review> reviewAll;
+            reviewAll = reviewRepository.findByUserId(id);
+            return reviewAll;
+        } catch (BasicException e) {
+            throw new BasicException(ErrorCode.INVALID_VERIFICATION_CODE);
+        }
 
-        List<Review> reviews = reviewRepository.findByUserId(id);
-        return reviews;
+
+    }
+
+    @Override
+    public List<MeetupParticipant> getParticipatedMeetings(Long id) throws BasicException {
+        try {
+            List<MeetupParticipant> participantAll;
+            participantAll = meetupParticipantRepository.findByUser_Id(id);
+            return participantAll;
+        } catch (BasicException e) {
+            throw new BasicException(ErrorCode.INVALID_VERIFICATION_CODE);
+        }
+
+    }
+
+    @Override
+    public List<MeetupReview> getMeetingReviews(Long id) throws BasicException {
+        try {
+            List<MeetupReview> meetupReviewAll;
+            meetupReviewAll = meetupReviewRepository.findMeetingReviewsById(id);
+            return meetupReviewAll;
+        } catch (BasicException e) {
+            throw new BasicException(ErrorCode.INVALID_VERIFICATION_CODE);
+        }
+    }
+
+    @Override
+    public List<Meeting> getMeeting(Long id) throws BasicException {
+        try {
+            List<Meeting> meetingAll;
+            meetingAll = meetingRepository.findByUser_Id(id);
+            return meetingAll;
+        } catch (BasicException e) {
+            throw new BasicException(ErrorCode.INVALID_VERIFICATION_CODE);
+        }
     }
 
     /**
@@ -218,4 +262,35 @@ public class MyPageServiceImpl implements MyPageService {
             log.info("등급이 변경되지 않았습니다.");
         }
     }
+
+    /**
+     *  사용자의 포인트 잔액을 조회
+     */
+    @Override
+    public Integer getUserPointBalance(Long id) throws BasicException {
+        try {
+            Optional<User> userPoint = userRepository.findById(id);
+
+            if (userPoint.isPresent()) {
+                User user = userPoint.get();
+                return user.getPointBalance();
+            } else {
+                throw new BasicException(ErrorCode.USER_NOT_FOUND);
+            }
+        } catch (BasicException e) {
+            throw new BasicException(ErrorCode.USER_NOT_FOUND);
+        }
+    }
+
+    @Override
+    public List<Point> getUserPointHistory(Long id) throws BasicException {
+        try {
+            List<Point> pointHistory;
+            pointHistory = pointRepository.findByUserId(id);
+            return pointHistory;
+        } catch (BasicException e) {
+            throw new BasicException(ErrorCode.USER_NOT_FOUND);
+        }
+    }
+
 }

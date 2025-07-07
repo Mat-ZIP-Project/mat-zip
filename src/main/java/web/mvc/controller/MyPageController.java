@@ -6,15 +6,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import web.mvc.domain.Meeting;
-import web.mvc.domain.Reservation;
-import web.mvc.domain.Review;
+import web.mvc.domain.*;
 import web.mvc.dto.ReservationDetailDto;
 import web.mvc.exception.BasicException;
 import web.mvc.exception.ErrorCode;
 import web.mvc.security.CustomUserDetails;
 import web.mvc.service.MyPageService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -44,7 +43,7 @@ public class MyPageController {
     }
 
     /**
-     *  사용자의 전체 모임 내역 조회
+     *  사용자의 식당 리뷰 내역 조회
      */
     @GetMapping("/reviews")
     public ResponseEntity<List<Review>> getUserReviews(@AuthenticationPrincipal CustomUserDetails principal) {
@@ -61,17 +60,59 @@ public class MyPageController {
         }
     }
 
-//    @GetMapping("/meetings")
-//    public ResponseEntity<List<Meeting>> getUserMeetings(@AuthenticationPrincipal CustomUserDetails principal) {
-//        if (principal == null || principal.getUser() == null) {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-//        }
-//        Long id = principal.getUser().getId();
-//
-//        try {
-//            List<Meeting> meetings = myPageService.get
-//        }
-//    }
+    /**
+     *  사용자가 참여한 모임 내역을 조회
+     */
+    @GetMapping("/meetings/participated")
+    public ResponseEntity<List<MeetupParticipant>> getUserMeetings(@AuthenticationPrincipal CustomUserDetails principal) {
+        if (principal == null || principal.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long id = principal.getUser().getId();
+
+        try {
+            List<MeetupParticipant> meetupParticipant = myPageService.getParticipatedMeetings(id);
+            return  ResponseEntity.ok(meetupParticipant);
+        } catch (BasicException e) {
+            return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
+        }
+    }
+
+    /**
+     *  사용자가 모임에 대해 작성한 리뷰 내역
+     */
+    @GetMapping("/meeting-reviews")
+    public ResponseEntity<List<MeetupReview>>  getUserMeetingReviews(@AuthenticationPrincipal CustomUserDetails principal) {
+        if (principal == null || principal.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long id = principal.getUser().getId();
+
+        try {
+            List<MeetupReview> meetingReviews = myPageService.getMeetingReviews(id);
+            return ResponseEntity.ok(meetingReviews);
+        } catch (BasicException e) {
+            return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
+        }
+    }
+
+    /**
+     *  사용자가 직접 생성한 모임 내역
+     */
+    @GetMapping("/meetings/created")
+    public ResponseEntity<List<Meeting>> getUserMeetingCreated(@AuthenticationPrincipal CustomUserDetails principal) {
+        if (principal == null || principal.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long id = principal.getUser().getId();
+
+        try {
+            List<Meeting> meetings = myPageService.getMeeting(id);
+            return ResponseEntity.ok(meetings);
+        } catch (BasicException e) {
+            return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
+        }
+    }
 
     /**
      * 사용자 예약 취소
@@ -90,6 +131,42 @@ public class MyPageController {
             return ResponseEntity.ok("성공");
         } catch (BasicException e) {
             return ResponseEntity.status(e.getErrorCode().getHttpStatus()).body(e.getMessage());
+        }
+    }
+
+    /**
+     *  포인트 가져오기
+     */
+    @GetMapping("/user/point")
+    public ResponseEntity<Integer> getUserPoints(@AuthenticationPrincipal CustomUserDetails principal) {
+        if (principal == null || principal.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long id = principal.getUser().getId();
+
+        try {
+            Integer pointBalance = myPageService.getUserPointBalance(id);
+            return ResponseEntity.ok(pointBalance);
+        } catch (BasicException e) {
+            return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
+        }
+    }
+
+    /**
+     *  포인트 내역 가져오기
+     */
+    @GetMapping("/user/points/history")
+    public ResponseEntity<List<Point>> getUserPointHistory(@AuthenticationPrincipal CustomUserDetails principal) {
+        if (principal == null || principal.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long id = principal.getUser().getId();
+
+        try {
+            List<Point> pointHistory = myPageService.getUserPointHistory(id);
+            return ResponseEntity.ok(pointHistory);
+        } catch (BasicException e) {
+            return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
         }
     }
 
