@@ -1,7 +1,7 @@
 package web.mvc.service;
 
 import web.mvc.domain.*;
-import web.mvc.dto.ReservationDetailDto;
+import web.mvc.dto.*;
 import web.mvc.exception.BasicException;
 
 import java.util.List;
@@ -16,22 +16,22 @@ public interface MyPageService {
     /**
      * 사용자의 전체 리뷰 내역 조회
      */
-    List<Review> getUserReviews(Long id) throws BasicException;
+    List<ReviewDetailDto> getUserReviews(Long id) throws BasicException;
 
     /**
      * 사용자의 참여한 모임 내역 조회
      */
-    List<MeetupParticipant> getParticipatedMeetings(Long id) throws BasicException;
+    List<ParticipantDetailDto> getParticipatedMeetings(Long id) throws BasicException;
 
     /**
-     *  사용자가 모임에 대해 작성한 리뷰 내역 조회
+     * 사용자가 모임에 대해 작성한 리뷰 내역 조회
      */
-    List<MeetupReview> getMeetingReviews(Long id) throws BasicException;
+    List<MeetingReviewDetailDto> getMeetingReviews(Long id) throws BasicException;
 
     /**
      *  사용자가 생성한 모임 내역 조회
      */
-    List<Meeting> getMeeting(Long id) throws BasicException;
+    List<CreatedMeetingDetailDto> getMeeting(Long id) throws BasicException;
 
     /**
      *  사용자가 예약 취소하는 메서드
@@ -50,4 +50,13 @@ public interface MyPageService {
      */
     List<Point> getUserPointHistory(Long id) throws BasicException;
 
+    /**
+     *  사용자의 알림 내역 조회
+     */
+    List<Notification> getUserNotification(Long id) throws BasicException;
+
+    /**
+     *  사용자의 알림을 읽음 상태로 변경
+     */
+    void markNotificationAsRead(Long id) throws BasicException;
 }

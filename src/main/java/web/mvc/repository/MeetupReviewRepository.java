@@ -17,6 +17,6 @@ public interface MeetupReviewRepository extends JpaRepository<MeetupReview, Long
     List<MeetupReview> findByMeetupParticipant_Meeting_MeetingId(Long meetingId);
 
     // 특정 사용자가 작성한 모임 리뷰 조회
-    @Query("SELECT mr FROM MeetupReview mr JOIN mr.meetupParticipant mp JOIN mp.user u WHERE u.id = :userId")
+    @Query("SELECT mr FROM MeetupReview mr JOIN mr.meetupParticipant mp JOIN mp.user u WHERE u.id = :id")
     List<MeetupReview> findMeetingReviewsById(@Param("id") Long id);
 }

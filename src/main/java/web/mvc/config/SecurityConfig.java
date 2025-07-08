@@ -95,7 +95,7 @@ public class SecurityConfig {
 
                                 // 접근 허용
                                 .requestMatchers("/auth/**", "/api/reviews/**", "/signup/**",
-                                         "/payment/complete", "/map/**").permitAll()
+                                          "/map/**").permitAll()
 
                                 // 권한별 접근제한
                                 .requestMatchers("/owner/**").hasRole("OWNER")

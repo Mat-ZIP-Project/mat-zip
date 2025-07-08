@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import web.mvc.domain.*;
-import web.mvc.dto.ReservationDetailDto;
+import web.mvc.dto.*;
 import web.mvc.exception.BasicException;
 import web.mvc.exception.ErrorCode;
 import web.mvc.security.CustomUserDetails;
@@ -18,7 +18,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/mypage")
+@RequestMapping("/mypage")
 @Slf4j
 public class MyPageController {
 
@@ -46,14 +46,14 @@ public class MyPageController {
      *  사용자의 식당 리뷰 내역 조회
      */
     @GetMapping("/reviews")
-    public ResponseEntity<List<Review>> getUserReviews(@AuthenticationPrincipal CustomUserDetails principal) {
+    public ResponseEntity<List<ReviewDetailDto>> getUserReviews(@AuthenticationPrincipal CustomUserDetails principal) {
         if (principal == null || principal.getUser() == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         Long id = principal.getUser().getId();
 
         try {
-            List<Review> reviews = myPageService.getUserReviews(id);
+            List<ReviewDetailDto> reviews = myPageService.getUserReviews(id);
             return ResponseEntity.ok(reviews);
         } catch (BasicException e) {
             return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
@@ -63,15 +63,15 @@ public class MyPageController {
     /**
      *  사용자가 참여한 모임 내역을 조회
      */
-    @GetMapping("/meetings/participated")
-    public ResponseEntity<List<MeetupParticipant>> getUserMeetings(@AuthenticationPrincipal CustomUserDetails principal) {
+    @GetMapping("/meetings/participants")
+    public ResponseEntity<List<ParticipantDetailDto>> getUserMeetings(@AuthenticationPrincipal CustomUserDetails principal) {
         if (principal == null || principal.getUser() == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         Long id = principal.getUser().getId();
 
         try {
-            List<MeetupParticipant> meetupParticipant = myPageService.getParticipatedMeetings(id);
+            List<ParticipantDetailDto> meetupParticipant = myPageService.getParticipatedMeetings(id);
             return  ResponseEntity.ok(meetupParticipant);
         } catch (BasicException e) {
             return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
@@ -81,15 +81,15 @@ public class MyPageController {
     /**
      *  사용자가 모임에 대해 작성한 리뷰 내역
      */
-    @GetMapping("/meeting-reviews")
-    public ResponseEntity<List<MeetupReview>>  getUserMeetingReviews(@AuthenticationPrincipal CustomUserDetails principal) {
+    @GetMapping("/meetings/reviews")
+    public ResponseEntity<List<MeetingReviewDetailDto>>  getUserMeetingReviews(@AuthenticationPrincipal CustomUserDetails principal) {
         if (principal == null || principal.getUser() == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         Long id = principal.getUser().getId();
 
         try {
-            List<MeetupReview> meetingReviews = myPageService.getMeetingReviews(id);
+            List<MeetingReviewDetailDto> meetingReviews = myPageService.getMeetingReviews(id);
             return ResponseEntity.ok(meetingReviews);
         } catch (BasicException e) {
             return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
@@ -100,14 +100,14 @@ public class MyPageController {
      *  사용자가 직접 생성한 모임 내역
      */
     @GetMapping("/meetings/created")
-    public ResponseEntity<List<Meeting>> getUserMeetingCreated(@AuthenticationPrincipal CustomUserDetails principal) {
+    public ResponseEntity<List<CreatedMeetingDetailDto>> getUserMeetingCreated(@AuthenticationPrincipal CustomUserDetails principal) {
         if (principal == null || principal.getUser() == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         Long id = principal.getUser().getId();
 
         try {
-            List<Meeting> meetings = myPageService.getMeeting(id);
+            List<CreatedMeetingDetailDto> meetings = myPageService.getMeeting(id);
             return ResponseEntity.ok(meetings);
         } catch (BasicException e) {
             return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
@@ -165,6 +165,42 @@ public class MyPageController {
         try {
             List<Point> pointHistory = myPageService.getUserPointHistory(id);
             return ResponseEntity.ok(pointHistory);
+        } catch (BasicException e) {
+            return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
+        }
+    }
+
+    /**
+     *  사용자의 알림 내역 가져오기
+     */
+    @GetMapping("/notifications")
+    public ResponseEntity<List<Notification>> getUserNotifications(@AuthenticationPrincipal CustomUserDetails principal) {
+        if (principal == null || principal.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long id = principal.getUser().getId();
+
+        try {
+            List<Notification> notificationList = myPageService.getUserNotification(id);
+            return ResponseEntity.ok(notificationList);
+        } catch (BasicException e) {
+            return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
+        }
+    }
+
+    /**
+     *  사용자의 모든 알림을 읽음 상태로 변경
+     */
+    @PostMapping("/notifications/markAllAsRead")
+    public ResponseEntity<Void> markAllAsRead(@AuthenticationPrincipal CustomUserDetails principal) {
+        if (principal == null || principal.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long id = principal.getUser().getId();
+
+        try {
+            myPageService.markNotificationAsRead(id);
+            return ResponseEntity.ok().build();
         } catch (BasicException e) {
             return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
         }
