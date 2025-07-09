@@ -98,7 +98,7 @@ public class SecurityConfig {
                                           "/map/**").permitAll()
 
                                 // 권한별 접근제한
-                                .requestMatchers("/owner/**").hasRole("OWNER")
+                                .requestMatchers("/reservation/owner/approve").hasRole("OWNER")
                                 .requestMatchers("/admin/**").hasRole("ADMIN")
                                 .anyRequest().authenticated());
 
