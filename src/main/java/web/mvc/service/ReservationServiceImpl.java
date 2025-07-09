@@ -43,7 +43,7 @@ public class ReservationServiceImpl implements ReservationService {
     @Transactional
     public ReservationCreateResDto createReservation(User user, ReservationCreateReqDto request) throws BasicException {
 
-        Restaurant restaurant = restaurantRepository.findByRestaurantName(request.getRestaurantName())
+        Restaurant restaurant = restaurantRepository.findByRestaurantId(request.getRestaurantId())
                 .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
 
         Reservation reservation = Reservation.builder()
@@ -59,7 +59,7 @@ public class ReservationServiceImpl implements ReservationService {
         // DB에 저장
         Reservation savedReservation = reservationRepository.save(reservation);
 
-        return new ReservationCreateResDto(savedReservation.getReservationId(), "예약이 성공적으로 신청되었습니다.", true);
+        return new ReservationCreateResDto(savedReservation.getReservationId(), restaurant.getRestaurantName(),"예약이 성공적으로 신청되었습니다.", true);
     }
 
     /**
