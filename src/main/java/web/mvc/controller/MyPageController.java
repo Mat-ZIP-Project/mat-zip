@@ -27,14 +27,6 @@ public class MyPageController {
     private final MyPageService myPageService;
 
     /**
-     *  사용자 정보 가져오기
-     */
-    @GetMapping("/user-info")
-    public ResponseEntity<UserDTO> getUser(@AuthenticationPrincipal CustomUserDetails user) {
-
-    }
-
-    /**
      * 사용자의 전체 예약 내역 조회
      */
     @GetMapping("/reservations")
