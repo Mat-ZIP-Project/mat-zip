@@ -1,5 +1,8 @@
 package web.mvc.controller;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,10 +11,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import web.mvc.dto.*;
+import web.mvc.exception.BasicException;
+import web.mvc.exception.ErrorCode;
 import web.mvc.security.CustomUserDetails;
 import web.mvc.service.SmsVerificationService;
 import web.mvc.service.TokenService;
 import web.mvc.service.UserService;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,19 +32,73 @@ public class AuthController {
     private final TokenService tokenService;
     private final SmsVerificationService smsService;
 
+    /** 토큰 갱신 (토큰 로테이션 방식) */
     @PostMapping("/refresh")
-    public ResponseEntity<TokenResponse> refresh(@RequestBody TokenResponse body) {
-        return ResponseEntity.ok(
-                tokenService.refreshTokens(body.getRefreshToken())
-        );
+    public ResponseEntity<Map<String, String>> refresh(HttpServletRequest request, HttpServletResponse response) {
+        // 쿠키에서 refreshToken 추출
+        String refreshToken = extractRefreshTokenFromCookie(request);
+
+        if (refreshToken == null) {
+            throw new BasicException(ErrorCode.REFRESH_NOT_FOUND);
+        }
+        // 토큰 로테이션 수행
+        TokenResponse tokenResponse = tokenService.refreshTokens(refreshToken);
+
+        // 새로운 refreshToken을 HttpOnly 쿠키로 설정
+        setRefreshTokenCookie(response, tokenResponse.getRefreshToken());
+
+        // 응답에는 새 accessToken만 포함
+        Map<String, String> responseBody = new HashMap<>();
+        responseBody.put("accessToken", tokenResponse.getAccessToken());
+
+        log.info("토큰 갱신 완료");
+        return ResponseEntity.ok(responseBody);
     }
 
+    /** 로그아웃 */
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@AuthenticationPrincipal CustomUserDetails principal) {
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal CustomUserDetails principal, HttpServletResponse response) {
         tokenService.invalidateToken(principal.getUser());
-        log.info("로그아웃 완료 = {}", principal.getUser().getUserId());
+
+        // refreshToken 쿠키 삭제
+        clearRefreshTokenCookie(response);
+
+        log.info("로그아웃 완료: {}", principal.getUser().getUserId());
         return ResponseEntity.ok().build();
     }
+
+    // 쿠키에서 RefreshToken 추출
+    private String extractRefreshTokenFromCookie(HttpServletRequest request) {
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("refreshToken".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
+    }
+
+    // RefreshToken 쿠키 설정
+    private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
+        Cookie refreshCookie = new Cookie("refreshToken", refreshToken);
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setSecure(false); // 개발환경용
+        refreshCookie.setMaxAge(2* 24 * 60 * 60);// 14주
+        refreshCookie.setPath("/");
+        refreshCookie.setAttribute("SameSite", "Lax");
+        response.addCookie(refreshCookie);
+    }
+
+    // RefreshToken 쿠키 삭제
+    private void clearRefreshTokenCookie(HttpServletResponse response) {
+        Cookie refreshCookie = new Cookie("refreshToken", null);
+        refreshCookie.setMaxAge(0);
+        refreshCookie.setPath("/");
+        refreshCookie.setHttpOnly(true);
+        response.addCookie(refreshCookie);
+    }
+
 
     /** 로그인된 사용자 정보 조회 */
     @GetMapping("/user-info")

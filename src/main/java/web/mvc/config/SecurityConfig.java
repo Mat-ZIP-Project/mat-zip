@@ -10,6 +10,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -34,74 +35,60 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
-    /** 비밀번호 암호화 */
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
         log.info("bCryptPasswordEncoder call.....");
         return new BCryptPasswordEncoder();
     }
 
-    /** AuthenticationManager Bean 등록 */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         log.info("authenticationManager --- {}", configuration);
         return configuration.getAuthenticationManager();
     }
 
-    /**
-     * SecurityFilterChain - security 정책
-     * */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        /////////////////////////////////
-        //CORS 설정
-        http.cors((corsCustomizer ->
-                corsCustomizer.configurationSource(new CorsConfigurationSource()
-                {
-                    @Override
-                    public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
-                        CorsConfiguration configuration = new CorsConfiguration();
-                        // configuration.setAllowedOrigins(Collections.singletonList("http://localhost:5173"));
-                        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:4173"));
-                        // configuration.setAllowedOrigins(Arrays.asList("http://15.165.235.157", "http://15.165.235.157:80"));
-                        // configuration.setAllowedOrigins(Arrays.asList("http://grace24.o-r.kr", "https://grace24.o-r.kr"));
-                        configuration.setAllowedMethods(Collections.singletonList("*"));
-                        configuration.setAllowCredentials(true);
+        // CORS 설정
+        http.cors(cors -> cors.configurationSource(corsConfig()));
 
-                        configuration.setAllowedHeaders(Collections.singletonList("*"));
-                        configuration.setMaxAge(3600L);
+        // 기본 설정 비활성화 (JWT, 커스텀 LoginFilter 사용)
+        http.csrf(csrf -> csrf.disable())
+                .httpBasic(b -> b.disable())
+                .formLogin(f -> f.disable());
 
-                        configuration.setExposedHeaders(Collections.singletonList("Authorization"));
-                        return configuration;
-                    }
-                })));
-        ////////////////////////////////////
-        /////////////////////////////////
-        // csrf, formLogin, httpBasic 비활성화
-        http.csrf((auth)-> auth.disable());
-        http.formLogin((auth)-> auth.disable());
-        http.httpBasic((auth)-> auth.disable());
+        // 세션 관리 설정 (STATELESS)
+        http.sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        );
 
-        http    //401, 403에러 처리
-                .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                        .accessDeniedHandler(jwtAccessDeniedHandler)
-                )
+        // 예외 처리
+        http.exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint(jwtAuthenticationEntryPoint) //401
+                .accessDeniedHandler(jwtAccessDeniedHandler)           //403
+        );
 
-                .authorizeHttpRequests((auth) ->
-                        auth
-                                // 인증 필요
-                                .requestMatchers("/auth/logout").authenticated()
+        // 경로별 접근 제어
+        http.authorizeHttpRequests(auth ->
+                auth
+                        // CORS Preflight 요청(OPTIONS) 모든 경로 허용
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                                // 접근 허용
-                                .requestMatchers("/auth/**", "/api/reviews/**", "/signup/**",
-                                          "/map/**").permitAll()
 
-                                // 권한별 접근제한
-                                .requestMatchers("/reservation/owner/approve").hasRole("OWNER")
-                                .requestMatchers("/admin/**").hasRole("ADMIN")
-                                .anyRequest().authenticated());
+                        // 인증 필요 (하단에 인증 허용 url 접근 전 인증 요청필요한 것만 기입)
+                        .requestMatchers("/auth/logout").authenticated()
 
+                        // 접근 허용 (접근 허용 url은 무조건 명시)
+                        .requestMatchers("/login","/auth/**", "/signup/**",
+                                "/payment/complete", "/map/**", "/api/reviews/**").permitAll()
+
+                        // 권한별 접근 제한
+                        .requestMatchers("/owner/**","/reservation/owner/approve").hasRole("OWNER")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                        // 그 외 모든 요청은 인증 필요
+                        .anyRequest().authenticated()
+        );
 
         http.addFilterAt(
                 new LoginFilter(
@@ -113,5 +100,25 @@ public class SecurityConfig {
                 LoginFilter.class);
 
         return http.build();
+    }
+
+    // CORS 설정 메서드
+    @Bean
+    public CorsConfigurationSource corsConfig() {
+        return new CorsConfigurationSource() {
+            @Override
+            public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
+                CorsConfiguration configuration = new CorsConfiguration();
+                configuration.setAllowedOrigins(
+                        Arrays.asList("http://localhost:5173", "http://localhost:4173")
+                );
+                configuration.setAllowedMethods(Collections.singletonList("*"));
+                configuration.setAllowedHeaders(Collections.singletonList("*"));
+                configuration.setAllowCredentials(true);
+                configuration.setMaxAge(3600L);
+                configuration.setExposedHeaders(Collections.singletonList("Authorization"));
+                return configuration;
+            }
+        };
     }
 }

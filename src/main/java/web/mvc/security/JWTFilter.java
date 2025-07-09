@@ -32,21 +32,18 @@ public class JWTFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-
-        //request에서 Authorization 헤더를 찾음
+        log.info("JWTFilter - doFilter메소드 호출");
+        // Authorization 헤더 확인
         String header = request.getHeader("Authorization");
 
-        //Authorization 헤더 검증
         if (header == null || !header.startsWith("Bearer ")) {
-            log.debug("Authorization 헤더 없음 or Bearer 미포함");
-            filterChain.doFilter(request, response); //다음 필터 호출
-
-            //조건이 해당되면 메소드 종료
+            filterChain.doFilter(request, response);
             return;
         }
 
-        //Bearer 부분 제거 후 순수 토큰만 획득
+        // Bearer 제거 후 토큰 추출
         String token = header.substring(7);
+
         // 토큰 유효성 검사 (서명·만료 확인)
         if (!jwtTokenProvider.validateToken(token)) {
             log.info("유효하지 않은 토큰: {}", token);
@@ -54,24 +51,21 @@ public class JWTFilter extends OncePerRequestFilter {
             return;
         }
 
-        // 토큰(클레임)에서 사용자 정보 추출
+        // 토큰에서 사용자 정보 추출
         String userId = jwtTokenProvider.getUserId(token);
-
-        // 토큰에서 다중 권한 파싱
         String role = jwtTokenProvider.getRole(token);
+
+        // 권한 설정
         Collection<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(role));
 
-        //UserDetails에 회원 정보 객체 담기
-        CustomUserDetails userDetails = (CustomUserDetails)
-                userDetailsService.loadUserByUsername(userId);
+        // UserDetails 조회
+        CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(userId);
 
-        //Authentication 객체 생성 및 SecurityContext에 저장
-        Authentication authToken =
-                new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
+        // SecurityContext에 인증 정보 저장
+        Authentication authToken = new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
+        SecurityContextHolder.getContext().setAuthentication(authToken);
 
-        SecurityContextHolder.getContext().setAuthentication(authToken); //저장
-
-        filterChain.doFilter(request, response);//다음 필터를 호출
+        filterChain.doFilter(request, response);
     }
 }
