@@ -33,7 +33,4 @@ public interface ReservationRepository extends JpaRepository<Reservation,Long> {
             "AND r.reminded = false " + // 아직 알림을 보내지 않은 경우
             "AND r.date = :currentDate")
     List<Reservation> findReservationsForReminder(@Param("currentDate") String currentDate);
-
-    // 예약 수 카운트
-    int countByRestaurant_RestaurantId(Long restaurantId);
 }

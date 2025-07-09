@@ -24,14 +24,17 @@ public class ReservationPayment {
     @JoinColumn(name = "reservation_id", nullable = false)
     private Reservation reservation;
 
-    @Column(nullable = false)
-    private Integer amount; // 결제 금액
+//    @Column(nullable = false)
+//    private Integer amount; // 결제 금액
 
     @Column(name = "original_amount", nullable = false)
     private Integer originalAmount;
 
     @Column(name = "discount_amount")
     private Integer discountAmount;
+
+    @Column(name = "final_amount")
+    private Integer finalPaymentAmount;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = true, length = 20) // NULL 허용 (결제 전에는 null일 수 있음)

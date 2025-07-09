@@ -50,7 +50,7 @@ public class SignupServiceImpl implements SignupService {
     @Value("${nts.api.service-key}")
     private String ntsServiceKey;
     private static final String NTS_API_URL = "https://api.odcloud.kr/api/nts-businessman/v1/status";
-    private static final Set<String> VALID_CATEGORIES = Set.of("한식", "양식", "중식", "일식", "카페");
+    private static final Set<String> VALID_CATEGORIES = Set.of("한식", "중식", "일식", "양식", "카페");
 
 
     @Override
@@ -171,6 +171,8 @@ public class SignupServiceImpl implements SignupService {
 
         // SMS 인증 확인
         checkSmsVerified(request.getPhone(), "SIGNUP");
+        // 전화번호 포맷팅
+        request.setPhone(formatPhoneNumber(request.getPhone()));
 
         // 사용자 생성 및 저장
         User user = createUser(request);
@@ -191,7 +193,12 @@ public class SignupServiceImpl implements SignupService {
         // 식당 정보 검증
         validateRestaurantInfo(request);
 
-        // 저장
+        //validateAndNormalizeAddress(request);
+        // 전화번호 포맷팅
+        request.setPhone(formatPhoneNumber(request.getPhone()));
+        request.setRestaurantPhone(formatPhoneNumber(request.getRestaurantPhone()));
+
+        // DB 저장
         User savedUser = createUser(request);
         userRepository.save(savedUser);
 
@@ -280,6 +287,47 @@ public class SignupServiceImpl implements SignupService {
                 .preferenceCategory(request.getPreferenceCategory())
                 .build();
     }
+
+    /** 전화번호에 하이픈 포맷팅 */
+    private String formatPhoneNumber(String phone) {
+        if (phone == null || phone.trim().isEmpty()) {
+            return phone;
+        }
+
+        String cleanPhone = phone.replaceAll("[^0-9]", "");
+
+        // 02로 시작하는 서울 번호
+        if (cleanPhone.startsWith("02")) {
+            if (cleanPhone.length() == 9) {
+                return cleanPhone.replaceAll("^(02)(\\d{3})(\\d{4})$", "$1-$2-$3");
+            } else if (cleanPhone.length() == 10) {
+                return cleanPhone.replaceAll("^(02)(\\d{4})(\\d{4})$", "$1-$2-$3");
+            }
+        }
+
+        // 휴대폰 번호 (010, 011, 016, 017, 018, 019)
+        if (cleanPhone.startsWith("01")) {
+            if (cleanPhone.length() == 11) {
+                return cleanPhone.replaceAll("^(\\d{3})(\\d{4})(\\d{4})$", "$1-$2-$3");
+            } else if (cleanPhone.length() == 10) {
+                return cleanPhone.replaceAll("^(\\d{3})(\\d{3})(\\d{4})$", "$1-$2-$3");
+            }
+        }
+
+        // 기타 지역번호
+        if (cleanPhone.startsWith("0") && cleanPhone.length() >= 9) {
+            if (cleanPhone.length() == 9) {
+                return cleanPhone.replaceAll("^(\\d{3})(\\d{3})(\\d{3})$", "$1-$2-$3");
+            } else if (cleanPhone.length() == 10) {
+                return cleanPhone.replaceAll("^(\\d{3})(\\d{3})(\\d{4})$", "$1-$2-$3");
+            } else if (cleanPhone.length() == 11) {
+                return cleanPhone.replaceAll("^(\\d{3})(\\d{4})(\\d{4})$", "$1-$2-$3");
+            }
+        }
+        return cleanPhone;
+    }
+
+
     /** 식당주 용 user 객체 저장 */
     private User createUser(SignupOwnerRequest request) {
         return User.builder()

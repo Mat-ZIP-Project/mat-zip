@@ -2,6 +2,8 @@ package web.mvc.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import web.mvc.domain.RefreshToken;
@@ -12,6 +14,8 @@ import web.mvc.exception.ErrorCode;
 import web.mvc.repository.RefreshTokenRepository;
 import web.mvc.repository.UserRepository;
 import web.mvc.security.JwtTokenProvider;
+
+import java.time.LocalDateTime;
 
 
 @Service
@@ -26,6 +30,7 @@ public class TokenServiceImpl implements TokenService {
     @Override
     @Transactional
     public TokenResponse generateTokens(User user) {
+        log.info("토큰 생성 시작: {}", user.getUserId());
         String accessToken = jwtTokenProvider.createAccessToken(user.getUserId(), user.getRole());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getUserId());
 
@@ -37,43 +42,58 @@ public class TokenServiceImpl implements TokenService {
                 .build();
     }
 
-    /** 기존 토큰이 있으면 업데이트, 없으면 새로 생성 */
     @Transactional
     public void saveRefreshToken(String userId, String refreshToken) {
-        // User ID로 영속성 컨텍스트에서 User 조회
-        User managedUser = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new BasicException(ErrorCode.USER_NOT_FOUND));
+        try {
+            User user = userRepository.findActiveUserByUserId(userId)
+                    .orElseThrow(() -> new BasicException(ErrorCode.USER_NOT_FOUND));
 
-        refreshTokenRepository.findByUser(managedUser)
-                .ifPresentOrElse(
-                        existing -> {
-                            existing.setToken(refreshToken);
-                            refreshTokenRepository.save(existing);
-                        },
-                        () -> {
-                            RefreshToken newToken = RefreshToken.builder()  //엔티티에 insert
-                                    .user(managedUser)
-                                    .token(refreshToken)
-                                    .build();
-                            refreshTokenRepository.save(newToken);
-                        }
-                );
+            RefreshToken existingToken = refreshTokenRepository.findByUser(user).orElse(null);
+
+            if (existingToken != null) {
+                // 기존 토큰 업데이트
+                existingToken.setToken(refreshToken);
+                refreshTokenRepository.save(existingToken);
+            } else {
+                // 새 토큰 생성
+                RefreshToken newRefreshToken = RefreshToken.builder()
+                        .user(user)
+                        .token(refreshToken)
+                        .build();
+                refreshTokenRepository.save(newRefreshToken);
+            }
+
+            log.info("RefreshToken 저장 완료: userId={}", userId);
+
+        } catch (Exception e) {
+            log.error("RefreshToken 저장 실패: userId={}, error={}", userId, e.getMessage());
+            throw new BasicException(ErrorCode.INVALID_TOKEN);
+        }
     }
 
     @Override
+    @Transactional
     public TokenResponse refreshTokens(String oldRefreshToken) {
+        // 1. JWT 토큰 자체 유효성 검증
         if (!jwtTokenProvider.validateToken(oldRefreshToken)) {
             throw new BasicException(ErrorCode.INVALID_TOKEN);
         }
-        RefreshToken refreshTokenEntity = refreshTokenRepository.findByToken(oldRefreshToken)
+
+        // 2. DB 토큰 조회 및 만료시간 검증
+        RefreshToken storedToken = refreshTokenRepository
+                .findByTokenAndNotExpired(oldRefreshToken, LocalDateTime.now())
                 .orElseThrow(() -> new BasicException(ErrorCode.REFRESH_NOT_FOUND));
 
-        User user = refreshTokenEntity.getUser();
+        User user = storedToken.getUser();
+
+        // 3. 새로운 토큰 생성
         String newAccessToken = jwtTokenProvider.createAccessToken(user.getUserId(), user.getRole());
         String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getUserId());
 
-        refreshTokenEntity.setToken(newRefreshToken);
-        refreshTokenRepository.save(refreshTokenEntity);
+        // 4. 토큰 로테이션 (기존 토큰 업데이트)
+        storedToken.setToken(newRefreshToken);
+        refreshTokenRepository.save(storedToken);
+        log.info("토큰 갱신 완료: userId={}, 새로운만료시간={}", user.getUserId(), storedToken.getExpiresAt());
 
         return TokenResponse.builder()
                 .accessToken(newAccessToken)
@@ -81,17 +101,16 @@ public class TokenServiceImpl implements TokenService {
                 .build();
     }
 
+
     @Override
     @Transactional
     public void invalidateToken(User user) {
         refreshTokenRepository.findByUser(user)
-                .ifPresentOrElse(
-                        token -> {
-                            refreshTokenRepository.delete(token);
-                            log.info("사용자 {}의 토큰 무효화 완료", user.getUserId());
-                        },
-                        () -> log.info("사용자 {}의 토큰이 이미 존재하지 않음", user.getUserId())
-                );
+                .ifPresent(token -> {
+                    refreshTokenRepository.delete(token);
+                    log.info("토큰 무효화 완료: {}", user.getUserId());
+                });
+
     }
 
     @Override
