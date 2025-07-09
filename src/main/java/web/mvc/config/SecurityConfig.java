@@ -79,7 +79,7 @@ public class SecurityConfig {
 
                         // 접근 허용 (접근 허용 url은 무조건 명시)
                         .requestMatchers("/login","/auth/**", "/signup/**",
-                                "/payment/complete", "/map/**").permitAll()
+                                "/payment/complete", "/map/**","/api/restaurants").permitAll()
 
                         // 권한별 접근 제한
                         .requestMatchers("/owner/**").hasRole("OWNER")
