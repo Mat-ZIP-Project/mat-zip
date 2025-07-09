@@ -51,7 +51,7 @@ public class SecurityTest {
                     .pointBalance(0)
                     .noShow(false)
                     .gpsVerified(false)
-                        .userGrade("새싹")
+                        .userGrade("먹짱")
                         .termsAgreed(true)
                         .privacyAgreed(true)
                     .build());
@@ -73,6 +73,31 @@ public class SecurityTest {
                         .name("관리자")
                         .phone("010-1111-2222")
                         .role("ROLE_ADMIN")
+                        .userStatus("활성")
+                        .pointBalance(0)
+                        .noShow(false)
+                        .gpsVerified(false)
+                        .privacyAgreed(true)
+                        .termsAgreed(true)
+                        .userGrade("새싹")
+                        .build());
+    }
+
+    /**
+     * 관리자 등록
+     * */
+    @Test
+    @DisplayName("관리자 계정추가")
+    void insertSampleOwner() {
+        String encPwd = passwordEncoder.encode("1234"); //비번 암호화
+
+        userRepository.save(
+                User.builder()
+                        .userId("owner1")
+                        .password(encPwd)
+                        .name("사장")
+                        .phone("010-1441-2222")
+                        .role("ROLE_OWNER")
                         .userStatus("활성")
                         .pointBalance(0)
                         .noShow(false)
