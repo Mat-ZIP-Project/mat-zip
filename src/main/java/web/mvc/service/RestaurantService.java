@@ -20,10 +20,10 @@ public interface RestaurantService {
     /**
      * 식당 찜 등록
      */
-    void likeRestaurant(Long restaurantId);
+    void toggleLikeRestaurant(Long userId, Long restaurantId);
 
     /**
      * 식당 찜 취소
      */
-    void unlikeRestaurant(Long restaurantId);
+//    void unlikeRestaurant(Long userId, Long restaurantId);
 }

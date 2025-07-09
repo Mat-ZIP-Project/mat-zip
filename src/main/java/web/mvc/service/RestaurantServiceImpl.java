@@ -12,6 +12,7 @@ import web.mvc.exception.ErrorCode;
 import web.mvc.repository.*;
 import web.mvc.security.CustomUserDetails;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -125,43 +126,26 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     @Override
-    public void likeRestaurant(Long restaurantId) {
-        // 현재 로그인한 유저 정보 가져오기
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        Long userId = userDetails.getUser().getId();
-
+    public void toggleLikeRestaurant(Long userId, Long restaurantId) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BasicException(ErrorCode.USER_NOT_FOUND));
 
         Optional<UserLike> existing = userLikeRepository.findByUserAndRestaurant(user, restaurant);
+
         if (existing.isPresent()) {
-            throw new BasicException(ErrorCode.ALREADY_LIKED);
+            userLikeRepository.delete(existing.get()); // 이미 찜한 경우 해제
+        } else {
+            userLikeRepository.save(UserLike.builder()
+                    .user(user)
+                    .restaurant(restaurant)
+                    .likedAt(LocalDateTime.now())
+                    .build()); // 아직 찜 안한 경우 저장
         }
 
-        userLikeRepository.save(UserLike.builder()
-                .user(user)
-                .restaurant(restaurant)
-                .build());
+
     }
 
-    @Override
-    public void unlikeRestaurant(Long restaurantId) {
-        // 현재 로그인한 유저 정보 가져오기
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        Long userId = userDetails.getUser().getId();
-
-        Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BasicException(ErrorCode.USER_NOT_FOUND));
-
-        UserLike like = userLikeRepository.findByUserAndRestaurant(user, restaurant)
-                .orElseThrow(() -> new BasicException(ErrorCode.LIKE_NOT_FOUND));
-
-        userLikeRepository.delete(like);
-    }
 }

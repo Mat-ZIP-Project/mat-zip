@@ -6,8 +6,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
 import web.mvc.domain.*;
 import web.mvc.dto.*;
+
 import web.mvc.exception.BasicException;
 import web.mvc.exception.ErrorCode;
 import web.mvc.security.CustomUserDetails;
@@ -59,6 +61,18 @@ public class MyPageController {
             return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
         }
     }
+
+//    @GetMapping("/meetings")
+//    public ResponseEntity<List<Meeting>> getUserMeetings(@AuthenticationPrincipal CustomUserDetails principal) {
+//        if (principal == null || principal.getUser() == null) {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+//        }
+//        Long id = principal.getUser().getId();
+//
+//        try {
+//            List<Meeting> meetings = myPageService.get
+//        }
+//    }
 
     /**
      *  사용자가 참여한 모임 내역을 조회

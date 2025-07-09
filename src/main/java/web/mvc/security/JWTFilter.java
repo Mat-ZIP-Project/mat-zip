@@ -35,6 +35,7 @@ public class JWTFilter extends OncePerRequestFilter {
         log.info("JWTFilter - doFilter메소드 호출");
         // Authorization 헤더 확인
         String header = request.getHeader("Authorization");
+        log.info("Authorization Header: {}", header);
 
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
