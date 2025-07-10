@@ -34,7 +34,7 @@ public class Notification {
     @JoinColumn(name = "reservationId", nullable = false)
     private Reservation reservation;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "id", nullable = false)
     private User user;
 

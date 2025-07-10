@@ -53,7 +53,7 @@ public interface MyPageService {
     /**
      *  사용자의 알림 내역 조회
      */
-    List<Notification> getUserNotification(Long id) throws BasicException;
+    List<NotificationDetailDto> getUserNotification(Long id) throws BasicException;
 
     /**
      *  사용자의 알림을 읽음 상태로 변경
