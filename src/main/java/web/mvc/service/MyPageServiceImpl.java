@@ -419,10 +419,23 @@ public class MyPageServiceImpl implements MyPageService {
         try {
             List<Notification> unreadNotification = notificationRepository.findByUserIdAndIsRead(id, false);
 
+            if (unreadNotification.isEmpty()) {
+                return;
+            }
+
             for (Notification notification : unreadNotification) {
                 notification.setIsRead(true);
             }
             notificationRepository.saveAll(unreadNotification);
+        } catch (BasicException e) {
+            throw new BasicException(ErrorCode.NO_AUTH_LOGS);
+        }
+    }
+
+    @Override
+    public int getUnreadNotificationCount(Long id) throws BasicException {
+        try {
+            return notificationRepository.countByUserIdAndIsRead(id, false);
         } catch (BasicException e) {
             throw new BasicException(ErrorCode.NO_AUTH_LOGS);
         }

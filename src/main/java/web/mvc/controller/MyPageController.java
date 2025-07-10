@@ -220,4 +220,22 @@ public class MyPageController {
         }
     }
 
+    /**
+     *  읽지 않은 알림 개수 반환
+     */
+    @GetMapping("/notifications/count")
+    public ResponseEntity<Integer> getUserNotificationCount(@AuthenticationPrincipal CustomUserDetails principal) {
+        if (principal == null || principal.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long id = principal.getUser().getId();
+
+        try {
+            int unreadCount = myPageService.getUnreadNotificationCount(id);
+            return ResponseEntity.ok(unreadCount);
+        } catch (BasicException e) {
+            return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
+        }
+    }
+
 }

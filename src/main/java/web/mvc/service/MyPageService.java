@@ -59,4 +59,9 @@ public interface MyPageService {
      *  사용자의 알림을 읽음 상태로 변경
      */
     void markNotificationAsRead(Long id) throws BasicException;
+
+    /**
+     * 알림 isRead의 값이 false인 것 개수
+     */
+    int getUnreadNotificationCount(Long id) throws BasicException;
 }
