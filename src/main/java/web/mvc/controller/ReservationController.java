@@ -56,15 +56,15 @@ public class ReservationController {
     /**
      *  사장이 예약에 대해 승인 할때 메서드
      */
-    @PostMapping("/approve")
+    @PostMapping("/owner/approve")
     public ResponseEntity<String> approveReservation(
             @AuthenticationPrincipal CustomUserDetails principal,
             @RequestBody OwnerApprovalReqDto request) {
 
-        if (!principal.getUser().getRole().equals("ROLE_ADMIN")) { // ✅ 권한 검증 로직
-            log.warn("권한 없는 사용자 '{}'가 예약 승인/거절을 시도했습니다.", principal.getUsername());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("예약 상태 변경 권한이 없습니다.");
-        }
+//        if (!principal.getUser().getRole().equals("ROLE_OWNER")) { // ✅ 권한 검증 로직
+//            log.warn("권한 없는 사용자 '{}'가 예약 승인/거절을 시도했습니다.", principal.getUsername());
+//            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("예약 상태 변경 권한이 없습니다.");
+//        }
 
         try {
             reservationService.updateReservationStatus(

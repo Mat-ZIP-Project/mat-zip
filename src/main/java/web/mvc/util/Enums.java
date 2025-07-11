@@ -4,7 +4,7 @@ public class Enums {
 
     // 예약 상태 Enum
     public enum ReservationStatus {
-        PENDING("대기"), // 예약 신청 후 결제까지 완료되었으나 사장 승인 대기
+        PENDING("대기"), // 예약 신청 후 결제 미완료
         PENDING_APPROVAL("결제 완료 - 승인 대기"),
         APPROVED("예약 완료"), // 사장 승인 완료 (최종 확정)
         REJECTED("예약 거절"),  // 사장 거절

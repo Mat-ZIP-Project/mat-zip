@@ -5,7 +5,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Builder
 @Getter
@@ -14,8 +16,8 @@ import java.time.LocalDateTime;
 public class ReservationDetailDto {
     private Long reservationId;
     private String restaurantName;
-    private LocalDateTime date;
-    private LocalDateTime time;
+    private LocalDate date;
+    private LocalTime time;
     private int numPeople;
     private String status; // 예약 상태
     private String ownerNotes; // 가게 사장 메모 (선택 사항)
