@@ -100,13 +100,15 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter{ //폼값 
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
         User user = customUserDetails.getUser();
 
+        String dbRole = user.getRole(); // DB에 저장된 값("ROLE_XX")
+
         // 사용자 권한 추출
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
         GrantedAuthority auth = iterator.next();
-        String role = auth.getAuthority(); //ROLE_USER or ROLE_ADMIN 첫 번째 권한만 사용
+        String role = auth.getAuthority(); // Spring Security 권한 (ROLE_USER or ROLE_ADMIN)
 
-        log.info("사용자 권한: {}", role);
+        log.info("DB 권한: {}, Spring Security 권한: {}", dbRole, role);
 
         // 토큰 생성 및 저장
         TokenResponse tokenResponse = tokenService.generateTokens(user);

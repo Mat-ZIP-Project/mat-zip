@@ -3,6 +3,7 @@ package web.mvc.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import web.mvc.domain.Menu;
 import web.mvc.domain.Restaurant;
 import web.mvc.dto.ReqPositionDTO;
 
@@ -30,4 +31,11 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             "        POINT(:longitude, :latitude)\n" +
             "    ) < :radius;",nativeQuery = true)
     List<Restaurant> searchByPosition(@Param("longitude")  double longitude, @Param("latitude") double latitude, @Param("radius") long radius);
+
+    /** 업주 ID(userId)에 매핑된 식당 조회 */
+    @Query("SELECT r FROM Restaurant r JOIN FETCH r.owner o " +
+            "JOIN FETCH o.user u WHERE u.userId = :userId")
+    Optional<Restaurant> findByOwnerUserId(@Param("userId") String userId);
+
+
 }

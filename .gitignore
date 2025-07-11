@@ -836,6 +836,7 @@ $RECYCLE.BIN/
 matzip-google-key.json
 
 # 설정파일 제외
+application.*
 application-secret.properties
 
 firebase-admin.json

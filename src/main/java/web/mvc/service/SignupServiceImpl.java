@@ -267,6 +267,9 @@ public class SignupServiceImpl implements SignupService {
         if (request.getMaxWaitingLimit() == null || request.getMaxWaitingLimit() < 0) {
             throw new BasicException(ErrorCode.INVALID_WAITING_LIMIT);
         }
+        if (request.getLatitude() == null || request.getLongitude() == null) {
+            throw new BasicException(ErrorCode.BAD_REQUEST);
+        }
     }
 
     /** 회원가입 시 사용자 정보 저장용 객체 생성 */
@@ -348,28 +351,33 @@ public class SignupServiceImpl implements SignupService {
 
     /** 식당 정보 DB저장 */
     private Restaurant createRestaurant(SignupOwnerRequest request, OwnerInfo ownerInfo) {
-        List<AddressResponse> addresses = searchAddress(request.getAddress());
-        if (addresses.isEmpty()) {
-            throw new BasicException(ErrorCode.ADDRESS_NOT_FOUND);
-        }
+//        List<AddressResponse> addresses = searchAddress(request.getAddress());
+//        if (addresses.isEmpty()) {
+//            throw new BasicException(ErrorCode.ADDRESS_NOT_FOUND);
+//        }
+//
+//        AddressResponse addressInfo = addresses.get(0);
+        Restaurant restaurant = modelMapper.map(request, Restaurant.class);
+        restaurant.setOwner(ownerInfo);
+        restaurant.setPhone(request.getRestaurantPhone());
 
-        AddressResponse addressInfo = addresses.get(0);
+        return restaurant;
 
-        return Restaurant.builder()
-                .owner(ownerInfo)
-                .restaurantName(request.getRestaurantName())
-                .address(addressInfo.getAddressName())
-                .regionSido(addressInfo.getRegionSido())
-                .regionSigungu(addressInfo.getRegionSigungu())
-                .latitude(addressInfo.getLatitude())
-                .longitude(addressInfo.getLongitude())
-                .phone(request.getRestaurantPhone())
-                .category(request.getCategory())
-                .descript(request.getDescript())
-                .openTime(request.getOpenTime())
-                .closeTime(request.getCloseTime())
-                .maxWaitingLimit(request.getMaxWaitingLimit())
-                .build();
+//        return Restaurant.builder()
+//                .owner(ownerInfo)
+//                .restaurantName(request.getRestaurantName())
+//                .address(request.getAddress())
+//                .regionSido(request.getRegionSido())
+//                .regionSigungu(request.getRegionSigungu())
+//                .latitude(request.getLatitude())
+//                .longitude(request.getLongitude())
+//                .phone(request.getRestaurantPhone())
+//                .category(request.getCategory())
+//                .descript(request.getDescript())
+//                .openTime(request.getOpenTime())
+//                .closeTime(request.getCloseTime())
+//                .maxWaitingLimit(request.getMaxWaitingLimit())
+//                .build();
     }
 
 }

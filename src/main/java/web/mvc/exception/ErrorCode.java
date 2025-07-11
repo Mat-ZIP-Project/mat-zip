@@ -82,9 +82,15 @@ public enum ErrorCode { //enum은 'Enumeration' 의 약자로 열거, 목록 이
 
     INVALID_RESERVATION_STATUS_TRANSITION(HttpStatus.BAD_REQUEST,"","현재 예약 상태에서 해당 상태로 변경할 수 없습니다."),
 
-    // 테스트
-    FORBIDDEN(HttpStatus.FORBIDDEN, "", "FORBIDDEN"),
-    INVALID_INPUT(HttpStatus.BAD_REQUEST, "", "INVALID_INPUT"),
+    // 공통 오류
+    FORBIDDEN(HttpStatus.FORBIDDEN, "FORBIDDEN", "권한이 없습니다."),
+    INVALID_INPUT(HttpStatus.BAD_REQUEST, "INVALID_INPUT", "INVALID_INPUT"),
+    BAD_REQUEST(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "잘못된 요청입니다."),
+    REQUEST_TIMEOUT(HttpStatus.REQUEST_TIMEOUT, "REQUEST_TIMEOUT", "요청시간이 초과되었습니다."),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "인증이 필요합니다."),
+    NOT_FOUND(HttpStatus.NOT_FOUND,"NOT_FOUND", "요청한 리소스를 찾을 수 없습니다."),
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."),
+
 
     // Waiting 관련 에러코드 추가
     WAITING_ALREADY_EXISTS(HttpStatus.CONFLICT, "Waiting Exists", "이미 입장 대기 중인 웨이팅이 존재합니다."),
