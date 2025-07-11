@@ -44,11 +44,11 @@ public class ReservationController {
         } catch (BasicException e) {
             log.error("예약 생성 실패: {}", e.getMessage());
             // BasicException의 ErrorCode에 따라 적절한 HTTP 상태 코드와 메시지 반환
-            ReservationCreateResDto errorResponse = new ReservationCreateResDto(null, e.getMessage(), false);
+            ReservationCreateResDto errorResponse = new ReservationCreateResDto(null,null, e.getMessage(), false);
             return ResponseEntity.status(500).body(errorResponse);
         } catch (Exception e) {
             log.error("알 수 없는 예약 생성 오류 발생: {}", e.getMessage(), e);
-            ReservationCreateResDto errorResponse = new ReservationCreateResDto(null, "서버 오류로 예약 생성에 실패했습니다.", false);
+            ReservationCreateResDto errorResponse = new ReservationCreateResDto(null,null, "서버 오류로 예약 생성에 실패했습니다.", false);
             return ResponseEntity.status(500).body(errorResponse);
         }
     }
@@ -56,15 +56,15 @@ public class ReservationController {
     /**
      *  사장이 예약에 대해 승인 할때 메서드
      */
-    @PostMapping("/approve")
+    @PostMapping("/owner/approve")
     public ResponseEntity<String> approveReservation(
             @AuthenticationPrincipal CustomUserDetails principal,
             @RequestBody OwnerApprovalReqDto request) {
 
-        if (!principal.getUser().getRole().equals("ROLE_ADMIN")) { // ✅ 권한 검증 로직
-            log.warn("권한 없는 사용자 '{}'가 예약 승인/거절을 시도했습니다.", principal.getUsername());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("예약 상태 변경 권한이 없습니다.");
-        }
+//        if (!principal.getUser().getRole().equals("ROLE_OWNER")) { // ✅ 권한 검증 로직
+//            log.warn("권한 없는 사용자 '{}'가 예약 승인/거절을 시도했습니다.", principal.getUsername());
+//            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("예약 상태 변경 권한이 없습니다.");
+//        }
 
         try {
             reservationService.updateReservationStatus(

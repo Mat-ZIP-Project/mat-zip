@@ -11,6 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ReservationCreateResDto {
     private Long reservationId;
+    private String reservationName;
     private String message;
     private boolean success;
 }

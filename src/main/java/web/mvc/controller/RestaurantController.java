@@ -2,9 +2,12 @@ package web.mvc.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import web.mvc.domain.User;
 import web.mvc.dto.RestaurantListResponseDTO;
 import web.mvc.dto.RestaurantDetailDTO;
+import web.mvc.security.CustomUserDetails;
 import web.mvc.service.RestaurantService;
 
 import java.util.List;
@@ -46,9 +49,9 @@ public class RestaurantController {
      * 찜 등록
      * @param restaurantId
      */
-    @PostMapping("/{restaurantId}/like")
-    public ResponseEntity<Void> likeRestaurant(@PathVariable Long restaurantId) {
-        restaurantService.likeRestaurant(restaurantId);
+    @PostMapping("/like/{restaurantId}")
+    public ResponseEntity<Void> likeRestaurant(@PathVariable Long restaurantId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        restaurantService.toggleLikeRestaurant(userDetails.getUser().getId(), restaurantId);
         return ResponseEntity.ok().build();
     }
 
@@ -56,9 +59,20 @@ public class RestaurantController {
      * 찜 취소
      * @param restaurantId
      */
-    @DeleteMapping("/{restaurantId}/like")
-    public ResponseEntity<Void> unlikeRestaurant(@PathVariable Long restaurantId) {
-        restaurantService.unlikeRestaurant(restaurantId);
+    @DeleteMapping("/like/{restaurantId}")
+    public ResponseEntity<Void> unlikeRestaurant(@PathVariable Long restaurantId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        restaurantService.toggleLikeRestaurant(userDetails.getUser().getId(), restaurantId);
         return ResponseEntity.ok().build();
+    }
+    /**
+     * 식당 검색
+     * @param keyword
+     */
+    @GetMapping("/search")
+    public ResponseEntity<List<RestaurantListResponseDTO>> searchRestaurants(
+            @RequestParam String keyword
+    ) {
+        List<RestaurantListResponseDTO> result = restaurantService.searchRestaurantsByKeyword(keyword);
+        return ResponseEntity.ok(result);
     }
 }

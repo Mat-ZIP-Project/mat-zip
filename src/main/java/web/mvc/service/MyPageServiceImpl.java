@@ -3,15 +3,13 @@ package web.mvc.service;
 import com.siot.IamportRestClient.exception.IamportResponseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import web.mvc.domain.*;
-import web.mvc.dto.ReservationDetailDto;
+import web.mvc.dto.*;
 import web.mvc.exception.BasicException;
 import web.mvc.exception.ErrorCode;
 import web.mvc.repository.*;
-import web.mvc.util.Enums;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -19,6 +17,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -31,10 +30,15 @@ public class MyPageServiceImpl implements MyPageService {
     private final UserRepository userRepository;
     private final ReservationRepository reservationRepository;
     private final ReviewRepository reviewRepository;
+    private final MeetingRepository meetingRepository;
+    private final MeetupReviewRepository meetupReviewRepository;
+    private final MeetupParticipantRepository meetupParticipantRepository;
+
     private final PaymentService paymentService;
     // 모임 rep 주입 필요
     private final ReservationPaymentRepository reservationPaymentRepository;
     private final PointRepository pointRepository;
+    private final NotificationRepository notificationRepository;
 
     /**
      *  사용자 전체 예약 내역 조회
@@ -43,26 +47,24 @@ public class MyPageServiceImpl implements MyPageService {
     @Transactional(readOnly = true)
     public List<ReservationDetailDto> getUserReservations(Long id) throws BasicException {
 
-        List<Reservation> reservations = reservationRepository.findByUserIdAndStatus(id, Enums.ReservationStatus.APPROVED.name());
+//        List<Reservation> reservations = reservationRepository.findByUserIdAndStatusIsNot(id, "대기중");
 
+        List<Reservation> reservations = reservationRepository.findByUserIdAndStatusIn(id, Arrays.asList("예약 완료", "예약 거절"));
         // 조회된 예약 리스트를 ReservationDetailDto로 변환
         return reservations.stream()
                 .map(reservation -> {
                     String paymentStatus;
                     Optional<ReservationPayment> paymentOpt = reservationPaymentRepository.findByReservation(reservation);
-                    if (paymentOpt.isPresent()) {
-                        // 결제 정보가 존재하면 해당 결제 상태를 사용
-                        paymentStatus = String.valueOf(paymentOpt.get().getStatus());
-                    } else {
-                        // 예약이 'CONFIRMED' 상태로 조회되었으므로, 결제 정보가 명시적으로 없어도
-                        // 논리적으로는 결제 완료된 것으로 간주 (혹은 외부 시스템에서 처리되었거나 정보 누락)
-                        paymentStatus = "결제 완료 (정보 없음)";
+
+                    if (paymentOpt.isEmpty()) {
+                        return null;
                     }
+                    paymentStatus = paymentOpt.get().getStatus();
                     return ReservationDetailDto.builder()
                             .reservationId(reservation.getReservationId())
                             .restaurantName(reservation.getRestaurant() != null ? reservation.getRestaurant().getRestaurantName() : "알 수 없음")
-                            .date(LocalDateTime.parse(reservation.getDate()))
-                            .time(LocalDateTime.parse(reservation.getTime()))
+                            .date(LocalDate.parse(reservation.getDate()))
+                            .time(LocalTime.parse(reservation.getTime()))
                             .numPeople(reservation.getNumPeople())
                             .status(reservation.getStatus())
                             .ownerNotes(reservation.getOwnerNotes())
@@ -70,6 +72,7 @@ public class MyPageServiceImpl implements MyPageService {
                             .paymentStatus(paymentStatus)
                             .build();
                 })
+                .filter(dto -> dto != null)
                 .collect(Collectors.toList());
     }
 
@@ -78,10 +81,126 @@ public class MyPageServiceImpl implements MyPageService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<Review> getUserReviews(Long id) throws BasicException {
+    public List<ReviewDetailDto> getUserReviews(Long id) throws BasicException {
+        try {
+            List<Review> reviews = reviewRepository.findByUserId(id);
 
-        List<Review> reviews = reviewRepository.findByUserId(id);
-        return reviews;
+            // Review 리스트를 ReviewDetailDto 리스트로 변환
+            return reviews.stream()
+                    .map(review -> ReviewDetailDto.builder()
+                            .reviewId(review.getReviewId())
+                            .content(review.getContent())
+                            .rating(review.getRating())
+                            .reviewedAt(review.getReviewedAt())
+                            .visitDate(review.getVisitDate())
+                            .restaurantName(review.getRestaurant() != null ? review.getRestaurant().getRestaurantName() : "알 수 없음")
+                            .build())
+                    .collect(Collectors.toList());
+        } catch (BasicException e) {
+            throw new BasicException(ErrorCode.RESERVATION_NOT_FOUND);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ParticipantDetailDto> getParticipatedMeetings(Long id) throws BasicException {
+        try {
+            List<MeetupParticipant> participants = meetupParticipantRepository.findByUser_Id(id);
+
+            return participants.stream()
+                    .map(participant -> {
+                        Meeting meeting = participant.getMeeting(); // Meeting 객체 가져오기
+
+                        // Meeting 객체가 null일 경우를 대비하여 기본값 설정
+                        Long meetingId = (meeting != null) ? meeting.getMeetingId() : null;
+                        String title = (meeting != null) ? meeting.getTitle() : "알 수 없는 모임";
+                        String description = (meeting != null) ? meeting.getDescription() : "";
+                        Integer currentParticipants = (meeting != null) ? meeting.getCurrentParticipants() : 0;
+                        LocalDateTime meetingTime = (meeting != null) ? meeting.getMeetingTime() : null;
+                        int maxParticipants = (meeting != null) ? meeting.getMaxParticipants() : 0; // int 타입이므로 0으로 기본값 설정
+
+                        // Restaurant 이름 가져오기 (Meeting -> Restaurant 접근)
+                        String restaurantName = (meeting != null && meeting.getRestaurant() != null)
+                                ? meeting.getRestaurant().getRestaurantName()
+                                : "알 수 없는 식당";
+
+                        return ParticipantDetailDto.builder()
+                                .joinId(participant.getJoinId())
+                                .joinStatus(participant.getJoinStatus())
+                                .joinedAt(participant.getJoinedAt())
+                                // Meeting 정보 매핑 (새로운 필드명 반영)
+                                .meetingId(meetingId)
+                                .title(title)
+                                .description(description)
+                                .currentParticipants(currentParticipants)
+                                .meetingTime(meetingTime)
+                                // Restaurant 정보 매핑
+                                .restaurantName(restaurantName)
+                                .build();
+                    })
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            System.err.println("참여한 모임 내역 조회 중 오류 발생: " + e.getMessage());
+            throw new BasicException(ErrorCode.NO_AUTH_LOGS);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MeetingReviewDetailDto> getMeetingReviews(Long id) throws BasicException {
+        try {
+            List<MeetupReview> meetupReviewAll = meetupReviewRepository.findMeetingReviewsById(id);
+
+            // MeetupReview 엔티티 목록을 MeetingReviewDetailDto 목록으로 변환
+            return meetupReviewAll.stream().map(review -> {
+                // MeetupReview -> MeetupParticipant -> Meeting -> Restaurant
+                MeetupParticipant participant = review.getMeetupParticipant();
+                Meeting meeting = (participant != null) ? participant.getMeeting() : null;
+                Restaurant restaurant = (meeting != null) ? meeting.getRestaurant() : null;
+
+                return MeetingReviewDetailDto.builder()
+                        .meetupReviewId(review.getMeetupReviewId()) // 엔티티의 필드명과 일치
+                        .reviewContent(review.getReviewContent()) // 엔티티의 필드명과 일치
+                        .imageUrl(review.getImageUrl()) // 이미지 URL 추가
+                        .createdAt(review.getCreatedAt()) // 엔티티의 필드명과 일치
+
+                        // Meeting 정보
+                        .meetingId((meeting != null) ? meeting.getMeetingId() : null)
+                        .meetingTitle((meeting != null) ? meeting.getTitle() : "알 수 없는 모임")
+                        .restaurantName((restaurant != null) ? restaurant.getRestaurantName() : "알 수 없는 식당")
+                        .build();
+            }).collect(Collectors.toList());
+        } catch (BasicException e) {
+            throw new BasicException(ErrorCode.NO_AUTH_LOGS);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CreatedMeetingDetailDto> getMeeting(Long id) throws BasicException {
+        try {
+            List<Meeting> meetingAll = meetingRepository.findByUser_Id(id);
+
+            return meetingAll.stream().map(meeting -> {
+                // Restaurant 정보는 Meeting 엔티티를 통해 접근
+                Restaurant restaurant = meeting.getRestaurant();
+
+                return CreatedMeetingDetailDto.builder()
+                        .meetingId(meeting.getMeetingId())
+                        .title(meeting.getTitle())
+                        .description(meeting.getDescription())
+                        .maxParticipants(meeting.getMaxParticipants())
+                        .currentParticipants(meeting.getCurrentParticipants())
+                        .meetingTime(meeting.getMeetingTime())
+                        .createdAt(meeting.getCreatedAt())
+                        .restaurantId((restaurant != null) ? restaurant.getRestaurantId() : null)
+                        .restaurantName((restaurant != null) ? restaurant.getRestaurantName() : "알 수 없는 식당")
+                        .build();
+            }).collect(Collectors.toList());
+        } catch (BasicException e) {
+            throw new BasicException(ErrorCode.NO_AUTH_LOGS);
+        }
     }
 
     /**
@@ -100,8 +219,8 @@ public class MyPageServiceImpl implements MyPageService {
         // 예약 상태 확인 (취소 가능한지)
         String currentStatus = reservation.getStatus();
         // APPROVED, PENDING_APPROVAL 상태만 취소가 가능함.
-        if (!(currentStatus.equals(Enums.ReservationStatus.APPROVED.name())
-        || currentStatus.equals(Enums.ReservationStatus.PENDING_APPROVAL.name()))) {
+        if (!(currentStatus.equals("예약 완료")
+        || currentStatus.equals("결제 후 사장 승인 대기"))) {
             throw new BasicException(ErrorCode.INVALID_RESERVATION_STATUS);
         }
         // 시간 기반 취소 가능여부
@@ -127,7 +246,7 @@ public class MyPageServiceImpl implements MyPageService {
         if (paymentOpt.isPresent()) {
             ReservationPayment payment = paymentOpt.get();
             // PAID 상태의 결제만 환불 시도
-            if (payment.getStatus().equals(Enums.PaymentStatus.PAID.name())) {
+            if (payment.getStatus().equals("결제 완료")) {
                 try {
                     paymentService.cancelPayment(
                             payment.getImpUid(),
@@ -136,7 +255,7 @@ public class MyPageServiceImpl implements MyPageService {
                     );
 
                     // 환불 성공 시 결제 상태 업데이트 (PaymentService에서도 하지만 여기서 한 번 더 명시적으로)
-                    payment.setStatus(Enums.PaymentStatus.valueOf(Enums.PaymentStatus.CANCELLED.name()));
+                    payment.setStatus("결제 취소");
                     reservationPaymentRepository.save(payment);
                     log.info("예약 ID '{}' 결제 ID '{}'에 대한 환불 성공 및 결제 상태 '{}'로 업데이트.", reservationId, payment.getPaymentId(), payment.getStatus());
                     finalPaymentStatus = String.valueOf(payment.getStatus()); // 실제 환불된 상태
@@ -157,7 +276,7 @@ public class MyPageServiceImpl implements MyPageService {
         }
 
         // 예약 상태 변경
-        reservation.setStatus(Enums.ReservationStatus.CANCELLED.name());
+        reservation.setStatus("예약 취소");
         User user = reservation.getUser();
 
         // ✅ 포인트 회수 로직 추가 (취소 시)
@@ -218,4 +337,108 @@ public class MyPageServiceImpl implements MyPageService {
             log.info("등급이 변경되지 않았습니다.");
         }
     }
+
+    /**
+     *  사용자의 포인트 잔액을 조회
+     */
+    @Override
+    public Integer getUserPointBalance(Long id) throws BasicException {
+        try {
+            Optional<User> userPoint = userRepository.findById(id);
+
+            if (userPoint.isPresent()) {
+                User user = userPoint.get();
+                return user.getPointBalance();
+            } else {
+                throw new BasicException(ErrorCode.USER_NOT_FOUND);
+            }
+        } catch (BasicException e) {
+            throw new BasicException(ErrorCode.USER_NOT_FOUND);
+        }
+    }
+
+    @Override
+    public List<Point> getUserPointHistory(Long id) throws BasicException {
+        try {
+            List<Point> pointHistory;
+            pointHistory = pointRepository.findByUserId(id);
+            return pointHistory;
+        } catch (BasicException e) {
+            throw new BasicException(ErrorCode.USER_NOT_FOUND);
+        }
+    }
+
+    /**
+     *  사용자의 모든 알림을 조회
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<NotificationDetailDto> getUserNotification(Long id) throws BasicException {
+        try {
+            List<Notification> notifications = notificationRepository.findByUserId(id);
+            // 조회된 Notification 엔티티 리스트를 NotificationDetailDto 리스트로 변환합니다.
+            return notifications.stream()
+                    .map(notification -> {
+                        Long reservationId = null;
+                        String restaurantName = "알 수 없음"; // 기본값 설정
+
+                        // Notification 엔티티의 reservation 필드에 접근합니다. (EAGER 로딩)
+                        Reservation reservation = notification.getReservation();
+                        if (reservation != null) {
+                            reservationId = reservation.getReservationId();
+
+                            // Reservation 엔티티의 restaurant 필드에 접근합니다. (일반적으로 EAGER 로딩)
+                            Restaurant restaurant = reservation.getRestaurant();
+                            if (restaurant != null) {
+                                restaurantName = restaurant.getRestaurantName();
+                            }
+                        }
+
+                        // NotificationDetailDto를 빌더 패턴으로 생성하여 반환합니다.
+                        return NotificationDetailDto.builder()
+                                .notificationId(notification.getNotificationId())
+                                .title(notification.getTitle())
+                                .body(notification.getBody())
+                                .isRead(notification.getIsRead())
+                                .createdAt(notification.getCreatedAt())
+                                .reservationId(reservationId)
+                                .restaurantName(restaurantName)
+                                .build();
+                    })
+                    .collect(Collectors.toList());
+        } catch (BasicException e) {
+            throw new BasicException(ErrorCode.NO_AUTH_LOGS);
+        }
+    }
+
+    /**
+     *  사용자의 모든 알림을 읽음 상태로 변경
+     */
+    @Override
+    public void markNotificationAsRead(Long id) throws BasicException {
+        try {
+            List<Notification> unreadNotification = notificationRepository.findByUserIdAndIsRead(id, false);
+
+            if (unreadNotification.isEmpty()) {
+                return;
+            }
+
+            for (Notification notification : unreadNotification) {
+                notification.setIsRead(true);
+            }
+            notificationRepository.saveAll(unreadNotification);
+        } catch (BasicException e) {
+            throw new BasicException(ErrorCode.NO_AUTH_LOGS);
+        }
+    }
+
+    @Override
+    public int getUnreadNotificationCount(Long id) throws BasicException {
+        try {
+            return notificationRepository.countByUserIdAndIsRead(id, false);
+        } catch (BasicException e) {
+            throw new BasicException(ErrorCode.NO_AUTH_LOGS);
+        }
+    }
+
 }

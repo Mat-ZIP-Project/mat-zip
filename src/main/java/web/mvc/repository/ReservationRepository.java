@@ -16,6 +16,10 @@ public interface ReservationRepository extends JpaRepository<Reservation,Long> {
     // 특정 사용자의 모든 예약 조회
     List<Reservation> findByUserIdAndStatus(Long id, String status);
 
+    List<Reservation> findByUserIdAndStatusIn(Long id, List<String> status);
+
+    List<Reservation> findByUserIdAndStatusIsNot(Long id, String status);
+
     // 특정 식당의 예약 조회
     Optional<Reservation> findByReservationId(Long reservationId);
     // 기존 메서드 (예약 존재 여부만 확인 가능)
@@ -26,7 +30,7 @@ public interface ReservationRepository extends JpaRepository<Reservation,Long> {
      *  예약 알림을 보낼 대상을 조회하는 메서드
      *  상태가 'approved'이고, 아직 알림을 보내지 않은.
      *  현재 날짜에 해당하는 모든 예약 찾는다.
-     *
+     *  스프링 스케줄러 필요한 것
      */
     @Query("SELECT r FROM Reservation r " +
             "WHERE r.status = 'APPROVED' " +

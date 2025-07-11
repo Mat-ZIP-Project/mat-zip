@@ -18,12 +18,15 @@ public interface RestaurantService {
     RestaurantDetailDTO getRestaurantDetail(Long restaurantId);
 
     /**
-     * 식당 찜 등록
+     * 식당 찜 등록 및 취소 (toggle)
      */
-    void likeRestaurant(Long restaurantId);
+    void toggleLikeRestaurant(Long userId, Long restaurantId);
 
     /**
      * 식당 찜 취소
      */
-    void unlikeRestaurant(Long restaurantId);
+//    void unlikeRestaurant(Long userId, Long restaurantId);
+
+    List<RestaurantListResponseDTO> searchRestaurantsByKeyword(String keyword);
+
 }

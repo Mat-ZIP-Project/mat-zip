@@ -19,6 +19,7 @@ public class RestaurantDetailDTO {
     private String descript;
 
     private double avgRating;
+    private double avgRatingLocal;
     private LocalTime openTime;
     private LocalTime closeTime;
 

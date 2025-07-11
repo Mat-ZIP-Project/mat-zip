@@ -9,7 +9,10 @@ import java.util.List;
 
 public interface PointRepository extends JpaRepository<Point, Long> {
 
-    List<Point> findByUserAndPointLog(User user, Point point);
+    /**
+     *  사용자에 해당하는 포인트 내역 조회
+     */
+    List<Point> findByUserId(Long userId);
 
     /**
      *  사용자의 모든 포인트 기록 중 가장 높은 pointLog 값을 조회
