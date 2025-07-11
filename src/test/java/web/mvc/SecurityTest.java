@@ -93,7 +93,7 @@ public class SecurityTest {
 
         userRepository.save(
                 User.builder()
-                        .userId("owner1")
+                        .userId("owner")
                         .password(encPwd)
                         .name("사장")
                         .phone("010-1441-2222")

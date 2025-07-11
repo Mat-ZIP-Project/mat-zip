@@ -10,7 +10,6 @@ import web.mvc.dto.*;
 import web.mvc.exception.BasicException;
 import web.mvc.exception.ErrorCode;
 import web.mvc.repository.*;
-import web.mvc.util.Enums;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -18,6 +17,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -47,8 +47,9 @@ public class MyPageServiceImpl implements MyPageService {
     @Transactional(readOnly = true)
     public List<ReservationDetailDto> getUserReservations(Long id) throws BasicException {
 
-        List<Reservation> reservations = reservationRepository.findByUserIdAndStatusIsNot(id, Enums.ReservationStatus.PENDING.name());
+//        List<Reservation> reservations = reservationRepository.findByUserIdAndStatusIsNot(id, "대기중");
 
+        List<Reservation> reservations = reservationRepository.findByUserIdAndStatusIn(id, Arrays.asList("예약 완료", "예약 거절"));
         // 조회된 예약 리스트를 ReservationDetailDto로 변환
         return reservations.stream()
                 .map(reservation -> {
@@ -58,7 +59,7 @@ public class MyPageServiceImpl implements MyPageService {
                     if (paymentOpt.isEmpty()) {
                         return null;
                     }
-                    paymentStatus = String.valueOf(paymentOpt.get().getStatus());
+                    paymentStatus = paymentOpt.get().getStatus();
                     return ReservationDetailDto.builder()
                             .reservationId(reservation.getReservationId())
                             .restaurantName(reservation.getRestaurant() != null ? reservation.getRestaurant().getRestaurantName() : "알 수 없음")
@@ -218,8 +219,8 @@ public class MyPageServiceImpl implements MyPageService {
         // 예약 상태 확인 (취소 가능한지)
         String currentStatus = reservation.getStatus();
         // APPROVED, PENDING_APPROVAL 상태만 취소가 가능함.
-        if (!(currentStatus.equals(Enums.ReservationStatus.APPROVED.name())
-        || currentStatus.equals(Enums.ReservationStatus.PENDING_APPROVAL.name()))) {
+        if (!(currentStatus.equals("예약 완료")
+        || currentStatus.equals("결제 후 사장 승인 대기"))) {
             throw new BasicException(ErrorCode.INVALID_RESERVATION_STATUS);
         }
         // 시간 기반 취소 가능여부
@@ -245,7 +246,7 @@ public class MyPageServiceImpl implements MyPageService {
         if (paymentOpt.isPresent()) {
             ReservationPayment payment = paymentOpt.get();
             // PAID 상태의 결제만 환불 시도
-            if (payment.getStatus().equals(Enums.PaymentStatus.PAID.name())) {
+            if (payment.getStatus().equals("결제 완료")) {
                 try {
                     paymentService.cancelPayment(
                             payment.getImpUid(),
@@ -254,7 +255,7 @@ public class MyPageServiceImpl implements MyPageService {
                     );
 
                     // 환불 성공 시 결제 상태 업데이트 (PaymentService에서도 하지만 여기서 한 번 더 명시적으로)
-                    payment.setStatus(Enums.PaymentStatus.valueOf(Enums.PaymentStatus.CANCELLED.name()));
+                    payment.setStatus("결제 취소");
                     reservationPaymentRepository.save(payment);
                     log.info("예약 ID '{}' 결제 ID '{}'에 대한 환불 성공 및 결제 상태 '{}'로 업데이트.", reservationId, payment.getPaymentId(), payment.getStatus());
                     finalPaymentStatus = String.valueOf(payment.getStatus()); // 실제 환불된 상태
@@ -275,7 +276,7 @@ public class MyPageServiceImpl implements MyPageService {
         }
 
         // 예약 상태 변경
-        reservation.setStatus(Enums.ReservationStatus.CANCELLED.name());
+        reservation.setStatus("예약 취소");
         User user = reservation.getUser();
 
         // ✅ 포인트 회수 로직 추가 (취소 시)
@@ -372,10 +373,39 @@ public class MyPageServiceImpl implements MyPageService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<Notification> getUserNotification(Long id) throws BasicException {
+    public List<NotificationDetailDto> getUserNotification(Long id) throws BasicException {
         try {
-            List<Notification> notificationAll = notificationRepository.findByUserId(id);
-            return notificationAll;
+            List<Notification> notifications = notificationRepository.findByUserId(id);
+            // 조회된 Notification 엔티티 리스트를 NotificationDetailDto 리스트로 변환합니다.
+            return notifications.stream()
+                    .map(notification -> {
+                        Long reservationId = null;
+                        String restaurantName = "알 수 없음"; // 기본값 설정
+
+                        // Notification 엔티티의 reservation 필드에 접근합니다. (EAGER 로딩)
+                        Reservation reservation = notification.getReservation();
+                        if (reservation != null) {
+                            reservationId = reservation.getReservationId();
+
+                            // Reservation 엔티티의 restaurant 필드에 접근합니다. (일반적으로 EAGER 로딩)
+                            Restaurant restaurant = reservation.getRestaurant();
+                            if (restaurant != null) {
+                                restaurantName = restaurant.getRestaurantName();
+                            }
+                        }
+
+                        // NotificationDetailDto를 빌더 패턴으로 생성하여 반환합니다.
+                        return NotificationDetailDto.builder()
+                                .notificationId(notification.getNotificationId())
+                                .title(notification.getTitle())
+                                .body(notification.getBody())
+                                .isRead(notification.getIsRead())
+                                .createdAt(notification.getCreatedAt())
+                                .reservationId(reservationId)
+                                .restaurantName(restaurantName)
+                                .build();
+                    })
+                    .collect(Collectors.toList());
         } catch (BasicException e) {
             throw new BasicException(ErrorCode.NO_AUTH_LOGS);
         }
@@ -389,10 +419,23 @@ public class MyPageServiceImpl implements MyPageService {
         try {
             List<Notification> unreadNotification = notificationRepository.findByUserIdAndIsRead(id, false);
 
+            if (unreadNotification.isEmpty()) {
+                return;
+            }
+
             for (Notification notification : unreadNotification) {
                 notification.setIsRead(true);
             }
             notificationRepository.saveAll(unreadNotification);
+        } catch (BasicException e) {
+            throw new BasicException(ErrorCode.NO_AUTH_LOGS);
+        }
+    }
+
+    @Override
+    public int getUnreadNotificationCount(Long id) throws BasicException {
+        try {
+            return notificationRepository.countByUserIdAndIsRead(id, false);
         } catch (BasicException e) {
             throw new BasicException(ErrorCode.NO_AUTH_LOGS);
         }

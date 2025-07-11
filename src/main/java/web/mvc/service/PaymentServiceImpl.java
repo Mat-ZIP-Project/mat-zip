@@ -68,7 +68,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         // 중복 사전 검증 방지
-        Optional<ReservationPayment> existingPayment = reservationPaymentRepository.findByReservationAndStatus(reservation, Enums.PaymentStatus.READY);
+        Optional<ReservationPayment> existingPayment = reservationPaymentRepository.findByReservationAndStatus(reservation, "ready");
         if (existingPayment.isPresent()) {
             throw new BasicException(ErrorCode.PAYMENT_ALREADY_PROCESSED);
         }
@@ -98,7 +98,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .originalAmount(originalAmount) // 초기 금액 저장
                 .discountAmount(discountAmount) // 할인 금액 저장
                 .finalPaymentAmount(finalPaymentAmount) // 총 결제 금액 저장
-                .status(Enums.PaymentStatus.READY)
+                .status("ready")
                 .user(user)
                 .merchantUid(merchantUid) // Payment 엔티티의 DB 컬럼명이 portone_merchant_uid라면 이렇게 사용하는 것이 일관적입니다. Payment 엔티티의 필드명을 확인하세요.
                 .build();
@@ -184,7 +184,7 @@ public class PaymentServiceImpl implements PaymentService {
                 });
 
         // 2. 이미 처리된 결제인지 확인 (중복 콜백 방지)
-        if (payment.getStatus() == Enums.PaymentStatus.PAID) {
+        if (payment.getStatus().equals("paid")) {
             log.warn("이미 처리된 결제입니다: impUid={}, merchantUid={}", impUid, merchantUid);
             throw new BasicException(ErrorCode.PAYMENT_ALREADY_PROCESSED);
         }
@@ -196,9 +196,9 @@ public class PaymentServiceImpl implements PaymentService {
         Reservation reservation = payment.getReservation();
         if (reservation != null) {
             // PEDING_APPROVAL 결제 후 사장 승인 대기 중 상태
-            reservation.setStatus("PENDING_APPROVAL"); // Reservation 엔티티의 status 타입에 맞게 설정
+            reservation.setStatus("결제 후 사장 승인 대기"); // Reservation 엔티티의 status 타입에 맞게 설정
             reservationRepository.save(reservation);
-            log.info("Reservation 엔티티 상태 업데이트 (PENDING_APPROVAL): reservationId={}", reservation.getReservationId());
+            log.info("Reservation 엔티티 상태 업데이트 (결제 후 사장 승인 대기): reservationId={}", reservation.getReservationId());
         }
 
         // 응답 DTO를 PaymentCompleteResDto로 반환
@@ -206,7 +206,7 @@ public class PaymentServiceImpl implements PaymentService {
         response.setSuccess(true);
         response.setMerchantUid(merchantUid);
         response.setImpUid(impUid);
-        response.setStatus(Enums.PaymentStatus.PAID.name()); // Enum의 이름을 String으로 설정
+        response.setStatus("paid"); // Enum의 이름을 String으로 설정
         response.setMessage("결제가 성공적으로 처리되었습니다.");
         log.info("결제 및 예약 정보 DB 저장 완료: impUid={}, merchantUid={}", impUid, merchantUid);
         return response;
@@ -223,7 +223,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         if (!portonePaymentData.getStatus().equals("paid")) {
             log.warn("결제 상태 불일치 (paid 아님): impUid={}, status={}", portonePaymentData.getImpUid(), portonePaymentData.getStatus());
-            payment.setStatus(Enums.PaymentStatus.FAILED);
+            payment.setStatus("canceled");
             reservationPaymentRepository.save(payment);
             throw new BasicException(ErrorCode.PAYMENT_NOT_PAID);
         }
@@ -232,7 +232,7 @@ public class PaymentServiceImpl implements PaymentService {
         // Payment 엔티티의 필드명이 'portoneMerchantUid'라고 가정합니다.
         if (!portonePaymentData.getMerchantUid().equals(payment.getMerchantUid())) { // payment.getPortoneMerchantUid()를 사용
             log.error("Merchant UID 불일치: PortOne={}, DB={}", portonePaymentData.getMerchantUid(), payment.getMerchantUid());
-            payment.setStatus(Enums.PaymentStatus.FAILED);
+            payment.setStatus("canceled");
             reservationPaymentRepository.save(payment);
             throw new BasicException(ErrorCode.PAYMENT_MERCHANT_UID_MISMATCH);
         }
@@ -240,7 +240,7 @@ public class PaymentServiceImpl implements PaymentService {
         // 금액 비교는 BigDecimal.compareTo()를 사용하여 정확하게 수행
         if (portonePaymentData.getAmount().compareTo(new BigDecimal(payment.getFinalPaymentAmount())) != 0) {
             log.error("결제 금액 불일치: PortOne={}, Expected={}", portonePaymentData.getAmount(), payment.getFinalPaymentAmount());
-            payment.setStatus(Enums.PaymentStatus.FAILED);
+            payment.setStatus("canceled");
             reservationPaymentRepository.save(payment);
             throw new BasicException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
@@ -248,7 +248,7 @@ public class PaymentServiceImpl implements PaymentService {
         // PortOne에서 받은 impUid를 Payment 엔티티에 저장 (DB 컬럼이 portone_imp_uid라면 엔티티 필드도 portoneImpUid가 적합)
         payment.setImpUid(portonePaymentData.getImpUid()); // Payment 엔티티에 setPortoneImpUid가 있다고 가정
         payment.setPaidAt(LocalDateTime.now()); // 결제 완료 시간 설정
-        payment.setStatus(Enums.PaymentStatus.PAID); // 상태를 PAID로 변경
+        payment.setStatus("paid"); // 상태를 결제완료로 변경
         reservationPaymentRepository.save(payment); // 업데이트된 Payment 엔티티 저장
 
         log.info("결제 유효성 검증 성공 및 Payment 엔티티 업데이트 완료: paymentId={}, impUid={}", payment.getPaymentId(), portonePaymentData.getImpUid());
@@ -277,7 +277,7 @@ public class PaymentServiceImpl implements PaymentService {
                 });
 
         // 3. 이미 취소된 결제인지 확인
-        if (localPayment.getStatus() == Enums.PaymentStatus.CANCELLED) {
+        if (localPayment.getStatus().equals("canceled")) {
             log.warn("이미 취소된 결제입니다: impUid={}", impUid);
             return targetPayment;
         }
@@ -296,7 +296,7 @@ public class PaymentServiceImpl implements PaymentService {
         Payment canceledIamportPayment = cancelResponse.getResponse();
 
         // 7. DB의 결제 상태 업데이트 ( PAID -> CANCELLED )
-        localPayment.setStatus(Enums.PaymentStatus.CANCELLED);
+        localPayment.setStatus("canceled");
         localPayment.setPaidAt(LocalDateTime.now());
         reservationPaymentRepository.save(localPayment);
         log.info("DB의 ReservationPayment 상태를 CANCELLED로 업데이트 완료: impUid={}", impUid);
@@ -304,9 +304,9 @@ public class PaymentServiceImpl implements PaymentService {
          // 8. 관련된 예약 상태 업데이트
         Reservation reservation = localPayment.getReservation();
         if (reservation != null &&
-                (!reservation.getStatus().equals(Enums.ReservationStatus.APPROVED.name()) &&
-                        !reservation.getStatus().equals(Enums.ReservationStatus.REJECTED.name()))) {
-            reservation.setStatus(Enums.ReservationStatus.CANCELLED.name());
+                (!reservation.getStatus().equals("예약 완료") &&
+                        !reservation.getStatus().equals("예약 거절"))) {
+            reservation.setStatus("예약 취소");
             reservationRepository.save(reservation);
             log.info("Reservation 엔티티 상태 업데이트 (CANCELLED): reservationId={}", reservation.getReservationId());
         }

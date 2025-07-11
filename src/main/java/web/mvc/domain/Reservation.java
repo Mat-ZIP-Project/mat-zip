@@ -71,7 +71,7 @@ public class Reservation {
     @Column(name = "reservation_time", nullable = false, length = 20)
     private String time;
 
-    // 예약 상태 ( 예약완료, 대기, 예약실패 )
+    // 예약 상태 ( 대기중, 결제 후 사장 승인 대기, 예약 완료, 예약 거절, 예약 취소)
     private String status;
     // 예약 신청 일
     @Column(name = "created_at")
