@@ -148,4 +148,35 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     }
 
+    @Override
+    public List<RestaurantListResponseDTO> searchRestaurantsByKeyword(String keyword) {
+        List<Restaurant> restaurants = restaurantRepository.findByRestaurantNameContaining(keyword);
+
+        return restaurants.stream()
+                .map(restaurant -> {
+                    int likeCount = userLikeRepository.countByRestaurant(restaurant);
+                    int reviewCount = 0;       // TODO
+                    int reservationCount = 0;  // TODO
+
+                    return RestaurantListResponseDTO.builder()
+                            .restaurantId(restaurant.getRestaurantId())
+                            .restaurantName(restaurant.getRestaurantName())
+                            .address(restaurant.getAddress())
+                            .regionSido(restaurant.getRegionSido())
+                            .regionSigungu(restaurant.getRegionSigungu())
+                            .category(restaurant.getCategory())
+                            .avgRating(restaurant.getAvgRating())
+                            .likeCount(likeCount)
+                            .reviewCount(reviewCount)
+                            .reservationCount(reservationCount)
+                            .thumbnailImageUrl(
+                                    restaurantImageRepository.findAllByRestaurant(restaurant).stream()
+                                            .map(RestaurantImage::getImageUrl)
+                                            .findFirst()
+                                            .orElse(null))
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
 }
