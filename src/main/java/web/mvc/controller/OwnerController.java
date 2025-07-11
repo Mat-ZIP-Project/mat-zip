@@ -7,10 +7,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import web.mvc.dto.MenuRequest;
-import web.mvc.dto.MenuResponse;
+import web.mvc.dto.*;
 import web.mvc.security.CustomUserDetails;
 import web.mvc.service.MenuService;
+import web.mvc.service.OwnerService;
+import web.mvc.service.RestaurantService;
 
 import java.util.List;
 
@@ -19,8 +20,88 @@ import java.util.List;
 @RequestMapping("/owner")
 @Slf4j
 public class OwnerController {
+    private final OwnerService ownerService;
     private final MenuService menuService;
 
+    /**
+     * 업주의 식당 정보 조회
+     * - 사업자번호, 이미지 목록 포함
+     */
+    @GetMapping("/restaurant")
+    public ResponseEntity<RestaurantInfoResponse> getRestaurantInfo(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String userId = userDetails.getUser().getUserId();
+        RestaurantInfoResponse response = ownerService.getRestaurantInfo(userId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 업주의 식당 기본 정보 수정
+     * - 주소, 전화번호, 설명, 영업시간, 최대 대기인원 수정
+     */
+    @PutMapping("/restaurant")
+    public ResponseEntity<RestaurantInfoResponse> updateRestaurantInfo(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody RestaurantUpdateRequest request) {
+        String userId = userDetails.getUser().getUserId();
+        RestaurantInfoResponse response = ownerService.updateRestaurantInfo(userId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 업주의 식당 이미지 목록 조회
+     * - 대표이미지 먼저 정렬
+     */
+    @GetMapping("/restaurant/images")
+    public ResponseEntity<List<RestaurantImageResponse>> getRestaurantImages(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String userId = userDetails.getUser().getUserId();
+        List<RestaurantImageResponse> images = ownerService.getRestaurantImages(userId);
+        return ResponseEntity.ok(images);
+    }
+
+    /**
+     * 업주의 식당 이미지 업로드
+     * - 최대 10개 제한
+     * - 첫 번째 이미지 자동 대표이미지 설정
+     */
+    @PostMapping("/restaurant/images")
+    public ResponseEntity<List<RestaurantImageResponse>> uploadRestaurantImages(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam("images") List<MultipartFile> images) {
+        String userId = userDetails.getUser().getUserId();
+        List<RestaurantImageResponse> responses = ownerService.uploadRestaurantImages(userId, images);
+        return ResponseEntity.ok(responses);
+    }
+
+    /**
+     * 업주의 식당 이미지 삭제
+     * - 대표이미지 삭제 시 자동 재설정
+     */
+    @DeleteMapping("/restaurant/images/{imageId}")
+    public ResponseEntity<Void> deleteRestaurantImage(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long imageId) {
+        String userId = userDetails.getUser().getUserId();
+        ownerService.deleteRestaurantImage(userId, imageId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 업주의 식당 대표이미지 설정
+     * - 기존 대표이미지 자동 해제
+     */
+    @PutMapping("/restaurant/images/{imageId}/main")
+    public ResponseEntity<Void> setMainImage(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long imageId) {
+        String userId = userDetails.getUser().getUserId();
+        ownerService.setMainImage(userId, imageId);
+        return ResponseEntity.ok().build();
+    }
+
+    ////////////////////////////////////////////////////////////
+    // 메뉴 관리 API
     /** 메뉴 목록 조회 */
     @GetMapping("/menu")
     public ResponseEntity<List<MenuResponse>> getMenus(

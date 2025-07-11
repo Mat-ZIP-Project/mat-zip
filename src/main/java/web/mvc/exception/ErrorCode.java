@@ -36,6 +36,7 @@ public enum ErrorCode { //enum은 'Enumeration' 의 약자로 열거, 목록 이
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED,"Invalid access token", "토큰이 만료되었습니다."),
     REFRESH_NOT_FOUND(HttpStatus.UNAUTHORIZED,"Invalid refresh token",  "refresh 토큰이 만료되었습니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND,"Not found userId", "사용자를 찾을 수 없습니다."),
+    OWNER_NOT_FOUND(HttpStatus.NOT_FOUND, "OWNER_NOT_FOUND", "식당 업주 정보를 찾을 수 없습니다"),
 
     // 현지인 인증 관련 예외처리
     FAILED_AUTH(HttpStatus.BAD_REQUEST, "Auth failed", "인증 실패입니다."),
@@ -82,7 +83,7 @@ public enum ErrorCode { //enum은 'Enumeration' 의 약자로 열거, 목록 이
 
     INVALID_RESERVATION_STATUS_TRANSITION(HttpStatus.BAD_REQUEST,"","현재 예약 상태에서 해당 상태로 변경할 수 없습니다."),
 
-    // 공통 오류
+    // 공통 예외처리
     FORBIDDEN(HttpStatus.FORBIDDEN, "FORBIDDEN", "권한이 없습니다."),
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "INVALID_INPUT", "INVALID_INPUT"),
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "잘못된 요청입니다."),
@@ -91,13 +92,16 @@ public enum ErrorCode { //enum은 'Enumeration' 의 약자로 열거, 목록 이
     NOT_FOUND(HttpStatus.NOT_FOUND,"NOT_FOUND", "요청한 리소스를 찾을 수 없습니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."),
 
-
     // Waiting 관련 에러코드 추가
     WAITING_ALREADY_EXISTS(HttpStatus.CONFLICT, "Waiting Exists", "이미 입장 대기 중인 웨이팅이 존재합니다."),
     WAITING_NOT_FOUND(HttpStatus.NOT_FOUND, "Waiting Not Found", "웨이팅 정보를 찾을 수 없습니다."),
     INVALID_STATUS_CHANGE(HttpStatus.BAD_REQUEST, "INVALID_STATUS_CHANGE", "웨이팅 상태가 변경할 수 없는 상황입니다."),
     NOT_EXPIRED_YET(HttpStatus.BAD_REQUEST, "NOT_EXPIRED_YET", "아직 15분이 다 경과하지 않았습니다."),
-    WAITING_STATUS_NOT_FOUND(HttpStatus.NOT_FOUND, "WaitingStatus Not Found", "waiting_status가 존재하지 않습니다.");
+    WAITING_STATUS_NOT_FOUND(HttpStatus.NOT_FOUND, "WaitingStatus Not Found", "waiting_status가 존재하지 않습니다."),
+
+    // AWS S3 이미지 업로드 관련 예외
+    IMAGE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "IMAGE_LIMIT_EXCEEDED", "이미지는 최대 10개까지 업로드 가능합니다"),
+    IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "IMAGE_NOT_FOUND", "이미지를 찾을 수 없습니다");
 
 
     private final HttpStatus httpStatus;

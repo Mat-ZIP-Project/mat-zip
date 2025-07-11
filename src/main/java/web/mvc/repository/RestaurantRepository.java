@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import web.mvc.domain.Menu;
+import web.mvc.domain.OwnerInfo;
 import web.mvc.domain.Restaurant;
 import web.mvc.dto.ReqPositionDTO;
 
@@ -37,5 +38,5 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             "JOIN FETCH o.user u WHERE u.userId = :userId")
     Optional<Restaurant> findByOwnerUserId(@Param("userId") String userId);
 
-
+    Optional<Restaurant> findByOwner(OwnerInfo owner);
 }

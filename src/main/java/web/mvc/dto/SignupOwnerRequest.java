@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.sql.Time;
+import java.time.LocalTime;
 
 @Getter
 @Setter
@@ -32,8 +33,8 @@ public class SignupOwnerRequest {
     private String category; // 한식, 중식, 일식, 양식, 카페
     private String descript;
 
-    private Time openTime; // "HH:mm:ss" 형태
-    private Time closeTime;
+    private LocalTime openTime; // "HH:mm:ss" 형태
+    private LocalTime closeTime;
 
     private Integer maxWaitingLimit;
 }
