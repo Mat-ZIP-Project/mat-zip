@@ -32,6 +32,7 @@ public class Restaurant {
     private double longitude;  //경도
 
     private double avgRating = 0.0;
+    private double avgRatingLocal = 0.0;
     private String phone;
 
     private String category; // 카테고리 : 한식, 일식, 중식, 양식, 카페

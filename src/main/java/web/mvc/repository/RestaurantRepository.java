@@ -23,6 +23,10 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     // 식당 이름으로 식당 조회
     Optional<Restaurant> findByRestaurantName(String restaurantName);
 
+    // 식당 이름으로 식당 조회 (여러 개 출력 가능)
+    List<Restaurant> findByRestaurantNameContaining(String keyword);
+
+
     //좌표, 반경 기반 식당 리스트 조회
     @Query(value = "select * from restaurants " +
             "where ST_Distance_Sphere(\n" +

@@ -64,4 +64,15 @@ public class RestaurantController {
         restaurantService.toggleLikeRestaurant(userDetails.getUser().getId(), restaurantId);
         return ResponseEntity.ok().build();
     }
+    /**
+     * 식당 검색
+     * @param keyword
+     */
+    @GetMapping("/search")
+    public ResponseEntity<List<RestaurantListResponseDTO>> searchRestaurants(
+            @RequestParam String keyword
+    ) {
+        List<RestaurantListResponseDTO> result = restaurantService.searchRestaurantsByKeyword(keyword);
+        return ResponseEntity.ok(result);
+    }
 }

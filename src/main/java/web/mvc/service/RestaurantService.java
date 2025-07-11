@@ -18,7 +18,7 @@ public interface RestaurantService {
     RestaurantDetailDTO getRestaurantDetail(Long restaurantId);
 
     /**
-     * 식당 찜 등록
+     * 식당 찜 등록 및 취소 (toggle)
      */
     void toggleLikeRestaurant(Long userId, Long restaurantId);
 
@@ -26,4 +26,7 @@ public interface RestaurantService {
      * 식당 찜 취소
      */
 //    void unlikeRestaurant(Long userId, Long restaurantId);
+
+    List<RestaurantListResponseDTO> searchRestaurantsByKeyword(String keyword);
+
 }
