@@ -13,7 +13,7 @@ public class ReservationCreateReqDto {
     private String date;
     private String time;
     private Integer numPeople;
-    private String restaurantName;
+    private Long restaurantId;
 //    private Long id;
 
 }

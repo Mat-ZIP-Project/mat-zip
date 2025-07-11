@@ -2,7 +2,6 @@ package web.mvc.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
-import web.mvc.util.Enums;
 
 import java.time.LocalDateTime;
 
@@ -36,9 +35,8 @@ public class ReservationPayment {
     @Column(name = "final_amount")
     private Integer finalPaymentAmount;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = true, length = 20) // NULL 허용 (결제 전에는 null일 수 있음)
-    private Enums.PaymentStatus status; // 결제 상태 (PAID, READY, CANCELLED, FAILED 등)
+    private String status; // 결제 상태 (결제 완료, 결제 전, 결제 취소, 결제 실패 등)
 
     @Column(name = "paid_at")
     private LocalDateTime paidAt; // 결제 완료 시간

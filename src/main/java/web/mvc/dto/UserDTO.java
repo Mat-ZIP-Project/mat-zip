@@ -18,5 +18,6 @@ public class UserDTO {
     private int pointBalance;
     private Boolean noShow;
     private Boolean gpsVerified;
+    private String userGrade;
 
 }

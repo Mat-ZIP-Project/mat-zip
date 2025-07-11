@@ -20,8 +20,8 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     // 지역(구)만 필터링
     List<Restaurant> findByRegionSigungu(String regionSigungu);
 
-    // 식당 이름으로 식당 조회
-    Optional<Restaurant> findByRestaurantName(String restaurantName);
+    // 식당 Id로 식당 찾기
+    Optional<Restaurant> findByRestaurantId(Long restaurantId);
 
     // 식당 이름으로 식당 조회 (여러 개 출력 가능)
     List<Restaurant> findByRestaurantNameContaining(String keyword);

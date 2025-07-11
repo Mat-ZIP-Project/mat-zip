@@ -188,14 +188,14 @@ public class MyPageController {
      *  사용자의 알림 내역 가져오기
      */
     @GetMapping("/notifications")
-    public ResponseEntity<List<Notification>> getUserNotifications(@AuthenticationPrincipal CustomUserDetails principal) {
+    public ResponseEntity<List<NotificationDetailDto>> getUserNotifications(@AuthenticationPrincipal CustomUserDetails principal) {
         if (principal == null || principal.getUser() == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         Long id = principal.getUser().getId();
 
         try {
-            List<Notification> notificationList = myPageService.getUserNotification(id);
+            List<NotificationDetailDto> notificationList = myPageService.getUserNotification(id);
             return ResponseEntity.ok(notificationList);
         } catch (BasicException e) {
             return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
@@ -215,6 +215,24 @@ public class MyPageController {
         try {
             myPageService.markNotificationAsRead(id);
             return ResponseEntity.ok().build();
+        } catch (BasicException e) {
+            return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
+        }
+    }
+
+    /**
+     *  읽지 않은 알림 개수 반환
+     */
+    @GetMapping("/notifications/count")
+    public ResponseEntity<Integer> getUserNotificationCount(@AuthenticationPrincipal CustomUserDetails principal) {
+        if (principal == null || principal.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long id = principal.getUser().getId();
+
+        try {
+            int unreadCount = myPageService.getUnreadNotificationCount(id);
+            return ResponseEntity.ok(unreadCount);
         } catch (BasicException e) {
             return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
         }

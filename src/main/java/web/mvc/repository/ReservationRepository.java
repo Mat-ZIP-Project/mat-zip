@@ -16,6 +16,8 @@ public interface ReservationRepository extends JpaRepository<Reservation,Long> {
     // 특정 사용자의 모든 예약 조회
     List<Reservation> findByUserIdAndStatus(Long id, String status);
 
+    List<Reservation> findByUserIdAndStatusIn(Long id, List<String> status);
+
     List<Reservation> findByUserIdAndStatusIsNot(Long id, String status);
 
     // 특정 식당의 예약 조회

@@ -44,11 +44,11 @@ public class ReservationController {
         } catch (BasicException e) {
             log.error("예약 생성 실패: {}", e.getMessage());
             // BasicException의 ErrorCode에 따라 적절한 HTTP 상태 코드와 메시지 반환
-            ReservationCreateResDto errorResponse = new ReservationCreateResDto(null, e.getMessage(), false);
+            ReservationCreateResDto errorResponse = new ReservationCreateResDto(null,null, e.getMessage(), false);
             return ResponseEntity.status(500).body(errorResponse);
         } catch (Exception e) {
             log.error("알 수 없는 예약 생성 오류 발생: {}", e.getMessage(), e);
-            ReservationCreateResDto errorResponse = new ReservationCreateResDto(null, "서버 오류로 예약 생성에 실패했습니다.", false);
+            ReservationCreateResDto errorResponse = new ReservationCreateResDto(null,null, "서버 오류로 예약 생성에 실패했습니다.", false);
             return ResponseEntity.status(500).body(errorResponse);
         }
     }
