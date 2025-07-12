@@ -33,6 +33,11 @@ public class JWTFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         log.info("JWTFilter - doFilter메소드 호출");
+
+        // *** 요청 상세 정보 로깅 *** (디버깅용)
+        log.info("요청 URI: {}, Method: {}, Content-Type: {}",
+                request.getRequestURI(), request.getMethod(), request.getContentType());
+
         // Authorization 헤더 확인
         String header = request.getHeader("Authorization");
         log.info("Authorization Header: {}", header);
@@ -56,6 +61,8 @@ public class JWTFilter extends OncePerRequestFilter {
         String userId = jwtTokenProvider.getUserId(token);
         String role = jwtTokenProvider.getRole(token);
 
+        log.info("[JWTFilter] 토큰에서 추출된 사용자: {}, 권한: {}", userId, role);
+
         // 권한 설정
         Collection<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(role));
@@ -66,6 +73,8 @@ public class JWTFilter extends OncePerRequestFilter {
         // SecurityContext에 인증 정보 저장
         Authentication authToken = new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
         SecurityContextHolder.getContext().setAuthentication(authToken);
+
+        log.info("SecurityContext에 인증 정보 저장 완료");
 
         filterChain.doFilter(request, response);
     }

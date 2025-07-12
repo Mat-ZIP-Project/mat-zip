@@ -28,9 +28,10 @@ public class JwtTokenProvider {
         secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
     }
 
-    //Bearer : JWT 혹은 Oauth에 대한 토큰을 사용
+    //Bearer : JWT에 대한 토큰 사용
     //claim은 payload에 해당하는 정보
     public String createAccessToken(String userId, String role) {
+        log.info("토큰 생성 - userId: {}, role: {}", userId, role);
         return Jwts.builder()
                 .setSubject(userId)
                 .claim("role", role)
@@ -55,8 +56,10 @@ public class JwtTokenProvider {
         try {
             Jwts.parser().verifyWith(secretKey).build()
                     .parseClaimsJws(token);
+            log.info("토큰 검증 성공");
             return true;
         } catch (JwtException | IllegalArgumentException e) {
+            log.error("토큰 검증 실패: {}", e.getMessage());
             return false;
         }
     }
@@ -64,7 +67,8 @@ public class JwtTokenProvider {
     //검증 Id
     public String getUserId(String token) {
         return Jwts.parser()
-                .setSigningKey(secretKey)
+                //.setSigningKey(secretKey)
+                .verifyWith(secretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody()
@@ -74,8 +78,10 @@ public class JwtTokenProvider {
 
     //검증 Role
     public String getRole(String token) {
-        return Jwts.parser().verifyWith(secretKey).build()
+        String role = Jwts.parser().verifyWith(secretKey).build()
                 .parseSignedClaims(token).getPayload().get("role", String.class);
+        log.info("토큰에서 추출된 role: {}", role);
+        return role;
     }
 
 }

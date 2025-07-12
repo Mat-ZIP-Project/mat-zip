@@ -8,6 +8,8 @@ import net.nurigo.sdk.message.model.Message;
 import net.nurigo.sdk.message.request.SingleMessageSendingRequest;
 import net.nurigo.sdk.message.response.SingleMessageSentResponse;
 import net.nurigo.sdk.message.service.DefaultMessageService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -15,6 +17,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import web.mvc.config.CoolsmsProperties;
 import web.mvc.domain.SmsVerification;
@@ -23,33 +28,39 @@ import web.mvc.exception.ErrorCode;
 import web.mvc.repository.SmsVerificationRepository;
 import web.mvc.repository.UserRepository;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class SmsVerificationServiceImpl implements SmsVerificationService {
 
-    private final UserRepository userRepository;
-    private final SmsVerificationRepository smsRepository;
-    private final CoolsmsProperties props;
-    //private DefaultMessageService messageService;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private SmsVerificationRepository smsRepository;
+    @Autowired
+    private CoolsmsProperties props;
+    @Autowired
+    private RestTemplateBuilder restTemplateBuilder;
+    private RestTemplate restTemplate;
+
     private final Random random = new Random();
-    private final RestTemplate restTemplate;
 
     // Nurigo SDK 초기화
- /*   @PostConstruct
+    @PostConstruct
     public void init() {
-       // try {
-            this.messageService = NurigoApp.INSTANCE.initialize(
-                    props.getKey(), props.getSecret(), "https://api.coolsms.co.kr");
-            log.info("Nurigo SDK 초기화 완료");
-       // } catch (Throwable ex) {
-       // }
-    }*/
+        this.restTemplate = restTemplateBuilder.build();
+    }
 
 
     @Override
@@ -64,8 +75,9 @@ public class SmsVerificationServiceImpl implements SmsVerificationService {
         String code = generateAndSaveVerificationCode(phone, purpose);
 
         log.info("인증코드 생성 및 저장 완료 - phone: {}, purpose: {}", phone, purpose);
-        // 문자 발송 메소드 호출
-        sendSms(phone, code);
+        System.out.println("[MatZIP] 인증번호 [" + code + "]를 입력해주세요.");
+        // 문자 발송 메소드 호출 (배포시 주석 풀기)
+        //sendSms(phone, code);
     }
 
 
@@ -122,51 +134,64 @@ public class SmsVerificationServiceImpl implements SmsVerificationService {
     }
 
     /** 문자 발송 */
-/*    private void sendSms(String to, String code) {
+    // SDK 호출하던 sendSms()를 RestTemplate 호출로 대체
+    private void sendSms(String to, String code) {
+        String url = "https://api.coolsms.co.kr/sms/2/send";  // v2 SMS API 엔드포인트
 
-        Message message = new Message();
-        message.setFrom(props.getFromNumber()); // 발신자 번호
-        message.setTo(to);                      // 수신자 번호
-        message.setText("[MatZip] 인증번호 [" + code + "]를 입력해주세요."); // 인증코드
+        long timestamp = Instant.now().getEpochSecond();
+        String salt = generateSalt();
+        String signature = generateSignature(timestamp, salt); // HMAC-MD5(signature)
 
-        SingleMessageSendingRequest request = new SingleMessageSendingRequest(message);
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("api_key", props.getKey());
+        body.add("timestamp", String.valueOf(timestamp));
+        body.add("salt", salt);
+        body.add("signature", signature);
+        body.add("to", to);
+        body.add("from", props.getFromNumber());
+        body.add("text", "[MatZIP] 인증번호 [" + code + "]를 입력해주세요.");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
         try {
-            SingleMessageSentResponse response = messageService.sendOne(request);
-            log.info("SMS 발송 성공 - phone: {}, response: {}", to, response);
-        } catch (Exception e) {
-            log.error("SMS 전송 실패", e);
+            ResponseEntity<String> resp = restTemplate.postForEntity(url, request, String.class);
+            if (!resp.getStatusCode().is2xxSuccessful()) {
+                throw new BasicException(ErrorCode.SMS_SENDING_FAILED);
+            }
+        } catch (RestClientException e) {
             throw new BasicException(ErrorCode.SMS_SENDING_FAILED);
         }
-    }*/
+    }
 
-    private void sendSms(String to, String code) {
-                    // CoolSMS REST API v4 엔드포인트
-                   String url = "https://api.coolsms.co.kr" + "/messages/v4/send";
-
-                    // HTTP 헤더 설정
-                    HttpHeaders headers = new HttpHeaders();
-                    headers.setContentType(MediaType.APPLICATION_JSON);
-                    // REST API v4 requires “user” scheme, not Basic
-                    headers.set("Authorization",
-                                    "user " + props.getKey() + ":" + props.getSecret());
-
-                    // 요청 바디 구성
-                    Map<String, Object> body = new HashMap<>();
-                    body.put("type", "SMS");
-                    body.put("from", props.getFromNumber());
-                    body.put("to", to);
-                    body.put("text", "[MatZip] 인증번호 [" + code + "]를 입력해주세요.");
-                    System.out.println("SMS REST API 호출 - [MatZip] 인증번호 [" + code + "]를 입력해주세요.");
-                    HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
-            try {
-                    ResponseEntity<String> resp = restTemplate.postForEntity(url, request, String.class);
-                    log.info("SMS REST API 호출 성공 - phone: {}, status: {}", to, resp.getStatusCode());
-                } catch (Exception e) {
-                    log.error("SMS REST API 호출 실패", e);
-                    throw new BasicException(ErrorCode.SMS_SENDING_FAILED);
-               }
+    // salt 생성 (랜덤 20바이트를 hex 문자열로)
+    private String generateSalt() {
+        byte[] bytes = new byte[20];
+        new SecureRandom().nextBytes(bytes);
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
         }
+        return sb.toString();
+    }
+
+    // HMAC-MD5(signature) 생성
+    private String generateSignature(long timestamp, String salt) {
+        try {
+            Mac mac = Mac.getInstance("HmacMD5");
+            mac.init(new SecretKeySpec(props.getSecret().getBytes(StandardCharsets.UTF_8), "HmacMD5"));
+            byte[] hash = mac.doFinal((timestamp + salt).getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new BasicException(ErrorCode.SMS_SENDING_FAILED);
+        }
+    }
 
 
     @Override
@@ -188,7 +213,6 @@ public class SmsVerificationServiceImpl implements SmsVerificationService {
         if (!sms.getCode().equals(code)) {
             throw new BasicException(ErrorCode.INVALID_VERIFICATION_CODE);
         }
-
         // 인증완료 처리
         smsRepository.verifySmsById(sms.getSmsId());
     }
