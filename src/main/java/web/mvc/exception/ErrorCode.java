@@ -91,7 +91,12 @@ public enum ErrorCode { //enum은 'Enumeration' 의 약자로 열거, 목록 이
     WAITING_NOT_FOUND(HttpStatus.NOT_FOUND, "Waiting Not Found", "웨이팅 정보를 찾을 수 없습니다."),
     INVALID_STATUS_CHANGE(HttpStatus.BAD_REQUEST, "INVALID_STATUS_CHANGE", "웨이팅 상태가 변경할 수 없는 상황입니다."),
     NOT_EXPIRED_YET(HttpStatus.BAD_REQUEST, "NOT_EXPIRED_YET", "아직 15분이 다 경과하지 않았습니다."),
-    WAITING_STATUS_NOT_FOUND(HttpStatus.NOT_FOUND, "WaitingStatus Not Found", "waiting_status가 존재하지 않습니다.");
+    WAITING_STATUS_NOT_FOUND(HttpStatus.NOT_FOUND, "WaitingStatus Not Found", "waiting_status가 존재하지 않습니다."),
+
+    //리뷰 예외처리
+    RESTAURANT_MISMATCH(HttpStatus.BAD_REQUEST,"","해당 식당의 영수증이 아닙니다."),
+    INVALID_DATE(HttpStatus.BAD_REQUEST,"","7일 이내 사용 건만 리뷰 작성 가능합니다."),
+    DUPLICATED_REVIEW(HttpStatus.BAD_REQUEST,"","이미 리뷰가 작성된 방문 건입니다."),;
 
 
     private final HttpStatus httpStatus;
