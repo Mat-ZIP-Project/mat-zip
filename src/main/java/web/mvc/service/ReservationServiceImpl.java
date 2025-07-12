@@ -12,7 +12,6 @@ import web.mvc.dto.ReservationCreateResDto;
 import web.mvc.exception.BasicException;
 import web.mvc.exception.ErrorCode;
 import web.mvc.repository.*;
-import web.mvc.util.Enums;
 
 import java.io.IOException;
 import java.math.BigDecimal;
