@@ -26,9 +26,6 @@ public class Review {
     @Column(nullable = false)
     private int rating;
 
-    private String category;
-
-    private boolean siteReview;
 
     @Column(nullable = false)
     private LocalDateTime reviewedAt;
@@ -43,8 +40,6 @@ public class Review {
     @ManyToOne
     @JoinColumn(name = "id")
     private User user;
-
-    private Long sourceId;
 
     @Column(name = "local_review")
     private boolean localReview;

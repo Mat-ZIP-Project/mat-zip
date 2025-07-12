@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.sql.Time;
+import java.time.LocalTime;
 
 @Getter
 @Setter
@@ -21,7 +22,6 @@ public class SignupOwnerRequest {
 
     // 식당 정보
     private String restaurantName;
-
     private String address;
     private String regionSido;
     private String regionSigungu;
