@@ -91,7 +91,7 @@ public class OwnerController {
      * 업주의 식당 대표이미지 설정
      * - 기존 대표이미지 자동 해제
      */
-    @PutMapping("/restaurant/images/{imageId}/main")
+    @PutMapping("/restaurant/images/main/{imageId}")
     public ResponseEntity<Void> setMainImage(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long imageId) {
@@ -112,18 +112,21 @@ public class OwnerController {
     }
 
     /** 메뉴 등록 */
-    @PostMapping(value = "/menu")
+    @PostMapping(value = "/menu", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MenuResponse> createMenu(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestPart("data") MenuRequest request,
             @RequestPart(value = "image", required = false) MultipartFile image) {
+        System.out.println("Controller 오니 ?");
+        System.out.println("MenuRequest" + request.getMenuName() + request.getDescription());
+        System.out.println("image : " + image);
         String userId = userDetails.getUser().getUserId();
         MenuResponse created = menuService.createMenu(userId, request, image);
         return ResponseEntity.ok(created);
     }
 
     /** 메뉴 수정 */
-    @PutMapping(value = "/menu/{id}")
+    @PutMapping(value = "/menu/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MenuResponse> updateMenu(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable("id") Long menuId,

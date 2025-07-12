@@ -30,7 +30,7 @@ public class OwnerServiceImpl implements OwnerService {
     private final ModelMapper modelMapper;
 
     // *** AWS S3 폴더 경로 ***
-    private static final String RESTAURANT_FOLDER = "restaurant";
+    private static final String RESTAURANT_FOLDER = "main";
 
     /** 업주의 식당 정보 조회 */
     @Override
@@ -108,7 +108,7 @@ public class OwnerServiceImpl implements OwnerService {
 
     /**
      * 업주의 식당 이미지 업로드
-     * - 최대 10개 제한
+     * - 최대 9개 제한
      * - 첫 번째 이미지 업로드 시 대표이미지가 없으면 자동 설정
      */
     @Override
@@ -116,9 +116,9 @@ public class OwnerServiceImpl implements OwnerService {
         Restaurant restaurant = restaurantRepository.findByOwnerUserId(userId)
                 .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
 
-        // 현재 이미지 개수 확인 (최대 10개 제한)
+        // 현재 이미지 개수 확인 (최대 9개 제한)
         int currentImageCount = restaurantImageRepository.countByRestaurant(restaurant);
-        if (currentImageCount + images.size() > 10) {
+        if (currentImageCount + images.size() > 9) {
             throw new BasicException(ErrorCode.IMAGE_LIMIT_EXCEEDED);
         }
 
@@ -131,7 +131,7 @@ public class OwnerServiceImpl implements OwnerService {
             MultipartFile image = images.get(i);
 
             // S3에 이미지 업로드
-            String imageUrl = s3Service.uploadImage(userId, image, RESTAURANT_FOLDER);
+            String imageUrl = s3Service.uploadImageForRestaurant(userId, image, RESTAURANT_FOLDER);
 
             // 첫 번째 이미지이고 대표이미지가 없으면 자동으로 대표이미지 설정
             boolean isMainImage = !hasMainImage && i == 0;
