@@ -13,14 +13,19 @@ public class Menu {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "menu_id")
     private Long menuId;
 
+    @Column(name = "menu_name", nullable = false)
     private String menuName;
+
+    @Column(nullable = false)
     private int price;
 
     @Lob
     private String description;
 
+    @Column(name = "image_url")
     private String imageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
