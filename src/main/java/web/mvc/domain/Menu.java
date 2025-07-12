@@ -16,8 +16,10 @@ public class Menu {
     @Column(name = "menu_id")
     private Long menuId;
 
-    @Column(name = "menu_name")
+    @Column(name = "menu_name", nullable = false)
     private String menuName;
+
+    @Column(nullable = false)
     private int price;
 
     @Lob

@@ -26,7 +26,6 @@ public class OwnerServiceImpl implements OwnerService {
 
     private final RestaurantRepository restaurantRepository;
     private final RestaurantImageRepository restaurantImageRepository;
-    private final OwnerInfoRepository ownerInfoRepository;
     private final S3Service s3Service;
     private final ModelMapper modelMapper;
 
@@ -195,7 +194,6 @@ public class OwnerServiceImpl implements OwnerService {
                 log.info("대표이미지 자동 설정: 이미지 ID={}", newMainImage.getImageId());
             }
         }
-
         log.info("식당 이미지 삭제 완료: 업주 ID={}, 이미지 ID={}", userId, imageId);
     }
 

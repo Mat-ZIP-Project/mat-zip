@@ -373,33 +373,11 @@ public class SignupServiceImpl implements SignupService {
 
     /** 식당 정보 DB저장 */
     private Restaurant createRestaurant(SignupOwnerRequest request, OwnerInfo ownerInfo) {
-//        List<AddressResponse> addresses = searchAddress(request.getAddress());
-//        if (addresses.isEmpty()) {
-//            throw new BasicException(ErrorCode.ADDRESS_NOT_FOUND);
-//        }
-//
-//        AddressResponse addressInfo = addresses.get(0);
         Restaurant restaurant = modelMapper.map(request, Restaurant.class);
         restaurant.setOwner(ownerInfo);
         restaurant.setPhone(request.getRestaurantPhone());
 
         return restaurant;
-
-//        return Restaurant.builder()
-//                .owner(ownerInfo)
-//                .restaurantName(request.getRestaurantName())
-//                .address(request.getAddress())
-//                .regionSido(request.getRegionSido())
-//                .regionSigungu(request.getRegionSigungu())
-//                .latitude(request.getLatitude())
-//                .longitude(request.getLongitude())
-//                .phone(request.getRestaurantPhone())
-//                .category(request.getCategory())
-//                .descript(request.getDescript())
-//                .openTime(request.getOpenTime())
-//                .closeTime(request.getCloseTime())
-//                .maxWaitingLimit(request.getMaxWaitingLimit())
-//                .build();
     }
 
 }

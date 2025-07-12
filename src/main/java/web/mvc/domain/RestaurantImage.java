@@ -13,8 +13,10 @@ public class RestaurantImage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "image_id")
     private Long imageId;
 
+    @Column(name = "image_url")
     private String imageUrl;
 
     @Column(name = "is_main", nullable = false)

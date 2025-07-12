@@ -27,7 +27,6 @@ public class MenuServiceImpl implements MenuService {
     private final S3Service s3Service;
 
     // *** AWS S3 폴더 경로 ***
-    //private static final String RESTAURANT_FOLDER = "restaurant";
     private static final String MENU_FOLDER = "menus";
 
     /**

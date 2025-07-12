@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 public class S3ServiceImpl implements S3Service {
 
     private final AmazonS3 amazonS3;
-    private final OwnerInfoRepository ownerInfoRepository;
     private final RestaurantRepository restaurantRepository;
 
     @Value("${aws.s3.bucket}")
@@ -41,7 +40,7 @@ public class S3ServiceImpl implements S3Service {
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif");
 
     /**
-     * 단일 이미지 업로드 - 식당/메뉴/기타
+     * 단일 이미지 업로드
      */
     public String uploadImage(String userId, MultipartFile image, String folderName) {
         if (image.isEmpty() || Objects.isNull(image.getOriginalFilename())) {
@@ -61,7 +60,7 @@ public class S3ServiceImpl implements S3Service {
     }
 
     /**
-     * 다중 이미지 업로드 (대표 이미지 등)
+     * 다중 이미지 업로드
      */
     public List<String> uploadMultipleImages(String userId, List<MultipartFile> images, String folderName) {
         if (images == null || images.isEmpty()) {
@@ -72,22 +71,6 @@ public class S3ServiceImpl implements S3Service {
                 .map(image -> uploadImage(userId, image, folderName))
                 .collect(Collectors.toList());
     }
-
-    /**
-     * 단일 이미지 업로드 (경로 지정 재사용용)
-     */
-//    public String uploadImage(MultipartFile image, String folderPath) {
-//        if (image.isEmpty() || Objects.isNull(image.getOriginalFilename())) {
-//            throw new BasicException(ErrorCode.INVALID_INPUT);
-//        }
-//        validateImageExtension(image.getOriginalFilename());
-//
-//        try {
-//            return uploadToS3(image, folderPath);
-//        } catch (IOException e) {
-//            throw new BasicException(ErrorCode.INTERNAL_SERVER_ERROR);
-//        }
-//    }
 
     /**
      * 이미지 삭제

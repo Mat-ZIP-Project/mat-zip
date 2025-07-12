@@ -34,9 +34,9 @@ public class Restaurant {
     private double latitude;   //위도
     private double longitude;  //경도
 
-    @Column(name = "avg_rating")
+    @Column(name = "avg_rating", nullable = false)
     private double avgRating = 0.0;
-    @Column(name = "avg_rating_local")
+    @Column(name = "avg_rating_local", nullable = false)
     private double avgRatingLocal = 0.0;
 
     private String phone;

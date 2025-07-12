@@ -40,7 +40,6 @@ public class JWTFilter extends OncePerRequestFilter {
 
         // Authorization 헤더 확인
         String header = request.getHeader("Authorization");
-
         log.info("Authorization Header: {}", header);
 
         if (header == null || !header.startsWith("Bearer ")) {
@@ -75,12 +74,7 @@ public class JWTFilter extends OncePerRequestFilter {
         Authentication authToken = new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
         SecurityContextHolder.getContext().setAuthentication(authToken);
 
-        log.info("SecurityContext에 인증 정보 저장 완료. 권한: {}", authorities);
-
-        Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
-        log.info("현재 인증사용자 ID: {}, 권한: {}",
-                currentAuth != null ? currentAuth.getName() : "null",
-                currentAuth != null ? currentAuth.getAuthorities() : "null");
+        log.info("SecurityContext에 인증 정보 저장 완료");
 
         filterChain.doFilter(request, response);
     }

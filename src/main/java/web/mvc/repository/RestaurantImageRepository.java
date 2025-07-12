@@ -20,5 +20,6 @@ public interface RestaurantImageRepository extends JpaRepository<RestaurantImage
     /** 대표이미지 조회 */
     Optional<RestaurantImage> findByRestaurantAndIsMainTrue(Restaurant restaurant);
 
+    /** 식당 이미지 개수 */
     int countByRestaurant(Restaurant restaurant);
 }
