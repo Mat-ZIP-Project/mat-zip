@@ -2,34 +2,30 @@ package web.mvc.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import web.mvc.domain.Restaurant;
-import web.mvc.domain.User;
 import web.mvc.domain.WaitingQueue;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 public interface WaitingQueueRepository extends JpaRepository<WaitingQueue, Long> {
 
-    // 특정 식당의 가장 마지막 웨이팅 번호 조회 (최댓값)
-    @Query("SELECT MAX(w.waitingNumber) FROM WaitingQueue w WHERE w.restaurant = :restaurant")
-    Integer findMaxWaitingNumberByRestaurant(Restaurant restaurant);
+    // 현재 사용자가 웨이팅 중인지 여부 (다른 식당 포함)
+    boolean existsByUser_UserIdAndStatus(String userId, String status);
 
-    // 유저가 현재 '입장 대기' 상태인 웨이팅이 있는지 확인
-    boolean existsByUserAndStatus(User user, String status);
+    // 특정 식당의 현재 대기 목록 (상태: 입장 대기)
+    List<WaitingQueue> findByRestaurant_RestaurantIdAndStatusOrderByWaitingNumberAsc(Long restaurantId, String status);
 
-    // 특정 식당의 대기 인원 수 조회 (status = '입장 대기'인 경우만)
-//    int countByRestaurantAndStatus(Restaurant restaurant, String status);
+    // 특정 식당에서 가장 큰 waiting_number 조회 → 신규 대기자 번호 계산용
+    Optional<WaitingQueue> findTopByRestaurant_RestaurantIdOrderByWaitingNumberDesc(Long restaurantId);
 
-    // 특정 식당의 '입장 대기' 웨이팅 전체 조회
-    List<WaitingQueue> findByRestaurantAndStatusOrderByWaitingNumber(Restaurant restaurant, String status);
+    // 사용자의 현재 웨이팅 조회 (주로 상태: 입장 대기)
+    Optional<WaitingQueue> findByUser_UserIdAndStatus(String userId, String status);
 
-    // 유저가 등록한 웨이팅 리스트
-//    List<WaitingQueue> findByUser(User user);
+    // 대기 상태 중 expectedEntryTime이 지나도 입장 안 한 경우 찾기 (노쇼 후보)
+    @Query("SELECT w FROM WaitingQueue w WHERE w.status = '입장 대기' AND w.expectedEntryTime < CURRENT_TIMESTAMP")
+    List<WaitingQueue> findExpiredWaitings();
 
-    // 특정 유저 + 식당의 현재 '입장 대기' 웨이팅 조회
-    Optional<WaitingQueue> findByUserAndStatus(User user, String status);
-
-
+    List<WaitingQueue> findByStatusAndCalledAtBefore(String status, LocalDateTime time);
 
 }

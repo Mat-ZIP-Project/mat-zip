@@ -11,7 +11,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "waiting_queue")
+@Table(
+        name = "waiting_queue",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"restaurant_id", "waiting_number"})
+        }
+)
 public class WaitingQueue {
 
     @Id
@@ -38,4 +43,6 @@ public class WaitingQueue {
 
     @Column(nullable = false)
     private Integer waitingNumber; // 본인 대기 번호 (1번, 2번, ...)
+
+    private LocalDateTime calledAt;
 }

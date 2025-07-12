@@ -76,14 +76,14 @@ public class SecurityConfig {
 
                         // 인증 필요 (하단에 인증 허용 url 접근 전 인증 요청필요한 것만 기입)
                         .requestMatchers("/auth/logout").authenticated()
-                        
+
                         // 찜하기 관련 POST, DELETE 요청은 인증 필요
                         .requestMatchers(HttpMethod.POST, "/api/restaurants/like/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/restaurants/like/**").authenticated()
 
                         // 접근 허용 (접근 허용 url은 무조건 명시)
                         .requestMatchers("/login","/auth/**", "/signup/**",
-                                "/payment/complete", "/map/**", "/api/reviews/**", "/api/restaurants/**").permitAll()
+                                "/payment/complete", "/map/**", "/api/reviews/**", "/api/restaurants/**", "/api/waiting/status/**").permitAll()
 
                         // 권한별 접근 제한
                         .requestMatchers("/owner/**","/reservation/owner/approve").hasRole("OWNER")
