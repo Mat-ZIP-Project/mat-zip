@@ -24,7 +24,7 @@ public class WaitingQueue {
     private Long waitingId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "id", nullable = false) // DB 컬럼명과 맞춤
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
