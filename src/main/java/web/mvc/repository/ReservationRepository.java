@@ -13,6 +13,7 @@ import java.util.Optional;
 
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation,Long> {
+
     // 특정 사용자의 모든 예약 조회
     List<Reservation> findByUserIdAndStatus(Long id, String status);
 

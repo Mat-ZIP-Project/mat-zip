@@ -39,6 +39,35 @@ public class MyPageServiceImpl implements MyPageService {
     private final ReservationPaymentRepository reservationPaymentRepository;
     private final PointRepository pointRepository;
     private final NotificationRepository notificationRepository;
+    private final UserLikeRepository userLikeRepository;
+
+    /**
+     *  사용자 찜한 식당 내역 조회
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<RestaurantLikeDetailDto> getUserRestaurantLikes(Long id) throws BasicException {
+        User user = userRepository.findById(id).orElseThrow(() -> new BasicException(ErrorCode.USER_NOT_FOUND));
+
+        List<UserLike> userLikes = userLikeRepository.findAllByUser(user);
+
+        return userLikes.stream().map(userLike -> {
+            //
+            return RestaurantLikeDetailDto.builder()
+                    .likeId(userLike.getLikeId())
+                    .likedAt(userLike.getLikedAt())
+                    .restaurantId(userLike.getRestaurant().getRestaurantId())
+                    .restaurantName(userLike.getRestaurant().getRestaurantName())
+                    .address(userLike.getRestaurant().getAddress())
+                    .category(userLike.getRestaurant().getCategory())
+                    .avgRating(userLike.getRestaurant().getAvgRating())
+                    .phone(userLike.getRestaurant().getPhone())
+                    .descript(userLike.getRestaurant().getDescript())
+                    .openTime(userLike.getRestaurant().getOpenTime())
+                    .closeTime(userLike.getRestaurant().getCloseTime())
+                    .build();
+        }).collect(Collectors.toList());
+    }
 
     /**
      *  사용자 전체 예약 내역 조회
@@ -61,6 +90,7 @@ public class MyPageServiceImpl implements MyPageService {
                     }
                     paymentStatus = paymentOpt.get().getStatus();
                     return ReservationDetailDto.builder()
+                            .reservationId(reservation.getReservationId())
                             .reservationId(reservation.getReservationId())
                             .restaurantName(reservation.getRestaurant() != null ? reservation.getRestaurant().getRestaurantName() : "알 수 없음")
                             .date(LocalDate.parse(reservation.getDate()))
@@ -98,108 +128,6 @@ public class MyPageServiceImpl implements MyPageService {
                     .collect(Collectors.toList());
         } catch (BasicException e) {
             throw new BasicException(ErrorCode.RESERVATION_NOT_FOUND);
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ParticipantDetailDto> getParticipatedMeetings(Long id) throws BasicException {
-        try {
-            List<MeetupParticipant> participants = meetupParticipantRepository.findByUser_Id(id);
-
-            return participants.stream()
-                    .map(participant -> {
-                        Meeting meeting = participant.getMeeting(); // Meeting 객체 가져오기
-
-                        // Meeting 객체가 null일 경우를 대비하여 기본값 설정
-                        Long meetingId = (meeting != null) ? meeting.getMeetingId() : null;
-                        String title = (meeting != null) ? meeting.getTitle() : "알 수 없는 모임";
-                        String description = (meeting != null) ? meeting.getDescription() : "";
-                        Integer currentParticipants = (meeting != null) ? meeting.getCurrentParticipants() : 0;
-                        LocalDateTime meetingTime = (meeting != null) ? meeting.getMeetingTime() : null;
-                        int maxParticipants = (meeting != null) ? meeting.getMaxParticipants() : 0; // int 타입이므로 0으로 기본값 설정
-
-                        // Restaurant 이름 가져오기 (Meeting -> Restaurant 접근)
-                        String restaurantName = (meeting != null && meeting.getRestaurant() != null)
-                                ? meeting.getRestaurant().getRestaurantName()
-                                : "알 수 없는 식당";
-
-                        return ParticipantDetailDto.builder()
-                                .joinId(participant.getJoinId())
-                                .joinStatus(participant.getJoinStatus())
-                                .joinedAt(participant.getJoinedAt())
-                                // Meeting 정보 매핑 (새로운 필드명 반영)
-                                .meetingId(meetingId)
-                                .title(title)
-                                .description(description)
-                                .currentParticipants(currentParticipants)
-                                .meetingTime(meetingTime)
-                                // Restaurant 정보 매핑
-                                .restaurantName(restaurantName)
-                                .build();
-                    })
-                    .collect(Collectors.toList());
-
-        } catch (Exception e) {
-            System.err.println("참여한 모임 내역 조회 중 오류 발생: " + e.getMessage());
-            throw new BasicException(ErrorCode.NO_AUTH_LOGS);
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<MeetingReviewDetailDto> getMeetingReviews(Long id) throws BasicException {
-        try {
-            List<MeetupReview> meetupReviewAll = meetupReviewRepository.findMeetingReviewsById(id);
-
-            // MeetupReview 엔티티 목록을 MeetingReviewDetailDto 목록으로 변환
-            return meetupReviewAll.stream().map(review -> {
-                // MeetupReview -> MeetupParticipant -> Meeting -> Restaurant
-                MeetupParticipant participant = review.getMeetupParticipant();
-                Meeting meeting = (participant != null) ? participant.getMeeting() : null;
-                Restaurant restaurant = (meeting != null) ? meeting.getRestaurant() : null;
-
-                return MeetingReviewDetailDto.builder()
-                        .meetupReviewId(review.getMeetupReviewId()) // 엔티티의 필드명과 일치
-                        .reviewContent(review.getReviewContent()) // 엔티티의 필드명과 일치
-                        .imageUrl(review.getImageUrl()) // 이미지 URL 추가
-                        .createdAt(review.getCreatedAt()) // 엔티티의 필드명과 일치
-
-                        // Meeting 정보
-                        .meetingId((meeting != null) ? meeting.getMeetingId() : null)
-                        .meetingTitle((meeting != null) ? meeting.getTitle() : "알 수 없는 모임")
-                        .restaurantName((restaurant != null) ? restaurant.getRestaurantName() : "알 수 없는 식당")
-                        .build();
-            }).collect(Collectors.toList());
-        } catch (BasicException e) {
-            throw new BasicException(ErrorCode.NO_AUTH_LOGS);
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<CreatedMeetingDetailDto> getMeeting(Long id) throws BasicException {
-        try {
-            List<Meeting> meetingAll = meetingRepository.findByUser_Id(id);
-
-            return meetingAll.stream().map(meeting -> {
-                // Restaurant 정보는 Meeting 엔티티를 통해 접근
-                Restaurant restaurant = meeting.getRestaurant();
-
-                return CreatedMeetingDetailDto.builder()
-                        .meetingId(meeting.getMeetingId())
-                        .title(meeting.getTitle())
-                        .description(meeting.getDescription())
-                        .maxParticipants(meeting.getMaxParticipants())
-                        .currentParticipants(meeting.getCurrentParticipants())
-                        .meetingTime(meeting.getMeetingTime())
-                        .createdAt(meeting.getCreatedAt())
-                        .restaurantId((restaurant != null) ? restaurant.getRestaurantId() : null)
-                        .restaurantName((restaurant != null) ? restaurant.getRestaurantName() : "알 수 없는 식당")
-                        .build();
-            }).collect(Collectors.toList());
-        } catch (BasicException e) {
-            throw new BasicException(ErrorCode.NO_AUTH_LOGS);
         }
     }
 
@@ -312,33 +240,6 @@ public class MyPageServiceImpl implements MyPageService {
     }
 
     /**
-     *  사용자의 등급을 확인하고 필요시 업데이트합니다.
-     */
-    @Override
-    public void checkAndUpdateUserGrade(User user) throws BasicException {
-        String currentGrade = user.getUserGrade();
-
-       int maxPoints = pointRepository.findMaxPointLogByUser(user);
-
-       String newGrade = currentGrade;
-
-       // 등급 상승 로직
-        if ("브론즈".equals(currentGrade) && maxPoints >= 3000) {
-            newGrade = "실버";
-        } else if ("실버".equals(currentGrade) && maxPoints >= 10000) {
-            newGrade = "먹짱";
-        }
-
-        if (!currentGrade.equals(newGrade)) {
-            user.setUserGrade(newGrade);
-            userRepository.save(user);
-            log.info("등급이 상승하였습니다.");
-        } else {
-            log.info("등급이 변경되지 않았습니다.");
-        }
-    }
-
-    /**
      *  사용자의 포인트 잔액을 조회
      */
     @Override
@@ -441,4 +342,25 @@ public class MyPageServiceImpl implements MyPageService {
         }
     }
 
+    @Override
+    public User updateUserPreference(Long id, UserPreferenceDto userPreferenceDto) throws BasicException {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + id));
+
+        user.setPreferenceCategory(userPreferenceDto.getPreferenceCategory());
+        return userRepository.save(user);
+    }
+
+    /**
+     *  마이페이지에서 리뷰 삭제 로직
+     */
+    @Override
+    public void deleteReview(Long id, Long reviewId) throws BasicException {
+
+        Review reviewToDelete = reviewRepository.findByReviewIdAndUserId(reviewId, id)
+                .orElseThrow(() -> new BasicException(ErrorCode.USER_NOT_FOUND));
+
+        // 2. 리뷰 삭제
+        reviewRepository.delete(reviewToDelete);
+    }
 }
