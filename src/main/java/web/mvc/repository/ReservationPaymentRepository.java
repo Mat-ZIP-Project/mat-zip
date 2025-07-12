@@ -4,7 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import web.mvc.domain.Reservation;
 import web.mvc.domain.ReservationPayment;
-import web.mvc.util.Enums;
+
 
 import java.util.Optional;
 
