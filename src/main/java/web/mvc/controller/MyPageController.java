@@ -11,10 +11,9 @@ import web.mvc.domain.*;
 import web.mvc.dto.*;
 
 import web.mvc.exception.BasicException;
-import web.mvc.exception.ErrorCode;
 import web.mvc.security.CustomUserDetails;
 import web.mvc.service.MyPageService;
-import web.mvc.service.ReviewService;
+import web.mvc.service.RestaurantReviewService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +25,6 @@ import java.util.List;
 public class MyPageController {
 
     private final MyPageService myPageService;
-    private final ReviewService reviewService;
 
     /**
      *  사용자의 선호 카테고리 업데이트
