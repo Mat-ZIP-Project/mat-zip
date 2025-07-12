@@ -87,8 +87,11 @@ public class SignupServiceImpl implements SignupService {
 
     @Override
     public void verifyBusinessNumber(String businessNumber) {
+        // 사업자번호를 하이픈 포함 형태로 변환
+        String formattedBusinessNumber = formatBusinessNumber(businessNumber);
+
         // DB 중복체크
-        if (ownerInfoRepository.existsByBusinessNumber(businessNumber)) {
+        if (ownerInfoRepository.existsByBusinessNumber(formattedBusinessNumber)) {
             throw new BasicException(ErrorCode.DUPLICATE_BUSINESS_NUMBER);
         }
 
@@ -189,11 +192,12 @@ public class SignupServiceImpl implements SignupService {
         checkSmsVerified(request.getPhone(), "SIGNUP");
 
         // 사업자 등록번호 검증
+        String formattedBusinessNumber = formatBusinessNumber(request.getBusinessNumber());
         verifyBusinessNumber(request.getBusinessNumber());
+
         // 식당 정보 검증
         validateRestaurantInfo(request);
 
-        //validateAndNormalizeAddress(request);
         // 전화번호 포맷팅
         request.setPhone(formatPhoneNumber(request.getPhone()));
         request.setRestaurantPhone(formatPhoneNumber(request.getRestaurantPhone()));
@@ -203,7 +207,7 @@ public class SignupServiceImpl implements SignupService {
         userRepository.save(savedUser);
 
         OwnerInfo ownerInfo = OwnerInfo.builder()
-                .businessNumber(request.getBusinessNumber())
+                .businessNumber(formattedBusinessNumber)
                 .user(savedUser)
                 .build();
         ownerInfoRepository.save(ownerInfo);
@@ -267,6 +271,9 @@ public class SignupServiceImpl implements SignupService {
         if (request.getMaxWaitingLimit() == null || request.getMaxWaitingLimit() < 0) {
             throw new BasicException(ErrorCode.INVALID_WAITING_LIMIT);
         }
+        if (request.getLatitude() == null || request.getLongitude() == null) {
+            throw new BasicException(ErrorCode.BAD_REQUEST);
+        }
     }
 
     /** 회원가입 시 사용자 정보 저장용 객체 생성 */
@@ -327,6 +334,24 @@ public class SignupServiceImpl implements SignupService {
         return cleanPhone;
     }
 
+    /**
+     * 사업자번호를 000-00-00000 형식으로 포맷팅
+     */
+    private String formatBusinessNumber(String businessNumber) {
+        if (businessNumber == null || businessNumber.trim().isEmpty()) {
+            return businessNumber;
+        }
+        // 하이픈 제거하고 숫자만 추출
+        String cleanBusinessNumber = businessNumber.replaceAll("[^0-9]", "");
+        // 10자리 숫자인지 확인
+        if (cleanBusinessNumber.length() != 10) {
+            log.warn("사업자번호 길이가 올바르지 않습니다: {}", cleanBusinessNumber);
+            return businessNumber; // 원본 반환
+        }
+
+        // 000-00-00000 형식으로 변환
+        return cleanBusinessNumber.replaceAll("^(\\d{3})(\\d{2})(\\d{5})$", "$1-$2-$3");
+    }
 
     /** 식당주 용 user 객체 저장 */
     private User createUser(SignupOwnerRequest request) {
@@ -348,28 +373,11 @@ public class SignupServiceImpl implements SignupService {
 
     /** 식당 정보 DB저장 */
     private Restaurant createRestaurant(SignupOwnerRequest request, OwnerInfo ownerInfo) {
-        List<AddressResponse> addresses = searchAddress(request.getAddress());
-        if (addresses.isEmpty()) {
-            throw new BasicException(ErrorCode.ADDRESS_NOT_FOUND);
-        }
+        Restaurant restaurant = modelMapper.map(request, Restaurant.class);
+        restaurant.setOwner(ownerInfo);
+        restaurant.setPhone(request.getRestaurantPhone());
 
-        AddressResponse addressInfo = addresses.get(0);
-
-        return Restaurant.builder()
-                .owner(ownerInfo)
-                .restaurantName(request.getRestaurantName())
-                .address(addressInfo.getAddressName())
-                .regionSido(addressInfo.getRegionSido())
-                .regionSigungu(addressInfo.getRegionSigungu())
-                .latitude(addressInfo.getLatitude())
-                .longitude(addressInfo.getLongitude())
-                .phone(request.getRestaurantPhone())
-                .category(request.getCategory())
-                .descript(request.getDescript())
-                .openTime(request.getOpenTime())
-                .closeTime(request.getCloseTime())
-                .maxWaitingLimit(request.getMaxWaitingLimit())
-                .build();
+        return restaurant;
     }
 
 }

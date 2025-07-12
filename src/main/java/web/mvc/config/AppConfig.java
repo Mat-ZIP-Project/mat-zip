@@ -6,6 +6,7 @@ import jakarta.persistence.PersistenceContext;
 import com.siot.IamportRestClient.IamportClient;
 
 import org.modelmapper.ModelMapper;
+import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,7 +19,15 @@ public class AppConfig {
 
     @Bean
     public ModelMapper modelMapper() {
-        return new ModelMapper();
+        ModelMapper mapper = new ModelMapper();
+
+        // 최적화 설정
+        mapper.getConfiguration()
+                .setMatchingStrategy(MatchingStrategies.STRICT)  // 안전한 매핑(엄격한 매칭)
+                .setFieldMatchingEnabled(true)                   // Lombok 호환(필드 매칭 활성화)
+                .setFieldAccessLevel(org.modelmapper.config.Configuration.AccessLevel.PRIVATE);  // private 필드 접근 허용
+
+        return mapper;
     }
 
     @Bean
