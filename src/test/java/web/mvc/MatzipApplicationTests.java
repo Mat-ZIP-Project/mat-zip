@@ -32,7 +32,7 @@ class MatzipApplicationTests {
     }
     @Test
     void insertBadge(){
-        badgeRepository.save(UserLocalBadge.builder().regionName("경기도 용인시 수지구").user(User.builder().id(7L).build()).build());
+        badgeRepository.save(UserLocalBadge.builder().regionName("서울특별시 강남구").user(User.builder().id(4L).build()).build());
     }
 
 
