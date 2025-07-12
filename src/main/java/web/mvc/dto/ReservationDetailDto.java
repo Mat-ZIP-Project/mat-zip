@@ -15,6 +15,7 @@ import java.time.LocalTime;
 @AllArgsConstructor
 public class ReservationDetailDto {
     private Long reservationId;
+    private Long restaurantId;
     private String restaurantName;
     private LocalDate date;
     private LocalTime time;
