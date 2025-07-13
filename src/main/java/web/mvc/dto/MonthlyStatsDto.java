@@ -6,18 +6,16 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-
 
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 /**
- * 식당 사장 통계차트용 (일간)
+ * 식당 사장 통계차트용 (월간)
  */
-public class DailyStatsDto {
-    private String date;
+public class MonthlyStatsDto {
+    private Integer year;   // primitive -> wrapper
+    private Integer month;
     private Long reservationCount;
     private Long revenue;
 }
-

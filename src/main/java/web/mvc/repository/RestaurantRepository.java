@@ -42,4 +42,9 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             "JOIN FETCH o.user u WHERE u.userId = :userId")
     Optional<Restaurant> findByOwnerUserId(@Param("userId") String userId);
 
+    /** ownerId로 식당 조회  */
+    @Query("SELECT r FROM Restaurant r WHERE r.owner.ownerId = :ownerId")
+    Optional<Restaurant> findByOwnerId(@Param("ownerId") Long ownerId);
+
+
 }

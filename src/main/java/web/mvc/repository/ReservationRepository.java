@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import web.mvc.domain.Reservation;
+import web.mvc.dto.DailyStatsDto;
+import web.mvc.dto.MonthlyStatsDto;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -37,4 +39,50 @@ public interface ReservationRepository extends JpaRepository<Reservation,Long> {
             "AND r.reminded = false " + // 아직 알림을 보내지 않은 경우
             "AND r.date = :currentDate")
     List<Reservation> findReservationsForReminder(@Param("currentDate") String currentDate);
+
+    /** 일별 예약 건수·매출 (인터페이스 프로젝션) */
+    @Query("""
+      SELECT
+        r.date                 AS date,
+        COUNT(r)               AS reservationCount,
+        COALESCE(SUM(p.finalPaymentAmount), 0) AS revenue
+      FROM Reservation r
+      LEFT JOIN ReservationPayment p ON p.reservation = r
+      WHERE r.restaurant.id = :restaurantId
+        AND r.date BETWEEN :from AND :to
+      GROUP BY r.date
+      ORDER BY r.date
+    """)
+    List<DailyStatsProjection> findDailyStatsByRestaurantId(
+            @Param("restaurantId") Long restaurantId,
+            @Param("from")         String from,
+            @Param("to")           String to
+    );
+
+    /** 월별 예약 건수·매출 (인터페이스 프로젝션 + DATE→YEAR/MONTH) */
+    @Query("""
+      SELECT
+        FUNCTION('YEAR',  FUNCTION('STR_TO_DATE', r.date, '%Y-%m-%d')) AS year,
+        FUNCTION('MONTH', FUNCTION('STR_TO_DATE', r.date, '%Y-%m-%d')) AS month,
+        COUNT(r)               AS reservationCount,
+        COALESCE(SUM(p.finalPaymentAmount), 0) AS revenue
+      FROM Reservation r
+      LEFT JOIN ReservationPayment p ON p.reservation = r
+      WHERE r.restaurant.id = :restaurantId
+        AND FUNCTION('STR_TO_DATE', r.date, '%Y-%m-%d')
+            BETWEEN FUNCTION('STR_TO_DATE', :from, '%Y-%m-%d')
+                AND FUNCTION('STR_TO_DATE', :to, '%Y-%m-%d')
+      GROUP BY
+        FUNCTION('YEAR',  FUNCTION('STR_TO_DATE', r.date, '%Y-%m-%d')),
+        FUNCTION('MONTH', FUNCTION('STR_TO_DATE', r.date, '%Y-%m-%d'))
+      ORDER BY
+        FUNCTION('YEAR',  FUNCTION('STR_TO_DATE', r.date, '%Y-%m-%d')),
+        FUNCTION('MONTH', FUNCTION('STR_TO_DATE', r.date, '%Y-%m-%d'))
+    """)
+    List<MonthlyStatsProjection> findMonthlyStatsByRestaurantId(
+            @Param("restaurantId") Long restaurantId,
+            @Param("from")         String from,
+            @Param("to")           String to
+    );
+
 }

@@ -1,10 +1,14 @@
 package web.mvc.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import web.mvc.domain.Restaurant;
 import web.mvc.domain.Review;
+import web.mvc.dto.ReviewSummaryDto;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
@@ -22,4 +26,19 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     //  식당별 전체 리뷰 목록
     List<Review> findByRestaurant(Restaurant restaurant);
+
+    /** 최근 일간 총 리뷰 수 및 현지인 리뷰 수 */
+    @Query("""
+      SELECT new web.mvc.dto.ReviewSummaryDto(
+        COUNT(r),
+        SUM(CASE WHEN r.localReview = true THEN 1 ELSE 0 END)
+      )
+      FROM Review r
+      WHERE r.restaurant.id = :restaurantId
+        AND r.visitDate BETWEEN :from AND :to
+    """)
+    ReviewSummaryDto findReviewSummaryByVisitDate(@Param("restaurantId") Long restaurantId,
+                                                  @Param("from")   LocalDate from,
+                                                  @Param("to")     LocalDate to);
+
 }
