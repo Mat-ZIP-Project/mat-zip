@@ -26,6 +26,5 @@ public interface WaitingQueueRepository extends JpaRepository<WaitingQueue, Long
     @Query("SELECT w FROM WaitingQueue w WHERE w.status = '입장 대기' AND w.expectedEntryTime < CURRENT_TIMESTAMP")
     List<WaitingQueue> findExpiredWaitings();
 
-    List<WaitingQueue> findByStatusAndCalledAtBefore(String status, LocalDateTime time);
-
+    List<WaitingQueue> findByStatusAndCalledAtBefore(String status, LocalDateTime beforeTime);
 }

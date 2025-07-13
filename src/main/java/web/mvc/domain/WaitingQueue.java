@@ -39,7 +39,7 @@ public class WaitingQueue {
     private LocalDateTime expectedEntryTime; // 예상 입장 시간 (optional)
 
     @Column(length = 20)
-    private String status; // "입장 대기", "입장 완료", "노쇼"
+    private String status; // "입장 대기", "호출", "입장 완료", "노쇼"
 
     @Column(nullable = false)
     private Integer waitingNumber; // 본인 대기 번호 (1번, 2번, ...)
