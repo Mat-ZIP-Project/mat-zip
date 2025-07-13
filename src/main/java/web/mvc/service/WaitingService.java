@@ -1,48 +1,57 @@
 package web.mvc.service;
 
-import web.mvc.domain.User;
-import web.mvc.domain.Restaurant;
-import web.mvc.domain.WaitingQueue;
+import web.mvc.dto.WaitingRegisterRequestDTO;
+import web.mvc.dto.WaitingRegisterResponseDTO;
+import web.mvc.dto.WaitingStatusResponseDTO;
 
 import java.util.List;
 
 public interface WaitingService {
 
     /**
-     * 사용자 웨이팅 등록
-     * - 해당 유저가 이미 '입장 대기' 상태의 웨이팅을 가진 경우 예외 발생
-     * - restaurant의 가장 마지막 waitingNumber 다음 번호로 부여됨
-     * - waiting_status 테이블도 함께 업데이트
+     * 웨이팅 등록
+     * - 사용자가 특정 식당에 웨이팅을 신청할 때 호출
      */
-    WaitingQueue registerWaiting(User user, Restaurant restaurant, int numPeople);
-
-
+    WaitingRegisterResponseDTO registerWaitingByUserId(String userId, WaitingRegisterRequestDTO dto);
 
     /**
-     * 특정 웨이팅 상태 변경 (입장 완료, 노쇼)
-     * - status가 '입장 대기'인 경우에만 가능
-     * - 변경 시 waiting_status 카운트 감소
+     * 현재 로그인한 사용자의 웨이팅 상태 조회
      */
-    void updateWaitingStatus(Long waitingId, String newStatus);
+    WaitingStatusResponseDTO getMyWaitingStatus(String userId);
 
     /**
-     * 현재 로그인한 유저의 '입장 대기' 상태 웨이팅 단건 조회
-     * - 마이페이지에서 사용
-     * - 없으면 예외 발생
+     * 다음 대기자 호출 처리
+     * - 식당에서 다음 대기자를 호출하여 상태를 '호출됨(CALLED)'으로 변경
      */
-    WaitingQueue getMyActiveWaiting(User user);
+    void callNextWaiting(Long restaurantId);
 
     /**
-     * 특정 식당의 '입장 대기' 상태 웨이팅 리스트 조회
-     * - 사장님 마이페이지에서 확인용
-     * - 대기 순번 기준 정렬됨
+     * 호출된 대기자의 입장 처리
+     * - 호출된 상태(CALLED)인 대기자가 실제로 입장했을 때 상태를 '입장 완료(ENTERED)'로 변경
      */
-    List<WaitingQueue> getWaitingListByRestaurant(Restaurant restaurant);
+    void enterWaitingUser(Long waitingId);
 
     /**
-     * 웨이팅 ID로 웨이팅 단건 조회
-     * 컨트롤러에서 권한 체크나 상태 변경 전에 사용
+     * 특정 식당의 전체 웨이팅 현황 조회
+     * - 현재 대기 인원 수, 예상 입장 시간 등의 정보를 반환
      */
-    WaitingQueue getWaitingById(Long waitingId);
+    WaitingStatusResponseDTO getWaitingStatusByRestaurantId(Long restaurantId);
+
+    /**
+     * 식당 주인이 등록한 식당의 웨이팅 현황 조회
+     */
+    List<WaitingStatusResponseDTO> getWaitingStatusesByOwnerId(String ownerId);
+
+    /**
+     * 특정 대기자를 노쇼(NO-SHOW) 처리
+     * - 주인이 수동으로 호출한 대기자에 대해 노쇼 처리 시 사용
+     */
+    void markNoShow(Long waitingId);
+
+    /**
+     * 15분 이상 경과한 호출된 대기자들을 자동으로 노쇼 처리하는 스케줄러 메서드
+     * - 일정 주기로 자동 실행되어 자동 노쇼 처리를 수행
+     */
+    void autoMarkNoShow();
 
 }

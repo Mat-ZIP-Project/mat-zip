@@ -19,5 +19,6 @@ public class UserDTO {
     private Boolean noShow;
     private Boolean gpsVerified;
     private String userGrade;
+    private String preferenceCategory;
 
 }

@@ -2,8 +2,12 @@ package web.mvc.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -18,6 +22,7 @@ public class Review {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "review_id")
     private Long reviewId;
 
     @Column(nullable = false)
@@ -26,28 +31,25 @@ public class Review {
     @Column(nullable = false)
     private int rating;
 
-    private String category;
-
-    private boolean siteReview;
-
-    @Column(nullable = false)
+    @CreationTimestamp
+    @Column(name = "reviewed_at")
     private LocalDateTime reviewedAt;
 
-    @Column(nullable = false)
+    @Column(name = "visit_date", nullable = false)
     private LocalDate visitDate;
 
-    @ManyToOne
-    @JoinColumn(name = "restaurant_id")
+    @Column(name = "local_review", nullable = false)
+    private boolean localReview = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "restaurant_id", nullable = false)
     private Restaurant restaurant;
 
-    @ManyToOne
-    @JoinColumn(name = "id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id", nullable = false)
     private User user;
 
-    private Long sourceId;
-
-    @Column(name = "local_review")
-    private boolean localReview;
-
+    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReviewImage> images = new ArrayList<>();
 
 }

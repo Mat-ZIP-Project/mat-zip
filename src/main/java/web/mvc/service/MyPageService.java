@@ -9,36 +9,24 @@ import java.util.List;
 public interface MyPageService {
 
     /**
-     * 사용자의 전체 예약 내력 조회
+     *  사용자의 찜한 식당 내역 조회
+     */
+    List<RestaurantLikeDetailDto> getUserRestaurantLikes(Long id) throws BasicException;
+
+    /**
+     * 사용자의 전체 예약 내역 조회
      */
     List<ReservationDetailDto> getUserReservations(Long id) throws BasicException;
 
     /**
      * 사용자의 전체 리뷰 내역 조회
      */
-    List<ReviewDetailDto> getUserReviews(Long id) throws BasicException;
-
-    /**
-     * 사용자의 참여한 모임 내역 조회
-     */
-    List<ParticipantDetailDto> getParticipatedMeetings(Long id) throws BasicException;
-
-    /**
-     * 사용자가 모임에 대해 작성한 리뷰 내역 조회
-     */
-    List<MeetingReviewDetailDto> getMeetingReviews(Long id) throws BasicException;
-
-    /**
-     *  사용자가 생성한 모임 내역 조회
-     */
-    List<CreatedMeetingDetailDto> getMeeting(Long id) throws BasicException;
+    List<ReviewDetailResponse> getUserReviews(Long id) throws BasicException;
 
     /**
      *  사용자가 예약 취소하는 메서드
      */
     void cancelReservation(Long id, Long reservationId) throws BasicException;
-
-    void checkAndUpdateUserGrade(User user) throws BasicException;
 
     /**
      *  사용자의 포인트 잔액을 조회
@@ -64,4 +52,14 @@ public interface MyPageService {
      * 알림 isRead의 값이 false인 것 개수
      */
     int getUnreadNotificationCount(Long id) throws BasicException;
+
+    /**
+     *  사용자의 선호 카테고리 업데이트
+     */
+    User updateUserPreference(Long id, UserPreferenceDto userPreferenceDto) throws BasicException;
+
+    /**
+     *  리뷰 삭제
+     */
+    void deleteReview(Long id, Long reviewId) throws BasicException;
 }

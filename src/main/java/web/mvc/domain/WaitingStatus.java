@@ -26,4 +26,7 @@ public class WaitingStatus {
     private Integer waitingCount; // 실시간 대기 인원 (앞에 몇 팀 대기 중)
 
     private LocalDateTime updatedAt = LocalDateTime.now();
+
+    @Version
+    private Long version;
 }

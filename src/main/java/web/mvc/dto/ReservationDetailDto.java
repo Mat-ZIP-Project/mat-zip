@@ -15,6 +15,7 @@ import java.time.LocalTime;
 @AllArgsConstructor
 public class ReservationDetailDto {
     private Long reservationId;
+    private Long restaurantId;
     private String restaurantName;
     private LocalDate date;
     private LocalTime time;
@@ -23,4 +24,6 @@ public class ReservationDetailDto {
     private String ownerNotes; // 가게 사장 메모 (선택 사항)
     private LocalDateTime createdAt;
     private String paymentStatus; // 결제 상태 (엔티티에 직접 없는 파생 정보)
+
+    private boolean noShow; // 예약자 노쇼 이력
 }

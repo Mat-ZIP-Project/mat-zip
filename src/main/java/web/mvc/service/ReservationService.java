@@ -2,10 +2,7 @@ package web.mvc.service;
 
 import com.siot.IamportRestClient.response.Payment;
 import web.mvc.domain.User;
-import web.mvc.dto.NoShowReservationDto;
-import web.mvc.dto.PendingReservationDto;
-import web.mvc.dto.ReservationCreateReqDto;
-import web.mvc.dto.ReservationCreateResDto;
+import web.mvc.dto.*;
 import web.mvc.exception.BasicException;
 
 import java.math.BigDecimal;
@@ -26,6 +23,8 @@ public interface ReservationService {
     /** 노쇼처리 대상 리스트 */
     List<NoShowReservationDto> getNoShowCandidates(String ownerUserId);
 
-    /** 노쇼 처리 */
+    /** 만료된 예약 노쇼 처리 */
     void markNoShow(Long reservationId) throws BasicException;
+
+
 }

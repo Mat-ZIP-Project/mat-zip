@@ -7,12 +7,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import web.mvc.domain.Review;
 import web.mvc.dto.*;
 import web.mvc.exception.BasicException;
 import web.mvc.security.CustomUserDetails;
 import web.mvc.service.MenuService;
 import web.mvc.service.OwnerService;
 import web.mvc.service.ReservationService;
+import web.mvc.service.RestaurantReviewService;
 
 import java.util.List;
 
@@ -151,6 +153,20 @@ public class OwnerController {
 
     //////////////////////////////////////////////////////
     // 예약 관리
+    /** 상태 무관, 최신순 전체 예약 조회 */
+    @GetMapping("/reservations/all")
+    public ResponseEntity<List<ReservationDetailDto>> getAll(@AuthenticationPrincipal CustomUserDetails principal) throws BasicException {
+        List<ReservationDetailDto> list = ownerService.getAllReservations(principal.getUsername());
+        return ResponseEntity.ok(list);
+    }
+
+    /** 오늘 날짜 예약 조회 (시간순) */
+    @GetMapping("/reservation/today")
+    public ResponseEntity<List<ReservationDetailDto>> getToday(@AuthenticationPrincipal CustomUserDetails principal) throws BasicException {
+        List<ReservationDetailDto> list = ownerService.getTodayReservations(principal.getUsername());
+        return ResponseEntity.ok(list);
+    }
+
     /** 대기 중 예약 목록 조회 */
     @GetMapping("/reservations/pending")
     public ResponseEntity<List<PendingReservationDto>> getPending(@AuthenticationPrincipal CustomUserDetails principal) throws BasicException {
@@ -170,5 +186,12 @@ public class OwnerController {
         return ResponseEntity.ok("노쇼 처리 완료");
     }
 
+    //////////////////////////////////////////////////////////
+    // 리뷰 관리
+    @GetMapping("/reviews/all")
+    public ResponseEntity<List<ReviewDetailResponse>> getMyReviews(@AuthenticationPrincipal CustomUserDetails principal) {
+        List<ReviewDetailResponse> responses = ownerService.getReviewsByUserId(principal.getUsername());
+        return ResponseEntity.ok(responses);
+    }
 }
 

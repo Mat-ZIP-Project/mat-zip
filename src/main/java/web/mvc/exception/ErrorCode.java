@@ -98,10 +98,21 @@ public enum ErrorCode { //enum은 'Enumeration' 의 약자로 열거, 목록 이
     INVALID_STATUS_CHANGE(HttpStatus.BAD_REQUEST, "INVALID_STATUS_CHANGE", "웨이팅 상태가 변경할 수 없는 상황입니다."),
     NOT_EXPIRED_YET(HttpStatus.BAD_REQUEST, "NOT_EXPIRED_YET", "아직 15분이 다 경과하지 않았습니다."),
     WAITING_STATUS_NOT_FOUND(HttpStatus.NOT_FOUND, "WaitingStatus Not Found", "waiting_status가 존재하지 않습니다."),
+    MAX_WAITING_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "Max waiting limit exceeded", "최대 대기 인원을 초과했습니다."),
+    WAITING_ALREADY_ENTERED(HttpStatus.CONFLICT, "Already entered", "이미 입장 처리된 웨이팅입니다."),
+    WAITING_ALREADY_NOSHOW(HttpStatus.CONFLICT, "Already noshow", "이미 노쇼 처리된 웨이팅입니다."),
+    NO_WAITING_AVAILABLE(HttpStatus.NOT_FOUND, "No waiting available", "입장 처리할 웨이팅이 없습니다."),
+
+
+    //리뷰 예외처리
+    RESTAURANT_MISMATCH(HttpStatus.BAD_REQUEST,"","해당 식당의 영수증이 아닙니다."),
+    INVALID_DATE(HttpStatus.BAD_REQUEST,"","7일 이내 사용 건만 리뷰 작성 가능합니다."),
+    DUPLICATED_REVIEW(HttpStatus.BAD_REQUEST,"","이미 리뷰가 작성된 방문 건입니다."),
 
     // AWS S3 이미지 업로드 관련 예외
     IMAGE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "IMAGE_LIMIT_EXCEEDED", "이미지는 최대 10개까지 업로드 가능합니다"),
     IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "IMAGE_NOT_FOUND", "이미지를 찾을 수 없습니다");
+
 
 
     private final HttpStatus httpStatus;

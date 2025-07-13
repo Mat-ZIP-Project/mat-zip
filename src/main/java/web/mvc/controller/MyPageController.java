@@ -11,11 +11,9 @@ import web.mvc.domain.*;
 import web.mvc.dto.*;
 
 import web.mvc.exception.BasicException;
-import web.mvc.exception.ErrorCode;
 import web.mvc.security.CustomUserDetails;
 import web.mvc.service.MyPageService;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -25,6 +23,43 @@ import java.util.List;
 public class MyPageController {
 
     private final MyPageService myPageService;
+
+    /**
+     *  사용자의 선호 카테고리 업데이트
+     */
+    @PostMapping("/update/preference")
+    public ResponseEntity<?> updateUserPreference(@AuthenticationPrincipal CustomUserDetails principal, @RequestBody UserPreferenceDto userPreferenceDto) throws BasicException {
+        if (principal == null || principal.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long id = principal.getUser().getId();
+
+        try {
+            User updatedUser = myPageService.updateUserPreference(id, userPreferenceDto);
+            return ResponseEntity.ok(updatedUser);
+        } catch (BasicException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    /**
+     *  사용자의 식당 찜 내역 조회
+     */
+    @GetMapping("/restaurant/likes")
+    public ResponseEntity<List<RestaurantLikeDetailDto>> getUserRestaurantLikes(@AuthenticationPrincipal CustomUserDetails principal) {
+        if (principal == null || principal.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long id = principal.getUser().getId();
+
+        try {
+            List<RestaurantLikeDetailDto> restaurantLikes = myPageService.getUserRestaurantLikes(id);
+            return ResponseEntity.ok(restaurantLikes);
+        }  catch (BasicException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
 
     /**
      * 사용자의 전체 예약 내역 조회
@@ -48,81 +83,15 @@ public class MyPageController {
      *  사용자의 식당 리뷰 내역 조회
      */
     @GetMapping("/reviews")
-    public ResponseEntity<List<ReviewDetailDto>> getUserReviews(@AuthenticationPrincipal CustomUserDetails principal) {
+    public ResponseEntity<List<ReviewDetailResponse>> getUserReviews(@AuthenticationPrincipal CustomUserDetails principal) {
         if (principal == null || principal.getUser() == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         Long id = principal.getUser().getId();
 
         try {
-            List<ReviewDetailDto> reviews = myPageService.getUserReviews(id);
+            List<ReviewDetailResponse> reviews = myPageService.getUserReviews(id);
             return ResponseEntity.ok(reviews);
-        } catch (BasicException e) {
-            return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
-        }
-    }
-
-//    @GetMapping("/meetings")
-//    public ResponseEntity<List<Meeting>> getUserMeetings(@AuthenticationPrincipal CustomUserDetails principal) {
-//        if (principal == null || principal.getUser() == null) {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-//        }
-//        Long id = principal.getUser().getId();
-//
-//        try {
-//            List<Meeting> meetings = myPageService.get
-//        }
-//    }
-
-    /**
-     *  사용자가 참여한 모임 내역을 조회
-     */
-    @GetMapping("/meetings/participants")
-    public ResponseEntity<List<ParticipantDetailDto>> getUserMeetings(@AuthenticationPrincipal CustomUserDetails principal) {
-        if (principal == null || principal.getUser() == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        Long id = principal.getUser().getId();
-
-        try {
-            List<ParticipantDetailDto> meetupParticipant = myPageService.getParticipatedMeetings(id);
-            return  ResponseEntity.ok(meetupParticipant);
-        } catch (BasicException e) {
-            return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
-        }
-    }
-
-    /**
-     *  사용자가 모임에 대해 작성한 리뷰 내역
-     */
-    @GetMapping("/meetings/reviews")
-    public ResponseEntity<List<MeetingReviewDetailDto>>  getUserMeetingReviews(@AuthenticationPrincipal CustomUserDetails principal) {
-        if (principal == null || principal.getUser() == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        Long id = principal.getUser().getId();
-
-        try {
-            List<MeetingReviewDetailDto> meetingReviews = myPageService.getMeetingReviews(id);
-            return ResponseEntity.ok(meetingReviews);
-        } catch (BasicException e) {
-            return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
-        }
-    }
-
-    /**
-     *  사용자가 직접 생성한 모임 내역
-     */
-    @GetMapping("/meetings/created")
-    public ResponseEntity<List<CreatedMeetingDetailDto>> getUserMeetingCreated(@AuthenticationPrincipal CustomUserDetails principal) {
-        if (principal == null || principal.getUser() == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        Long id = principal.getUser().getId();
-
-        try {
-            List<CreatedMeetingDetailDto> meetings = myPageService.getMeeting(id);
-            return ResponseEntity.ok(meetings);
         } catch (BasicException e) {
             return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
         }
@@ -131,7 +100,7 @@ public class MyPageController {
     /**
      * 사용자 예약 취소
      */
-    @PostMapping("/reservations/{reservationId}/cancel")
+    @PostMapping("/reservations/cancel/{reservationId}")
     public ResponseEntity<String> cancelReservation(@AuthenticationPrincipal CustomUserDetails principal,
                                                     @PathVariable Long reservationId) {
         if (principal == null || principal.getUser() == null) {
@@ -238,4 +207,22 @@ public class MyPageController {
         }
     }
 
+    /**
+     *  마이페이지에서 사용자가 작성한 리뷰 삭제
+     */
+    @DeleteMapping("/reviews/delete/{reviewId}")
+    public ResponseEntity<?> deleteReview(@AuthenticationPrincipal CustomUserDetails principal,
+                                          @PathVariable Long reviewId) {
+        if (principal == null || principal.getUser() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long id = principal.getUser().getId();
+
+        try {
+            myPageService.deleteReview(id, reviewId);
+            return ResponseEntity.ok().build();
+        } catch (BasicException e) {
+            return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
+        }
+    }
 }

@@ -15,6 +15,7 @@ import java.util.Optional;
 
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation,Long> {
+
     // 특정 사용자의 모든 예약 조회
     List<Reservation> findByUserIdAndStatus(Long id, String status);
     List<Reservation> findByUserIdAndStatusIn(Long id, List<String> status);
@@ -33,6 +34,20 @@ public interface ReservationRepository extends JpaRepository<Reservation,Long> {
     List<Reservation> findReservationsByBeforeDate(@Param("status") String status,
                                                          @Param("date") String date );
 
+    /** 특정 식당의 전체 예약 조회 (최신순 정렬) */
+    @Query("SELECT DISTINCT r FROM Reservation r JOIN FETCH r.user WHERE r.restaurant.restaurantId = :restaurantId ORDER BY r.createdAt DESC")
+    List<Reservation> findAllByRestaurantIdOrderByCreatedAtDesc(@Param("restaurantId") Long restaurantId);
+
+    /** 식당의 당일 예약건 조회 (예약 시간기준 정렬) (yyyy-MM-dd) */
+    @Query("SELECT DISTINCT r FROM Reservation r JOIN FETCH r.user WHERE r.restaurant.restaurantId = :restaurantId " +
+            "  AND r.date = :targetDate ORDER BY r.time DESC")
+    List<Reservation> findByRestaurantAndDate(@Param("restaurantId") Long restaurantId,
+                                              @Param("targetDate") String targetDate);
+
+    /** 특정 식당의 전체 예약 페이징 적용 */
+    // @Query("SELECT r FROM Reservation r WHERE r.restaurant.restaurantId = :restaurantId ORDER BY r.createdAt DESC")
+    // Page<Reservation> findAllByRestaurantId(@Param("restaurantId") Long restaurantId, Pageable pageable);
+
     // 기존 메서드 (예약 존재 여부만 확인 가능)
     boolean existsByUser_UserIdAndRestaurant_RestaurantIdAndStatus(String userUserId, Long restaurantRestaurantId, String status);
     boolean existsByUser_IdAndRestaurant_RestaurantIdAndStatus(Long userId, Long restaurantRestaurantId, String status);
@@ -49,7 +64,7 @@ public interface ReservationRepository extends JpaRepository<Reservation,Long> {
             "AND r.date = :currentDate")
     List<Reservation> findReservationsForReminder(@Param("currentDate") String currentDate);
 
-    /** 일별 예약 건수·매출 (인터페이스 프로젝션) */
+    /** (식당 통계용) 일별 예약 건수·매출 (인터페이스 프로젝션) */
     @Query("""
       SELECT
         r.date                 AS date,
@@ -68,7 +83,7 @@ public interface ReservationRepository extends JpaRepository<Reservation,Long> {
             @Param("to")           String to
     );
 
-    /** 월별 예약 건수·매출 (인터페이스 프로젝션 + DATE→YEAR/MONTH) */
+    /** (식당 통계용) 월별 예약 건수·매출 (인터페이스 프로젝션 + DATE→YEAR/MONTH) */
     @Query("""
       SELECT
         FUNCTION('YEAR',  FUNCTION('STR_TO_DATE', r.date, '%Y-%m-%d')) AS year,
