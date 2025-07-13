@@ -21,7 +21,7 @@ public interface MyPageService {
     /**
      * 사용자의 전체 리뷰 내역 조회
      */
-    List<ReviewDetailDto> getUserReviews(Long id) throws BasicException;
+    List<ReviewDetailResponse> getUserReviews(Long id) throws BasicException;
 
     /**
      *  사용자가 예약 취소하는 메서드

@@ -18,7 +18,7 @@ public class RestaurantUpdateRequest {
     private Double latitude;
     private Double longitude;
     private String phone;
-
+    private String category;
     private String descript;
 
     private LocalTime openTime;

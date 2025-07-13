@@ -59,7 +59,7 @@ public class MenuServiceImpl implements MenuService {
         String imageUrl = null;
         if (image != null && !image.isEmpty()) {
             //String dir = getMenuImageDirectory(restaurant.getRestaurantId());
-            imageUrl = s3Service.uploadImage(userId, image, MENU_FOLDER);
+            imageUrl = s3Service.uploadImageForRestaurant(userId, image, MENU_FOLDER);
         }
 
         // 메뉴 엔티티 생성 및 저장
@@ -101,7 +101,7 @@ public class MenuServiceImpl implements MenuService {
                 }
             }
             //String dir = getMenuImageDirectory(menu.getRestaurant().getRestaurantId());
-            String newUrl = s3Service.uploadImage(userId, image, MENU_FOLDER);
+            String newUrl = s3Service.uploadImageForRestaurant(userId, image, MENU_FOLDER);
             menu.setImageUrl(newUrl);
         }
 

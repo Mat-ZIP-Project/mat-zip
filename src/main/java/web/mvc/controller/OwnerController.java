@@ -7,11 +7,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import web.mvc.domain.Review;
 import web.mvc.dto.*;
+import web.mvc.exception.BasicException;
 import web.mvc.security.CustomUserDetails;
 import web.mvc.service.MenuService;
 import web.mvc.service.OwnerService;
-import web.mvc.service.RestaurantService;
+import web.mvc.service.ReservationService;
+import web.mvc.service.RestaurantReviewService;
 
 import java.util.List;
 
@@ -22,6 +25,7 @@ import java.util.List;
 public class OwnerController {
     private final OwnerService ownerService;
     private final MenuService menuService;
+    private final ReservationService reservationService;
 
     /**
      * 업주의 식당 정보 조회
@@ -91,7 +95,7 @@ public class OwnerController {
      * 업주의 식당 대표이미지 설정
      * - 기존 대표이미지 자동 해제
      */
-    @PutMapping("/restaurant/images/{imageId}/main")
+    @PutMapping("/restaurant/images/main/{imageId}")
     public ResponseEntity<Void> setMainImage(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long imageId) {
@@ -112,18 +116,21 @@ public class OwnerController {
     }
 
     /** 메뉴 등록 */
-    @PostMapping(value = "/menu")
+    @PostMapping(value = "/menu", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MenuResponse> createMenu(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestPart("data") MenuRequest request,
             @RequestPart(value = "image", required = false) MultipartFile image) {
+        System.out.println("Controller 오니 ?");
+        System.out.println("MenuRequest" + request.getMenuName() + request.getDescription());
+        System.out.println("image : " + image);
         String userId = userDetails.getUser().getUserId();
         MenuResponse created = menuService.createMenu(userId, request, image);
         return ResponseEntity.ok(created);
     }
 
     /** 메뉴 수정 */
-    @PutMapping(value = "/menu/{id}")
+    @PutMapping(value = "/menu/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MenuResponse> updateMenu(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable("id") Long menuId,
@@ -142,6 +149,49 @@ public class OwnerController {
         String userId = userDetails.getUser().getUserId();
         menuService.deleteMenu(userId, menuId);
         return ResponseEntity.noContent().build();
+    }
+
+    //////////////////////////////////////////////////////
+    // 예약 관리
+    /** 상태 무관, 최신순 전체 예약 조회 */
+    @GetMapping("/reservations/all")
+    public ResponseEntity<List<ReservationDetailDto>> getAll(@AuthenticationPrincipal CustomUserDetails principal) throws BasicException {
+        List<ReservationDetailDto> list = ownerService.getAllReservations(principal.getUsername());
+        return ResponseEntity.ok(list);
+    }
+
+    /** 오늘 날짜 예약 조회 (시간순) */
+    @GetMapping("/reservation/today")
+    public ResponseEntity<List<ReservationDetailDto>> getToday(@AuthenticationPrincipal CustomUserDetails principal) throws BasicException {
+        List<ReservationDetailDto> list = ownerService.getTodayReservations(principal.getUsername());
+        return ResponseEntity.ok(list);
+    }
+
+    /** 대기 중 예약 목록 조회 */
+    @GetMapping("/reservations/pending")
+    public ResponseEntity<List<PendingReservationDto>> getPending(@AuthenticationPrincipal CustomUserDetails principal) throws BasicException {
+        return ResponseEntity.ok(reservationService.getPendingReservations(principal.getUsername()));
+    }
+
+    /** 노쇼 후보 목록 조회 */
+    @GetMapping("/reservations/noshow")
+    public ResponseEntity<List<NoShowReservationDto>> getNoShowList(@AuthenticationPrincipal CustomUserDetails principal) throws BasicException {
+        return ResponseEntity.ok(reservationService.getNoShowCandidates(principal.getUsername()));
+    }
+
+    /** 노쇼 처리 */
+    @PostMapping("/reservations/noshow")
+    public ResponseEntity<String> markNoShow(@RequestBody NoShowRequest request) throws BasicException {
+        reservationService.markNoShow(request.getReservationId());
+        return ResponseEntity.ok("노쇼 처리 완료");
+    }
+
+    //////////////////////////////////////////////////////////
+    // 리뷰 관리
+    @GetMapping("/reviews/all")
+    public ResponseEntity<List<ReviewDetailResponse>> getMyReviews(@AuthenticationPrincipal CustomUserDetails principal) {
+        List<ReviewDetailResponse> responses = ownerService.getReviewsByUserId(principal.getUsername());
+        return ResponseEntity.ok(responses);
     }
 }
 
