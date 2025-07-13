@@ -25,5 +25,8 @@ public class ReservationDetailDto {
     private LocalDateTime createdAt;
     private String paymentStatus; // 결제 상태 (엔티티에 직접 없는 파생 정보)
 
+    /// 예약자 정보
+    private String userId;
+    private String userName;
     private boolean noShow; // 예약자 노쇼 이력
 }
