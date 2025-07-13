@@ -7,15 +7,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import web.mvc.domain.*;
-import web.mvc.dto.ReservationCreateReqDto;
-import web.mvc.dto.ReservationCreateResDto;
+import web.mvc.dto.*;
 import web.mvc.exception.BasicException;
 import web.mvc.exception.ErrorCode;
 import web.mvc.repository.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -58,8 +59,9 @@ public class ReservationServiceImpl implements ReservationService {
         // DB에 저장
         Reservation savedReservation = reservationRepository.save(reservation);
 
-        return new ReservationCreateResDto(savedReservation.getReservationId(), restaurant.getRestaurantName(),"예약이 성공적으로 신청되었습니다.", true);
+        return new ReservationCreateResDto(savedReservation.getReservationId(), restaurant.getRestaurantName(), "예약이 성공적으로 신청되었습니다.", true);
     }
+
 
     /**
      * 특정 예약 상태를 승인( APPROVED ) 또는 거절( REJECTED ) 등으로 업데이트
@@ -92,9 +94,13 @@ public class ReservationServiceImpl implements ReservationService {
         String currentStatus = reservation.getStatus();
 
         // 1. 요청된 상태가 유효한 상태 목록에 있는지 검사
-        if (!VALID_STATUSES.contains(currentStatus)) {
-            log.error("유효하지 않은 예약 상태 요청: 예약 ID '{}', 요청 상태 '{}'", reservationId, currentStatus);
-            throw new BasicException(ErrorCode.RESERVATION_NOT_FOUND); // 에러 코드 세분화
+//        if (!VALID_STATUSES.contains(currentStatus)) {
+//            log.error("유효하지 않은 예약 상태 요청: 예약 ID '{}', 요청 상태 '{}'", reservationId, currentStatus);
+//            throw new BasicException(ErrorCode.RESERVATION_NOT_FOUND); // 에러 코드 세분화
+//        }
+        // 1. 요청된 newStatus가 유효한지 검사하도록 수정 (기존에는 currentStatus 검사)
+        if (!VALID_STATUSES.contains(newStatus)) {  // 수정된 부분
+            throw new BasicException(ErrorCode.INVALID_RESERVATION_STATUS);
         }
 
         // 2. 예약 상태 전환 유효성 검사 (비즈니스 규칙 강화)
@@ -272,4 +278,79 @@ public class ReservationServiceImpl implements ReservationService {
             log.warn("예약 ID '{}' 에 연결된 사용자 정보가 없어 알림을 보낼 수 없습니다.", reservationId);
         }
     } // <<-- updateReservationStatus 메서드의 닫는 중괄호
+
+
+    /**
+     * 대기 중인 예약 목록 조회
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<PendingReservationDto> getPendingReservations(String ownerUserId) throws BasicException {
+        Restaurant restaurant = restaurantRepository.findByOwnerUserId(ownerUserId)
+                .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
+
+        List<Reservation> list = reservationRepository.findReservationsByRestaurant(
+                restaurant.getRestaurantId(), STATUS_PENDING_APPROVAL);
+
+        return list.stream()
+                .map(r -> new PendingReservationDto(
+                        r.getReservationId(),
+                        r.getUser().getUserId(),
+                        r.getUser().getName(),
+                        Boolean.TRUE.equals(r.getUser().getNoShow()),
+                        r.getNumPeople(),
+                        r.getDate(),
+                        r.getTime(),
+                        r.getStatus()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 노쇼 대상 목록 조회 추가
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<NoShowReservationDto> getNoShowCandidates(String ownerUserId) throws BasicException {
+        Restaurant restaurant = restaurantRepository.findByOwnerUserId(ownerUserId)
+                .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
+
+        // "예약 완료" 상태이면서, 예약 방문일이 지난 건
+        List<Reservation> list = reservationRepository.findReservationsByBeforeDate(
+                STATUS_APPROVED, LocalDate.now().toString());
+
+        return list.stream()
+                .map(r -> new NoShowReservationDto(
+                        r.getReservationId(),
+                        r.getUser().getUserId(),
+                        r.getUser().getName(),
+                        r.getDate(),
+                        r.getTime()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 만료된 예약 노쇼 처리
+     */
+    @Override
+    @Transactional
+    public void markNoShow(Long reservationId) throws BasicException {
+        Reservation r = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new BasicException(ErrorCode.RESERVATION_NOT_FOUND));
+
+        // 예약 상태가 '예약 완료'인 경우에만 노쇼 처리 허용
+        if (!STATUS_APPROVED.equals(r.getStatus())) {
+            throw new BasicException(ErrorCode.INVALID_RESERVATION_STATUS);
+        }
+
+        r.setStatus("노쇼");  // 변경
+        User u = r.getUser();
+        u.setNoShow(true);     // 사용자 noShow 플래그 설정
+
+        reservationRepository.save(r);    // 예약 저장
+        userRepository.save(u);           // 사용자 저장
+    }
+
+
 }

@@ -13,9 +13,7 @@ import web.mvc.dto.*;
 import web.mvc.exception.BasicException;
 import web.mvc.security.CustomUserDetails;
 import web.mvc.service.MyPageService;
-import web.mvc.service.RestaurantReviewService;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -85,14 +83,14 @@ public class MyPageController {
      *  사용자의 식당 리뷰 내역 조회
      */
     @GetMapping("/reviews")
-    public ResponseEntity<List<ReviewDetailDto>> getUserReviews(@AuthenticationPrincipal CustomUserDetails principal) {
+    public ResponseEntity<List<ReviewDetailResponse>> getUserReviews(@AuthenticationPrincipal CustomUserDetails principal) {
         if (principal == null || principal.getUser() == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         Long id = principal.getUser().getId();
 
         try {
-            List<ReviewDetailDto> reviews = myPageService.getUserReviews(id);
+            List<ReviewDetailResponse> reviews = myPageService.getUserReviews(id);
             return ResponseEntity.ok(reviews);
         } catch (BasicException e) {
             return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();

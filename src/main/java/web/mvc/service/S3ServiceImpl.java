@@ -1,6 +1,7 @@
 package web.mvc.service;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
@@ -8,7 +9,7 @@ import com.amazonaws.util.IOUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import web.mvc.domain.OwnerInfo;
 import web.mvc.domain.Restaurant;
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
-@Component
+@Service
 public class S3ServiceImpl implements S3Service {
 
     private final AmazonS3 amazonS3;
@@ -42,7 +43,7 @@ public class S3ServiceImpl implements S3Service {
     /**
      * 단일 이미지 업로드
      */
-    public String uploadImage(String userId, MultipartFile image, String folderName) {
+    public String uploadImageForRestaurant(String userId, MultipartFile image, String folderName) {
         if (image.isEmpty() || Objects.isNull(image.getOriginalFilename())) {
             throw new BasicException(ErrorCode.INVALID_INPUT);
         }
@@ -68,7 +69,7 @@ public class S3ServiceImpl implements S3Service {
         }
         return images.stream()
                 .filter(image -> !image.isEmpty())
-                .map(image -> uploadImage(userId, image, folderName))
+                .map(image -> uploadImageForRestaurant(userId, image, folderName))
                 .collect(Collectors.toList());
     }
 
@@ -129,8 +130,10 @@ public class S3ServiceImpl implements S3Service {
         metadata.setContentLength(bytes.length);
 
         try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes)) {
-            amazonS3.putObject(new PutObjectRequest(bucketName, s3FileName, byteArrayInputStream, metadata));
+            PutObjectRequest por = new PutObjectRequest(bucketName, s3FileName, byteArrayInputStream, metadata);
+            amazonS3.putObject(por);
         } catch (Exception e) {
+            log.error("S3 업로드 실패: bucket={}, key={}", bucketName, s3FileName, e);
             throw new BasicException(ErrorCode.INTERNAL_SERVER_ERROR);
         } finally {
             is.close();

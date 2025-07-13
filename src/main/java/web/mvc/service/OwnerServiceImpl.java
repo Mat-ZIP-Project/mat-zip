@@ -1,5 +1,6 @@
 package web.mvc.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -13,6 +14,8 @@ import web.mvc.exception.ErrorCode;
 import web.mvc.repository.*;
 
 import java.sql.Time;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,11 +29,14 @@ public class OwnerServiceImpl implements OwnerService {
 
     private final RestaurantRepository restaurantRepository;
     private final RestaurantImageRepository restaurantImageRepository;
+    private final ReservationRepository reservationRepository;
+    private final ReservationPaymentRepository reservationPaymentRepository;
+    private final ReviewRepository reviewRepository;
     private final S3Service s3Service;
     private final ModelMapper modelMapper;
 
     // *** AWS S3 폴더 경로 ***
-    private static final String RESTAURANT_FOLDER = "restaurant";
+    private static final String RESTAURANT_FOLDER = "main";
 
     /** 업주의 식당 정보 조회 */
     @Override
@@ -108,7 +114,7 @@ public class OwnerServiceImpl implements OwnerService {
 
     /**
      * 업주의 식당 이미지 업로드
-     * - 최대 10개 제한
+     * - 최대 9개 제한
      * - 첫 번째 이미지 업로드 시 대표이미지가 없으면 자동 설정
      */
     @Override
@@ -116,9 +122,9 @@ public class OwnerServiceImpl implements OwnerService {
         Restaurant restaurant = restaurantRepository.findByOwnerUserId(userId)
                 .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
 
-        // 현재 이미지 개수 확인 (최대 10개 제한)
+        // 현재 이미지 개수 확인 (최대 9개 제한)
         int currentImageCount = restaurantImageRepository.countByRestaurant(restaurant);
-        if (currentImageCount + images.size() > 10) {
+        if (currentImageCount + images.size() > 9) {
             throw new BasicException(ErrorCode.IMAGE_LIMIT_EXCEEDED);
         }
 
@@ -131,7 +137,7 @@ public class OwnerServiceImpl implements OwnerService {
             MultipartFile image = images.get(i);
 
             // S3에 이미지 업로드
-            String imageUrl = s3Service.uploadImage(userId, image, RESTAURANT_FOLDER);
+            String imageUrl = s3Service.uploadImageForRestaurant(userId, image, RESTAURANT_FOLDER);
 
             // 첫 번째 이미지이고 대표이미지가 없으면 자동으로 대표이미지 설정
             boolean isMainImage = !hasMainImage && i == 0;
@@ -228,4 +234,90 @@ public class OwnerServiceImpl implements OwnerService {
         log.info("대표이미지 설정 완료: 업주 ID={}, 식당 ID={}, 이미지 ID={}",
                 userId, restaurant.getRestaurantId(), imageId);
     }
+    /////////////////////////////////////////////////////////////////////////////////////
+    /**
+     * 사업자 ID로 연결된 식당의 모든 예약 조회 (최신순 정렬)
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<ReservationDetailDto> getAllReservations(String ownerUserId) throws BasicException {
+        // 1) ownerUserId → Restaurant 조회
+        Restaurant restaurant = restaurantRepository.findByOwnerUserId(ownerUserId)
+                .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
+        Long restaurantId = restaurant.getRestaurantId();
+
+        // 2) 모든 예약 최신순 조회
+        List<Reservation> reservations = reservationRepository
+                .findAllByRestaurantIdOrderByCreatedAtDesc(restaurantId);
+
+        return mapToDtoList(reservations, restaurant);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ReservationDetailDto> getTodayReservations(String ownerUserId) throws BasicException {
+        Restaurant restaurant = restaurantRepository.findByOwnerUserId(ownerUserId)
+                .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
+        Long restaurantId = restaurant.getRestaurantId();
+        String today = LocalDate.now().toString(); // yyyy-MM-dd
+
+        List<Reservation> reservations = reservationRepository
+                .findByRestaurantAndDate(restaurantId, today);
+
+        return mapToDtoList(reservations, restaurant);
+    }
+
+    /**
+     * Reservation 엔티티 리스트를 DTO 리스트로 변환하는 공통 로직
+     */
+    private List<ReservationDetailDto> mapToDtoList(List<Reservation> reservations, Restaurant restaurant) {
+        return reservations.stream()
+                .map(r -> {
+                    // 각 예약에 대한 결제 정보 조회
+                    String paymentStatus = reservationPaymentRepository
+                            .findByReservation(r)
+                            .map(p -> p.getStatus())
+                            .orElse("NOT_PAID");
+                    return ReservationDetailDto.builder()
+                            .reservationId(r.getReservationId())
+                            .restaurantId(restaurant.getRestaurantId())
+                            .restaurantName(restaurant.getRestaurantName())
+                            .date(LocalDate.parse(r.getDate()))
+                            .time(LocalTime.parse(r.getTime()))
+                            .numPeople(r.getNumPeople())
+                            .status(r.getStatus())
+                            .ownerNotes(r.getOwnerNotes())
+                            .createdAt(r.getCreatedAt())
+                            .paymentStatus(paymentStatus)
+                            .noShow(Boolean.TRUE.equals(r.getUser().getNoShow()))
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////
+    /**
+     * 식당의 전체 리뷰 조회
+     * */
+    public List<ReviewDetailResponse> getReviewsByUserId(String userId) {
+        // 사업주계정으로(userId) Restaurant 조회
+        Restaurant restaurant = restaurantRepository
+                   .findByOwnerUserId(userId)
+                   .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
+
+        // 특정식당의 리뷰 + 이미지 리스트 조회 → DTO 매핑
+        List<Review> reviews = reviewRepository.findByRestaurantWithImages(restaurant.getRestaurantId());
+               return reviews.stream()
+                       .map(rev -> {
+                           ReviewDetailResponse dto = modelMapper.map(rev, ReviewDetailResponse.class);
+                           dto.setImageNames(
+                                   rev.getReviewImages().stream()
+                                      .map(ReviewImage::getImageName)
+                                      .collect(Collectors.toList())
+                               );
+                       return dto;
+                       })
+                       .collect(Collectors.toList());
+    }
+
 }
