@@ -311,7 +311,7 @@ public class OwnerServiceImpl implements OwnerService {
                        .map(rev -> {
                            ReviewDetailResponse dto = modelMapper.map(rev, ReviewDetailResponse.class);
                            dto.setImageNames(
-                                   rev.getImages().stream()
+                                   rev.getReviewImages().stream()
                                       .map(ReviewImage::getImageName)
                                       .collect(Collectors.toList())
                                );

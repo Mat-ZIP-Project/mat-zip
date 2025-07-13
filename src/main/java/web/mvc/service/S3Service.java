@@ -18,4 +18,9 @@ public interface S3Service {
     /** S3 다수 이미지 삭제 */
     //void deleteImages(List<String> urls);
 
+    /** S3에 단일 리뷰 이미지 업로드  (공개 URL 반환) */
+    public String uploadReviewImage(Long reviewId, MultipartFile image, String folderName);
+    /** S3 다중 리뷰 이미지 업로드 */
+    public List<String> uploadMultipleReviewImages(Long reviewId, List<MultipartFile> images, String folderName);
+
 }

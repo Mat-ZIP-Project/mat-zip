@@ -6,7 +6,6 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -49,7 +48,9 @@ public class Review {
     @JoinColumn(name = "id", nullable = false)
     private User user;
 
-    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ReviewImage> images = new ArrayList<>();
+
+    @OneToMany(mappedBy = "review" , cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReviewImage> reviewImages;
+
 
 }

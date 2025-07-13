@@ -22,6 +22,7 @@ public class ReviewImage {
     private String imageName;
 
     @ManyToOne(fetch = FetchType.LAZY)
+
     @JoinColumn(name = "review_id", nullable = false)
     private Review review;
 

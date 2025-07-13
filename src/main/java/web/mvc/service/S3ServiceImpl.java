@@ -74,6 +74,35 @@ public class S3ServiceImpl implements S3Service {
     }
 
     /**
+     * 단일이미지 업로드 - 리뷰
+     */
+    public String uploadReviewImage(Long reviewId, MultipartFile image, String folderName) {
+        if (image.isEmpty() || Objects.isNull(image.getOriginalFilename())) {
+            throw new BasicException(ErrorCode.INVALID_INPUT);
+        }
+        validateImageExtension(image.getOriginalFilename());
+        try {
+            return uploadToS3(image, String.format("review/%s/%s", reviewId, folderName));
+        }catch (IOException e) {
+            throw new BasicException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * 다중이미지 업로드 - 리뷰
+     */
+    public List<String> uploadMultipleReviewImages(Long reviewId, List<MultipartFile> images, String folderName){
+        if (images == null || images.isEmpty()) {
+            throw new BasicException(ErrorCode.INVALID_INPUT);
+        }
+        return images.stream()
+                .filter(image -> !image.isEmpty())
+                .map(image -> uploadReviewImage(reviewId, image, folderName))
+                .collect(Collectors.toList());
+    }
+
+
+    /**
      * 이미지 삭제
      */
     public void deleteImage(String imageUrl) {
