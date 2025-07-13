@@ -36,7 +36,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findByRestaurant(Restaurant restaurant);
 
     /** 특정 식당에 대한 리뷰 리스트 조회 (이미지포함) */
-    @Query("SELECT r FROM Review r JOIN FETCH r.images WHERE r.restaurant.restaurantId = :restId")
+    @Query("SELECT r FROM Review r JOIN FETCH r.reviewImages WHERE r.restaurant.restaurantId = :restId")
     List<Review> findByRestaurantWithImages(@Param("restId") Long restId);
 
     /** (식당 통계용) 최근 일간 총 리뷰 수 및 현지인 리뷰 수 */
