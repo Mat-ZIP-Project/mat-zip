@@ -17,13 +17,22 @@ import java.util.Optional;
 public interface ReservationRepository extends JpaRepository<Reservation,Long> {
     // 특정 사용자의 모든 예약 조회
     List<Reservation> findByUserIdAndStatus(Long id, String status);
-
     List<Reservation> findByUserIdAndStatusIn(Long id, List<String> status);
-
     List<Reservation> findByUserIdAndStatusIsNot(Long id, String status);
 
-    // 특정 식당의 예약 조회
+    // 특정 식당의 예약 단건 조회
     Optional<Reservation> findByReservationId(Long reservationId);
+
+    /** 특정 식당의 대기 중인 예약 조회 */
+    @Query("SELECT r FROM Reservation r WHERE r.restaurant.restaurantId = :restaurantId AND r.status = :status")
+    List<Reservation> findReservationsByRestaurant(@Param("restaurantId") Long restaurantId,
+                                                   @Param("status") String status);
+
+    /** "예약완료"이면서 날짜가 지난 예약 조회 (노쇼 대상) */
+    @Query("SELECT r FROM Reservation r WHERE r.status = :status AND r.date < :date")
+    List<Reservation> findReservationsByBeforeDate(@Param("status") String status,
+                                                         @Param("date") String date );
+
     // 기존 메서드 (예약 존재 여부만 확인 가능)
     boolean existsByUser_UserIdAndRestaurant_RestaurantIdAndStatus(String userUserId, Long restaurantRestaurantId, String status);
     boolean existsByUser_IdAndRestaurant_RestaurantIdAndStatus(Long userId, Long restaurantRestaurantId, String status);

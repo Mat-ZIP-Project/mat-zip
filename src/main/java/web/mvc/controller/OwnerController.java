@@ -8,10 +8,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import web.mvc.dto.*;
+import web.mvc.exception.BasicException;
 import web.mvc.security.CustomUserDetails;
 import web.mvc.service.MenuService;
 import web.mvc.service.OwnerService;
-import web.mvc.service.RestaurantService;
+import web.mvc.service.ReservationService;
 
 import java.util.List;
 
@@ -22,6 +23,7 @@ import java.util.List;
 public class OwnerController {
     private final OwnerService ownerService;
     private final MenuService menuService;
+    private final ReservationService reservationService;
 
     /**
      * 업주의 식당 정보 조회
@@ -146,5 +148,27 @@ public class OwnerController {
         menuService.deleteMenu(userId, menuId);
         return ResponseEntity.noContent().build();
     }
+
+    //////////////////////////////////////////////////////
+    // 예약 관리
+    /** 대기 중 예약 목록 조회 */
+    @GetMapping("/reservations/pending")
+    public ResponseEntity<List<PendingReservationDto>> getPending(@AuthenticationPrincipal CustomUserDetails principal) throws BasicException {
+        return ResponseEntity.ok(reservationService.getPendingReservations(principal.getUsername()));
+    }
+
+    /** 노쇼 후보 목록 조회 */
+    @GetMapping("/reservations/noshow")
+    public ResponseEntity<List<NoShowReservationDto>> getNoShowList(@AuthenticationPrincipal CustomUserDetails principal) throws BasicException {
+        return ResponseEntity.ok(reservationService.getNoShowCandidates(principal.getUsername()));
+    }
+
+    /** 노쇼 처리 */
+    @PostMapping("/reservations/noshow")
+    public ResponseEntity<String> markNoShow(@RequestBody NoShowRequest request) throws BasicException {
+        reservationService.markNoShow(request.getReservationId());
+        return ResponseEntity.ok("노쇼 처리 완료");
+    }
+
 }
 
