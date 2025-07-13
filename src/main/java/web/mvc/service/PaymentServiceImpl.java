@@ -24,7 +24,6 @@ import web.mvc.exception.ErrorCode;
 import web.mvc.repository.ReservationPaymentRepository;
 import web.mvc.repository.ReservationRepository;
 import web.mvc.repository.UserRepository;
-import web.mvc.util.Enums;
 
 import java.io.IOException;
 import java.math.BigDecimal;

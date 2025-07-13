@@ -11,7 +11,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "waiting_queue")
+@Table(
+        name = "waiting_queue",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"restaurant_id", "waiting_number"})
+        }
+)
 public class WaitingQueue {
 
     @Id
@@ -19,7 +24,7 @@ public class WaitingQueue {
     private Long waitingId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "id", nullable = false) // DB 컬럼명과 맞춤
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -34,8 +39,10 @@ public class WaitingQueue {
     private LocalDateTime expectedEntryTime; // 예상 입장 시간 (optional)
 
     @Column(length = 20)
-    private String status; // "입장 대기", "입장 완료", "노쇼"
+    private String status; // "입장 대기", "호출", "입장 완료", "노쇼"
 
     @Column(nullable = false)
     private Integer waitingNumber; // 본인 대기 번호 (1번, 2번, ...)
+
+    private LocalDateTime calledAt;
 }

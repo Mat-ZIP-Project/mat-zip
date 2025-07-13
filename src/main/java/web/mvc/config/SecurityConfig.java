@@ -76,17 +76,27 @@ public class SecurityConfig {
 
                         // 인증 필요 (하단에 인증 허용 url 접근 전 인증 요청필요한 것만 기입)
                         .requestMatchers("/auth/logout").authenticated()
-                        
+
                         // 찜하기 관련 POST, DELETE 요청은 인증 필요
                         .requestMatchers(HttpMethod.POST, "/api/restaurants/like/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/restaurants/like/**").authenticated()
 
                         // 접근 허용 (접근 허용 url은 무조건 명시)
                         .requestMatchers("/login","/auth/**", "/signup/**",
-                                "/payment/complete", "/map/**", "/api/reviews/**", "/api/restaurants/**").permitAll()
+                                "/payment/complete", "/map/**", "/api/reviews/**", "/api/restaurants/**", "/api/waiting/status/**").permitAll()
+
+                        // 웨이팅 사용자용
+                        .requestMatchers(HttpMethod.POST, "/api/waiting").hasRole("USER")
+                        .requestMatchers(HttpMethod.GET, "/api/waiting/me").hasRole("USER")
+                        .requestMatchers(HttpMethod.PUT, "/api/waiting/enter/**").hasRole("USER")
+                        .requestMatchers("/api/waiting/subscribe").authenticated()
 
                         // 권한별 접근 제한
                         .requestMatchers("/owner/**","/reservation/owner/approve").hasRole("OWNER")
+                        // 웨이팅 식당 주인용
+                        .requestMatchers(HttpMethod.PUT, "/api/waiting/next/**").hasRole("OWNER")
+                        .requestMatchers(HttpMethod.GET, "/api/waiting/owner/me").hasRole("OWNER")
+                        .requestMatchers(HttpMethod.PUT, "/api/waiting/noshow/**").hasRole("OWNER")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         // 그 외 모든 요청은 인증 필요
