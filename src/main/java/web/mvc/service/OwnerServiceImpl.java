@@ -289,6 +289,8 @@ public class OwnerServiceImpl implements OwnerService {
                             .ownerNotes(r.getOwnerNotes())
                             .createdAt(r.getCreatedAt())
                             .paymentStatus(paymentStatus)
+                            .userId(r.getUser().getUserId())
+                            .userName(r.getUser().getName())
                             .noShow(Boolean.TRUE.equals(r.getUser().getNoShow()))
                             .build();
                 })
