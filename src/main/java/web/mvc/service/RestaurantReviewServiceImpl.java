@@ -23,9 +23,14 @@ public class RestaurantReviewServiceImpl implements RestaurantReviewService{
     private final JPAQueryFactory jpaQueryFactory;
     private final RestaurantRepository restaurantRepository;
     private final UserRepository userRepository;
-    private final LocalBadgeRepository localBadgeRepository;
     private final ReviewRepository reviewRepository;
     private final PointRepository pointRepository;
+    private final ReviewImageRepository reviewImageRepository;
+
+    private final S3Service s3Service;
+
+    private static final String REVIEW_FOLDER = "review";
+
 
     @Transactional(readOnly = true)
     @Override
@@ -73,21 +78,18 @@ public class RestaurantReviewServiceImpl implements RestaurantReviewService{
                    .restaurant(Restaurant.builder().restaurantId(dto.getRestaurantId()).build())
                    .user(User.builder().id(id).build())
                    .localReview(dto.isLocal())
+                   .reviewedAt(LocalDateTime.now())
                    .build();
 
            reviewRepository.save(review);
 
+
            // 2. 이미지들 S3 업로드 및 리뷰 이미지 테이블에 저장
-        /*for (MultipartFile image : images) {
-            String imageUrl = s3Uploader.upload(image, "reviews");
-
-            ReviewImage reviewImage = ReviewImage.builder()
-                    .review(review)
-                    .imageUrl(imageUrl)
-                    .build();
-
-            reviewImageRepository.save(reviewImage);
-        } */
+           List<String> imageUrls = s3Service.uploadMultipleReviewImages(review.getReviewId(), images, REVIEW_FOLDER);
+           for (String url : imageUrls) {
+               ReviewImage image = ReviewImage.builder().imageName(url).review(review).build();
+               reviewImageRepository.save(image);
+           }
 
            // 3. 포인트 업데이트
            User user = userRepository.findById(id).get();
@@ -136,6 +138,12 @@ public class RestaurantReviewServiceImpl implements RestaurantReviewService{
     @Transactional
     @Override
     public void deleteReview(Long reviewId) {
+
+
+        QReviewImage reviewImage = QReviewImage.reviewImage;
+        List<ReviewImage> list =  jpaQueryFactory.selectFrom(reviewImage).where(reviewImage.review.reviewId.eq(reviewId)).fetch();
+
+        list.forEach(image->s3Service.deleteImage(image.getImageName()));
         reviewRepository.deleteById(reviewId);
 
     }
