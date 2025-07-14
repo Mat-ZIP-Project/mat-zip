@@ -2,14 +2,14 @@ package web.mvc.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
-
-import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OcrImageResult {
-    private OcrReceipt receipt;
+public class OcrFormattedDate {
+    private String year;
+    private String month;
+    private String day;
 }

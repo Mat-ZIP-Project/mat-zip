@@ -1,6 +1,7 @@
 package web.mvc.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,6 +21,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/reviews")
+@Slf4j
 public class ReviewController {
     private final ReceiptOcrService receiptOcrService;
     private final RestaurantReviewService restaurantReviewService;
@@ -34,7 +36,9 @@ public class ReviewController {
     @PostMapping("/ocr/{restaurantId}")
     public ResponseEntity<ResOcrDTO> parseReceipt(@RequestParam MultipartFile image, @PathVariable Long restaurantId,
                                                      @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("restaurantId:{}", restaurantId);
         ResOcrDTO result = receiptOcrService.parseReceipt(image,restaurantId,userDetails.getUser().getId());
+        log.info("receiptOcrService.parseReceipt():{}", result);
         return ResponseEntity.ok(result);
     }
 
@@ -44,6 +48,7 @@ public class ReviewController {
     @GetMapping("/{restaurantId}/{visitDate}")
     public ResponseEntity<ResLocalDTO> checkReview(@AuthenticationPrincipal CustomUserDetails userDetails,
                                                    @PathVariable Long restaurantId,@PathVariable String visitDate){
+        log.info("{restaurantId={},visitDate={}",restaurantId,visitDate);
         ResLocalDTO result= restaurantReviewService.checkReview(userDetails.getUser().getId(),restaurantId,visitDate);
 
         return ResponseEntity.ok(result);
