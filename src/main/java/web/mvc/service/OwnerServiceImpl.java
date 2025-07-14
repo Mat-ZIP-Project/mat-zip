@@ -267,6 +267,7 @@ public class OwnerServiceImpl implements OwnerService {
         return mapToDtoList(reservations, restaurant);
     }
 
+
     /**
      * Reservation 엔티티 리스트를 DTO 리스트로 변환하는 공통 로직
      */
@@ -297,6 +298,16 @@ public class OwnerServiceImpl implements OwnerService {
                 .collect(Collectors.toList());
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////
+//    @Override
+//    public List<WaitingListResponse> getWaitingListByRestaurant(String userId) {
+//        Restaurant restaurant = restaurantRepository
+//                .findByOwnerUserId(userId)
+//                .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
+//
+//        return list;
+//    }
+//
     ////////////////////////////////////////////////////////////////////////////////////
     /**
      * 식당의 전체 리뷰 조회

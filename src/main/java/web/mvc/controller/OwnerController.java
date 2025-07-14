@@ -185,7 +185,10 @@ public class OwnerController {
         reservationService.markNoShow(request.getReservationId());
         return ResponseEntity.ok("노쇼 처리 완료");
     }
-
+    //////////////////////////////////////////////////////////
+    // 웨이팅 관리
+    
+    
     //////////////////////////////////////////////////////////
     // 리뷰 관리
     @GetMapping("/reviews/all")

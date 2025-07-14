@@ -32,6 +32,9 @@ public interface OwnerService {
     /** 사업자에게 매핑된 식당의 오늘 날짜 예약 시간순 조회 */
     List<ReservationDetailDto> getTodayReservations(String ownerUserId) throws BasicException;
 
+    /** 특정 식당에 대한 웨이팅 명단 조회 */
+  //  List<WaitingListResponse> getWaitingListByRestaurant(String userId);
+
     /** 업주의 식당 리뷰 리스트 조회 */
     List<ReviewDetailResponse> getReviewsByUserId(String userId);
 }
