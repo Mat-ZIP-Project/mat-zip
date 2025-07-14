@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import web.mvc.domain.Reservation;
+import web.mvc.domain.Restaurant;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -38,4 +39,6 @@ public interface ReservationRepository extends JpaRepository<Reservation,Long> {
             "AND r.reminded = false " + // 아직 알림을 보내지 않은 경우
             "AND r.date = :currentDate")
     List<Reservation> findReservationsForReminder(@Param("currentDate") String currentDate);
+
+    int countByRestaurant(Restaurant restaurant);
 }

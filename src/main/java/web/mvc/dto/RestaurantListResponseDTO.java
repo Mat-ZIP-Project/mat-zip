@@ -13,6 +13,7 @@ public class RestaurantListResponseDTO {
     private String regionSido;
     private String regionSigungu;
     private double avgRating;
+    private double avgRatingLocal;
     private String category;
     private String thumbnailImageUrl; // 대표 이미지
     private int likeCount;     // 찜 수

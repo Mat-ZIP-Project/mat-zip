@@ -31,4 +31,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     //  식당별 전체 리뷰 목록
     List<Review> findByRestaurant(Restaurant restaurant);
 
+    // 식당 리뷰 개수 카운트
+    int countByRestaurant(Restaurant restaurant);
+
 }
