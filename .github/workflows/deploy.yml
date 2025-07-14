@@ -23,8 +23,15 @@ jobs:
         run: chmod +x ./mvnw  # mvnw 파일(Wrapper)에 실행 권한 부여
 
       - name: Create Firebase Admin JSON file
+        env:
+          FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_ADMIN_CREDENTIALS }}
         run: |
-          echo "${{ secrets.FIREBASE_ADMIN_CREDENTIALS }}" > src/main/resources/firebase-admin.json
+          echo -n "$FIREBASE_CREDENTIALS" > src/main/resources/firebase-admin.json
+
+          echo "Content of firebase-admin.json:"
+          cat src/main/resources/firebase-admin.json
+          echo "--- End of file content ---"
+          ls -la src/main/resources/
 
       - name: Maven 빌드 실행
         run: ./mvnw clean package -DskipTests  # Maven 빌드 실행 (테스트 생략)
