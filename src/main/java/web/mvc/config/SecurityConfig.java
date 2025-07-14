@@ -86,17 +86,16 @@ public class SecurityConfig {
                                 "/payment/complete", "/map/**", "/api/reviews/**", "/api/restaurants/**", "/api/waiting/status/**").permitAll()
 
                         // 웨이팅 사용자용
-                        .requestMatchers(HttpMethod.POST, "/api/waiting").hasRole("USER")
-                        .requestMatchers(HttpMethod.GET, "/api/waiting/me").hasRole("USER")
-                        .requestMatchers(HttpMethod.PUT, "/api/waiting/enter/**").hasRole("USER")
-                        .requestMatchers("/api/waiting/subscribe").authenticated()
+//                        .requestMatchers(HttpMethod.POST, "/api/waiting").hasRole("USER")
+//                        .requestMatchers(HttpMethod.GET, "/api/waiting/me").hasRole("USER")
+//                        .requestMatchers(HttpMethod.PUT, "/api/waiting/enter/**").hasRole("USER")
+//                        .requestMatchers("/api/waiting/subscribe").authenticated()
 
                         // 권한별 접근 제한
                         .requestMatchers("/owner/**","/reservation/owner/approve").hasRole("OWNER")
                         // 웨이팅 식당 주인용
-                        .requestMatchers(HttpMethod.PUT, "/api/waiting/next/**").hasRole("OWNER")
+                        .requestMatchers(HttpMethod.PUT, "/api/waiting/next/**", "/api/waiting/noshow/**").hasRole("OWNER")
                         .requestMatchers(HttpMethod.GET, "/api/waiting/owner/me").hasRole("OWNER")
-                        .requestMatchers(HttpMethod.PUT, "/api/waiting/noshow/**").hasRole("OWNER")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         // 그 외 모든 요청은 인증 필요
@@ -123,7 +122,9 @@ public class SecurityConfig {
             public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                 CorsConfiguration configuration = new CorsConfiguration();
                 configuration.setAllowedOrigins(
-                        Arrays.asList("http://localhost:5173", "http://localhost:4173")
+                        Arrays.asList("http://localhost:5173", "http://localhost:4173",
+                                "http://13.209.64.215", "http://13.209.64.215:80",
+                                "http://mat-zip.kro.kr", "https://mat-zip.kro.kr")
                 );
                 configuration.setAllowedMethods(Collections.singletonList("*"));
                 configuration.setAllowedHeaders(Collections.singletonList("*"));
