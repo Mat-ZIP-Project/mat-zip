@@ -1,5 +1,6 @@
 package web.mvc.service;
 
+import web.mvc.dto.ResReviewDTO;
 import web.mvc.dto.RestaurantListResponseDTO;
 import web.mvc.dto.RestaurantDetailDTO;
 
@@ -30,5 +31,7 @@ public interface RestaurantService {
      * 식당 이름에 특정 키워드가 포함된 식당 목록을 조회합니다.
      */
     List<RestaurantListResponseDTO> searchRestaurantsByKeyword(String keyword);
+
+    List<ResReviewDTO> getReviewsByRestaurant(Long restaurantId);
 
 }
