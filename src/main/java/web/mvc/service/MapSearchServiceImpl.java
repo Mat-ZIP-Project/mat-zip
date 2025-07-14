@@ -7,17 +7,16 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import web.mvc.domain.QRestaurant;
+import web.mvc.domain.QRestaurantImage;
 import web.mvc.domain.Restaurant;
-import web.mvc.domain.RestaurantImage;
+
 import web.mvc.dto.ReqPositionDTO;
 import web.mvc.dto.ReqRegionDTO;
 import web.mvc.dto.ResRestaurantDTO;
-import web.mvc.dto.RestaurantListResponseDTO;
-import web.mvc.repository.RestaurantImageRepository;
-import web.mvc.repository.RestaurantRepository;
-import web.mvc.repository.ReviewRepository;
 
-import java.util.ArrayList;
+import web.mvc.repository.*;
+
+
 import java.util.List;
 import java.util.Optional;
 
@@ -29,6 +28,8 @@ public class MapSearchServiceImpl implements MapSearchService {
     private final RestaurantImageRepository  restaurantImageRepository;
     private final ReviewRepository reviewRepository;
     private final JPAQueryFactory jpaQueryFactory;
+    private final UserLikeRepository userLikeRepository;
+    private final ReservationRepository reservationRepository;
 
     //메소드 이름 기반 JPA
     @Transactional(readOnly = true)
@@ -36,11 +37,14 @@ public class MapSearchServiceImpl implements MapSearchService {
     public List<ResRestaurantDTO> searchByPosition(ReqPositionDTO reqPositionDTO) {
         List<Restaurant> list=restaurantRepository.searchByPosition(reqPositionDTO.getLongitude(), reqPositionDTO.getLatitude(), reqPositionDTO.getRadius());
 
+
         return list.stream()
                 .map(restaurant -> {
                     ResRestaurantDTO dto = modelMapper.map(restaurant, ResRestaurantDTO.class);
-                    dto.setThumbnailImageUrl(Optional.ofNullable(getImgUrl(restaurant)).orElse(""));//사진이미지 세팅
-                    dto.setReviewCount((int)getReviewCnt(restaurant));//리뷰수 세팅
+                    dto.setImageUrl(Optional.ofNullable(getImgUrl(restaurant)).orElse(""));//사진이미지 세팅
+                    dto.setReviewCount(reviewRepository.countReviewByRestaurant(restaurant));//리뷰수 세팅
+                    dto.setReservationCount(reservationRepository.countByRestaurant(restaurant));
+                    dto.setLikeCount(userLikeRepository.countByRestaurant(restaurant));
                     return dto;
                 })
                 .toList();
@@ -63,22 +67,24 @@ public class MapSearchServiceImpl implements MapSearchService {
         return list.stream()
                 .map(restaurant -> {
                     ResRestaurantDTO dto = modelMapper.map(restaurant, ResRestaurantDTO.class);
-                    dto.setThumbnailImageUrl(Optional.ofNullable(getImgUrl(restaurant)).orElse(""));//사진이미지 세팅
-                    dto.setReviewCount((int)getReviewCnt(restaurant));//리뷰수 세팅
+                    dto.setImageUrl(Optional.ofNullable(getImgUrl(restaurant)).orElse(""));//사진이미지 세팅
+                    dto.setReviewCount(reviewRepository.countReviewByRestaurant(restaurant));//리뷰수 세팅
+                    dto.setReservationCount(reservationRepository.countByRestaurant(restaurant));
+                    dto.setLikeCount(userLikeRepository.countByRestaurant(restaurant));
                     return dto;
                 })
                 .toList();
     }
     
     public String getImgUrl(Restaurant restaurant) {
+        QRestaurantImage qrestaurantImage = QRestaurantImage.restaurantImage;
 
-        return restaurantImageRepository.findFirstByRestaurant(restaurant)
-                .map(RestaurantImage::getImageUrl)
-                .orElse("");
+        return jpaQueryFactory.select(qrestaurantImage.imageUrl).from(qrestaurantImage)
+                .where(qrestaurantImage.isMain.and(qrestaurantImage.restaurant.restaurantId.eq(restaurant.getRestaurantId())))
+                .fetchFirst();
     }
-    public long getReviewCnt(Restaurant restaurant) {
-        return reviewRepository.countReviewByRestaurant(restaurant);
-    }
+
+
     
     
 }
