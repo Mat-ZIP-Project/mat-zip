@@ -3,21 +3,20 @@ package web.mvc.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import web.mvc.domain.Menu;
-import web.mvc.domain.OwnerInfo;
 import web.mvc.domain.Restaurant;
-import web.mvc.dto.ReqPositionDTO;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     // 카테고리와 지역(구) 모두 필터링
-    List<Restaurant> findByCategoryAndRegionSigungu(String category, String regionSigungu);
+    List<Restaurant> findByCategoryInAndRegionSigungu(List<String> categories, String regionSigungu);
 
     // 카테고리만 필터링
-    List<Restaurant> findByCategory(String category);
+    List<Restaurant> findByCategoryIn(List<String> categories);
 
     // 지역(구)만 필터링
     List<Restaurant> findByRegionSigungu(String regionSigungu);
@@ -48,6 +47,4 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     // Restaurant 엔티티에서 owner.userId 기준으로 식당 리스트 조회
     List<Restaurant> findByOwner_User_UserId(String userId);
-
-
 }

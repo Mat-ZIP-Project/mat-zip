@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import web.mvc.domain.Reservation;
+import web.mvc.domain.Restaurant;
 import web.mvc.dto.DailyStatsDto;
 import web.mvc.dto.MonthlyStatsDto;
 
@@ -64,6 +65,8 @@ public interface ReservationRepository extends JpaRepository<Reservation,Long> {
             "AND r.date = :currentDate")
     List<Reservation> findReservationsForReminder(@Param("currentDate") String currentDate);
 
+    int countByRestaurant(Restaurant restaurant);
+
     /** (식당 통계용) 일별 예약 건수·매출 (인터페이스 프로젝션) */
     @Query("""
       SELECT
@@ -108,5 +111,4 @@ public interface ReservationRepository extends JpaRepository<Reservation,Long> {
             @Param("from")         String from,
             @Param("to")           String to
     );
-
 }
