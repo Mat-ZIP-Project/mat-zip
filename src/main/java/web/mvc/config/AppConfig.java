@@ -35,6 +35,7 @@ public class AppConfig {
         return new JPAQueryFactory(em);
     }
 
+
     @Value("${IAMPORT_REST_API_SECRET:default-iamport.rest-api-secret}")
     private String apiKey;
 
