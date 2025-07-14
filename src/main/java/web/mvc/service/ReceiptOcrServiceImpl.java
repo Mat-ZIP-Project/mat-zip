@@ -4,6 +4,7 @@ package web.mvc.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.http.HttpEntity;
@@ -27,6 +28,7 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReceiptOcrServiceImpl implements ReceiptOcrService {
     private final RestTemplate restTemplate;
     private final RestaurantRepository restaurantRepository;
@@ -34,8 +36,8 @@ public class ReceiptOcrServiceImpl implements ReceiptOcrService {
     @Value("${naver.ocr.api-url}")
     private String apiUrl;
 
-    @Value("${naver.ocr.client-id}")
-    private String clientId;
+//    @Value("${naver.ocr.client-id}")
+//    private String clientId;
 
     @Value("${naver.ocr.client-secret}")
     private String clientSecret;
@@ -67,9 +69,11 @@ public class ReceiptOcrServiceImpl implements ReceiptOcrService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("X-OCR-SECRET", clientSecret);
 
-            HttpEntity<String> request = new HttpEntity<>(body.toString(), headers);
+            HttpEntity<String> request = new HttpEntity<>(jsonBody, headers);
 
             ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, request, String.class);
+
+            log.info(response.getBody());
 
             // 4. 결과 파싱
             return extractRestaurantInfo(response.getBody(),restaurantId,id);
@@ -81,7 +85,13 @@ public class ReceiptOcrServiceImpl implements ReceiptOcrService {
 
     private void validateReceipt(Long restaurantId,String restaurantName,String visitDate,Long id){
         Restaurant restaurant=restaurantRepository.findById(restaurantId).get();
-        if(!restaurant.getRestaurantName().equals(restaurantName)){throw new BasicException(ErrorCode.RESTAURANT_MISMATCH);}
+
+        String extracted = restaurantName.replaceAll("\\s+", ""); // OCR 결과 공백 제거
+        String target = restaurant.getRestaurantName().replaceAll("\\s+", ""); // DB 값 공백 제거
+
+        log.info("restaurantName={},visitDate={}",restaurantName,visitDate);
+        log.info("restaurantId={},foundrestaurantName={}",restaurantId,restaurant.getRestaurantName());
+        if(!extracted.equals(target)){throw new BasicException(ErrorCode.RESTAURANT_MISMATCH);}
 
         LocalDate parsedVisitDate = LocalDate.parse(visitDate);
         LocalDate now = LocalDate.now();
@@ -106,20 +116,13 @@ public class ReceiptOcrServiceImpl implements ReceiptOcrService {
             ObjectMapper mapper = new ObjectMapper();
             OcrResponse response = mapper.readValue(responseJson, OcrResponse.class);
 
-            List<OcrField> fields = response.getImages().get(0).getFields();
+            OcrReceiptResult result = response.getImages().get(0).getReceipt().getResult();
+            String name = result.getStoreInfo().getName().getText();
+            String subName = result.getStoreInfo().getSubName().getText();
+            String restaurantName = name + subName;
 
-            String restaurantName = null;
-            String visitDate = null;
-
-            for (OcrField field : fields) {
-                String text = field.getInferText();
-                if (restaurantName == null && text.matches("^[가-힣a-zA-Z0-9\\s]+$")) {
-                    restaurantName = text;
-                }
-                if (visitDate == null && text.matches("\\d{4}[-./]\\d{2}[-./]\\d{2}")) {
-                    visitDate = text.replaceAll("[^0-9]", "-");
-                }
-            }
+            OcrFormattedDate date = result.getPaymentInfo().getDate().getFormatted();
+            String visitDate = String.format("%s-%s-%s", date.getYear(), date.getMonth(), date.getDay());
 
             validateReceipt(restaurantId,restaurantName,visitDate,id);
             return new ResOcrDTO(restaurantName, visitDate);

@@ -85,10 +85,12 @@ public class RestaurantReviewServiceImpl implements RestaurantReviewService{
 
 
            // 2. 이미지들 S3 업로드 및 리뷰 이미지 테이블에 저장
-           List<String> imageUrls = s3Service.uploadMultipleReviewImages(review.getReviewId(), images, REVIEW_FOLDER);
-           for (String url : imageUrls) {
-               ReviewImage image = ReviewImage.builder().imageName(url).review(review).build();
-               reviewImageRepository.save(image);
+           if(images!=null && !images.isEmpty()) {
+               List<String> imageUrls = s3Service.uploadMultipleReviewImages(review.getReviewId(), images, REVIEW_FOLDER);
+               for (String url : imageUrls) {
+                   ReviewImage image = ReviewImage.builder().imageName(url).review(review).build();
+                   reviewImageRepository.save(image);
+               }
            }
 
            // 3. 포인트 업데이트

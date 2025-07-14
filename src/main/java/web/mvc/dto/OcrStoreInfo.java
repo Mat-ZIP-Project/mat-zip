@@ -2,14 +2,13 @@ package web.mvc.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
-
-import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OcrImageResult {
-    private OcrReceipt receipt;
+public class OcrStoreInfo {
+    private OcrSimpleText name;
+    private OcrSimpleText subName;
 }
