@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,6 +21,6 @@ public class UserDTO {
     private Boolean noShow;
     private Boolean gpsVerified;
     private String userGrade;
-    private String preferenceCategory;
+    private List<String> preferences;
 
 }

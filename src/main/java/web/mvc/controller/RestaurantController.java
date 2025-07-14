@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import web.mvc.domain.User;
 import web.mvc.dto.RestaurantListResponseDTO;
 import web.mvc.dto.RestaurantDetailDTO;
 import web.mvc.security.CustomUserDetails;
@@ -27,9 +26,11 @@ public class RestaurantController {
      */
     @GetMapping
     public ResponseEntity<List<RestaurantListResponseDTO>> getRestaurantList(
-            @RequestParam(required = false) String category,
+            @RequestParam(required = false) List<String> category,
             @RequestParam(required = false) String regionSigungu,
             @RequestParam(required = false, defaultValue = "likes") String sortBy
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "10") int size
     ) {
         List<RestaurantListResponseDTO> list = restaurantService.getRestaurants(category, regionSigungu, sortBy);
         return ResponseEntity.ok(list);

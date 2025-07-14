@@ -26,5 +26,5 @@ public class RestaurantDetailDTO {
     private List<MenuDTO> menus;
     private List<String> imageUrls;
     private int likeCount;
-    private int reviewCount;
+    private long reviewCount;
 }
