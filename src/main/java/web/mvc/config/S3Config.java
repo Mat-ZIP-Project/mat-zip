@@ -17,13 +17,13 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class S3Config {
-    @Value("${aws.credentials.accessKey}")
+    @Value("${AWS_CREDENTIALS_ACCESSKEY:default-aws.credentials.accessKey}")
     private String accessKey;
 
-    @Value("${aws.credentials.secretKey}")
+    @Value("${AWS_CREDENTIALS_SECRETKEY:default-aws.credentials.secretKey}")
     private String secretKey;
 
-    @Value("${aws.region.static}")
+    @Value("${AWS_REGION_STATIC:default-aws.region.static}")
     private String region;
 
     @Bean

@@ -91,7 +91,7 @@ public class MyPageServiceImpl implements MyPageService {
                     paymentStatus = paymentOpt.get().getStatus();
                     return ReservationDetailDto.builder()
                             .reservationId(reservation.getReservationId())
-                            .reservationId(reservation.getReservationId())
+                            .restaurantId(reservation.getRestaurant().getRestaurantId())
                             .restaurantName(reservation.getRestaurant() != null ? reservation.getRestaurant().getRestaurantName() : "알 수 없음")
                             .date(LocalDate.parse(reservation.getDate()))
                             .time(LocalTime.parse(reservation.getTime()))
