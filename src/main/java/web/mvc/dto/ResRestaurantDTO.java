@@ -17,7 +17,8 @@ public class ResRestaurantDTO {
     private double avgRating;
     private double avgRatingLocal;
     private String category;
-    private String thumbnailImageUrl;
+
+    private String imageUrl;
     private int likeCount;     // 찜 수
     private long reviewCount;
     private int reservationCount;
