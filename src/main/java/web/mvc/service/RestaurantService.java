@@ -34,4 +34,7 @@ public interface RestaurantService {
 
     List<ResReviewDTO> getReviewsByRestaurant(Long restaurantId);
 
+    List<ResReviewDTO> getLocalReviewsByRestaurant(Long restaurantId);
+
+
 }
