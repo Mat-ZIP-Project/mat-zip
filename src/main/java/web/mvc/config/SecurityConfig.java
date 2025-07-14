@@ -122,7 +122,9 @@ public class SecurityConfig {
             public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                 CorsConfiguration configuration = new CorsConfiguration();
                 configuration.setAllowedOrigins(
-                        Arrays.asList("http://localhost:5173", "http://localhost:4173")
+                        Arrays.asList("http://localhost:5173", "http://localhost:4173",
+                                "http://13.209.64.215", "http://13.209.64.215:80",
+                                "http://mat-zip.kro.kr", "https://mat-zip.kro.kr")
                 );
                 configuration.setAllowedMethods(Collections.singletonList("*"));
                 configuration.setAllowedHeaders(Collections.singletonList("*"));
