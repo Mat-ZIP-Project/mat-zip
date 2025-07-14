@@ -35,10 +35,10 @@ public class AppConfig {
         return new JPAQueryFactory(em);
     }
 
-    @Value("${IAMPORT_REST_API_KEY}")
+    @Value("${iamport.rest-api-key}")
     private String apiKey;
 
-    @Value("${IAMPORT_REST_API_SECRET}")
+    @Value("${iamport.rest-api-secret}")
     private String apiSecret;
 
     @Bean

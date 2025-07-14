@@ -15,8 +15,11 @@ public class ResRestaurantDTO {
     private double longitude;
     private double latitude;
     private double avgRating;
+    private double avgRatingLocal;
     private String category;
     private String thumbnailImageUrl;
-    private int reviewCount;
+    private int likeCount;     // 찜 수
+    private long reviewCount;
+    private int reservationCount;
 
 }
