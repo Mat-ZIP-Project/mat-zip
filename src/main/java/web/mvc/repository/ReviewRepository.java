@@ -54,4 +54,10 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
                                                   @Param("to")     LocalDate to);
 
 
+    List<Review> findByRestaurantAndLocalReviewTrue(Restaurant restaurant);
+
+    List<Review> findByRestaurantAndLocalReviewFalse(Restaurant restaurant);
+
+
 }
+
