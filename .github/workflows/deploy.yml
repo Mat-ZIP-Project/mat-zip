@@ -22,13 +22,13 @@ jobs:
       - name: mvnw 실행 권한 부여
         run: chmod +x ./mvnw  # mvnw 파일(Wrapper)에 실행 권한 부여
 
-      - name: Maven 빌드 실행
-        run: ./mvnw clean package -DskipTests  # Maven 빌드 실행 (테스트 생략)
-      # run: ./mvnw clean verify  # 테스트 포함 빌드 시 이 명령어 사용
-
       - name: Create Firebase Admin JSON file
         run: |
           echo "${{ secrets.FIREBASE_ADMIN_CREDENTIALS }}" > src/main/resources/firebase-admin.json
+
+      - name: Maven 빌드 실행
+        run: ./mvnw clean package -DskipTests  # Maven 빌드 실행 (테스트 생략)
+      # run: ./mvnw clean verify  # 테스트 포함 빌드 시 이 명령어 사용
 
       - name: Docker Hub 로그인
         uses: docker/login-action@v3  # Docker Hub에 로그인하는 액션
