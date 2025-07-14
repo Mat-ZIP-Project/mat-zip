@@ -13,7 +13,6 @@ import web.mvc.security.CustomUserDetails;
 import web.mvc.service.WaitingService;
 import web.mvc.util.SseEmitterManager;
 
-
 import java.util.List;
 
 @RestController
@@ -25,50 +24,48 @@ public class WaitingController {
     private final SseEmitterManager sseEmitterManager;
 
     /**
-     * 웨이팅 등록
-     * - 로그인한 사용자가 요청
-     * - 사용자 ID는 시큐리티 세션에서 가져옴
-     * - 요청 바디로는 웨이팅할 식당 ID, 인원 수 등을 포함
+     * [POST] 웨이팅 등록
+     * - 로그인한 사용자가 특정 식당에 웨이팅 등록 요청
+     * - 요청 바디에는 식당 ID, 인원 수 등이 포함됨
+     * - 웨이팅 번호, 예상 입장 시간 등을 응답으로 반환
      */
     @PostMapping
     public ResponseEntity<WaitingRegisterResponseDTO> registerWaiting(
-            @AuthenticationPrincipal CustomUserDetails userDetails, // 로그인된 사용자 정보 주입
-            @Valid @RequestBody WaitingRegisterRequestDTO requestDto) { // 요청 바디 유효성 검증
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody WaitingRegisterRequestDTO requestDto) {
 
-        String userId = userDetails.getUsername(); // 사용자 ID 추출
-        WaitingRegisterResponseDTO response = waitingService.registerWaitingByUserId(userId, requestDto); // 서비스 호출
-
-        return ResponseEntity.ok(response); // 응답 반환
+        String userId = userDetails.getUsername();
+        WaitingRegisterResponseDTO response = waitingService.registerWaitingByUserId(userId, requestDto);
+        return ResponseEntity.ok(response);
     }
 
     /**
-     * 나의 웨이팅 상태 조회
-     * - 현재 로그인한 사용자의 웨이팅 상태 확인
-     * - 대기 중인 식당, 순번, 예상 입장 시간 등을 포함
+     * [GET] 나의 웨이팅 상태 조회
+     * - 로그인한 사용자의 현재 웨이팅 상태(순번, 식당명, 예상 입장 시간 등)를 반환
      */
     @GetMapping("/me")
     public ResponseEntity<WaitingStatusResponseDTO> getMyWaitingStatus(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        String userId = userDetails.getUsername(); // 사용자 ID 추출
-        WaitingStatusResponseDTO response = waitingService.getMyWaitingStatus(userId); // 웨이팅 정보 조회
-        return ResponseEntity.ok(response); // 응답 반환
+        String userId = userDetails.getUsername();
+        WaitingStatusResponseDTO response = waitingService.getMyWaitingStatus(userId);
+        return ResponseEntity.ok(response);
     }
 
     /**
-     * 다음 대기자 호출
-     * - 특정 식당에서 다음 손님을 호출하는 API
-     * - 관리자 또는 식당 주인 권한이 필요할 수 있음 (보안 로직은 Security 설정에 따라)
+     * [PUT] 다음 대기자 호출
+     * - 식당 주인이 호출 시 가장 먼저 등록된 웨이팅 유저를 호출 상태로 변경
+     * - 호출된 유저에게 SSE 알림 발송
      */
     @PutMapping("/next/{restaurantId}")
     public ResponseEntity<Void> callNextWaiting(@PathVariable Long restaurantId) {
-        waitingService.callNextWaiting(restaurantId); // 다음 웨이팅 상태 변경 처리
-        return ResponseEntity.ok().build(); // 바디 없이 성공 응답 반환
+        waitingService.callNextWaiting(restaurantId);
+        return ResponseEntity.ok().build();
     }
 
     /**
-     * 특정 식당의 웨이팅 현황 조회
-     * - 현재 대기 인원 수, 예상 입장 시간 등을 확인 가능
+     * [GET] 특정 식당의 웨이팅 현황 조회
+     * - 현재 대기 인원 수, 예상 입장 시간 등을 반환
      */
     @GetMapping("/status/{restaurantId}")
     public ResponseEntity<WaitingStatusResponseDTO> getWaitingStatusByRestaurant(@PathVariable Long restaurantId) {
@@ -77,10 +74,9 @@ public class WaitingController {
     }
 
     /**
-     * 호출된 웨이팅 유저의 입장 처리
-     * - 호출 상태(CALLED)인 유저가 실제로 입장했을 때 호출됨
-     * - waitingId로 해당 대기 정보를 찾아 상태를 'ENTERED'로 변경
-     * - 일반적으로 키오스크 또는 식당 직원 화면에서 입장 버튼을 눌렀을 때 호출되는 API
+     * [PUT] 호출된 웨이팅 유저 입장 처리
+     * - 상태가 '호출됨'인 대기자만 입장 가능
+     * - 입장 시 상태를 '입장 완료'로 변경
      */
     @PutMapping("/enter/{waitingId}")
     public ResponseEntity<Void> enterWaiting(@PathVariable Long waitingId) {
@@ -89,20 +85,22 @@ public class WaitingController {
     }
 
     /**
-     * [식당 주인 전용] 본인이 소유한 식당의 웨이팅 현황 리스트 조회
+     * [GET] 본인이 소유한 모든 식당의 웨이팅 현황 조회
+     * - 식당 주인 로그인 상태에서 호출됨
      */
     @GetMapping("/owner/me")
     public ResponseEntity<List<WaitingStatusResponseDTO>> getMyRestaurantsWaitingStatus(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        String ownerId = userDetails.getUsername(); // 로그인한 식당 주인의 사용자 ID
+        String ownerId = userDetails.getUsername();
         List<WaitingStatusResponseDTO> response = waitingService.getWaitingStatusesByOwnerId(ownerId);
-
         return ResponseEntity.ok(response);
     }
 
     /**
-     * 식당 주인이 특정 대기자를 노쇼 처리 시도
+     * [PUT] 식당 주인이 특정 웨이팅 유저를 노쇼 처리 시도
+     * - 호출된 후 15분이 지나지 않았다면 예외 발생
+     * - 15분 이상 지난 경우에만 노쇼 처리 가능
      */
     @PutMapping("/noshow/{waitingId}")
     public ResponseEntity<Void> markNoShow(@PathVariable Long waitingId) {
@@ -110,11 +108,15 @@ public class WaitingController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * [GET] SSE 구독 요청
+     * - 사용자가 이 API를 호출하면 서버와의 SSE 연결을 시작
+     * - 이후 서버에서 이벤트가 발생할 때마다 실시간으로 전달됨
+     */
     @GetMapping("/subscribe")
     public SseEmitter subscribe(@AuthenticationPrincipal CustomUserDetails userDetails) {
         String userId = userDetails.getUsername();
-        return sseEmitterManager.createEmitter(userId);
+        return sseEmitterManager.createEmitter(userId); // 사용자 ID 기반 SSE 연결 등록
     }
-
 
 }

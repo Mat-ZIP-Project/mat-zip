@@ -16,6 +16,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.Comparator;
+
 
 @Service
 @Transactional
@@ -27,27 +29,37 @@ public class RestaurantServiceImpl implements RestaurantService {
     private final RestaurantImageRepository restaurantImageRepository;
     private final UserLikeRepository userLikeRepository;
     private final UserRepository userRepository;
+    private final ReviewRepository reviewRepository;
+    private final ReservationRepository reservationRepository;
 
     @Override
-    public List<RestaurantListResponseDTO> getRestaurants(String category, String regionSigungu, String sortBy) {
+    public List<RestaurantListResponseDTO> getRestaurants(List<String> categoryList, String regionSigungu, String sortBy) {
         List<Restaurant> restaurants;
 
-        // 필터링 조건에 따라 식당 조회
-        if (category != null && regionSigungu != null) {
-            restaurants = restaurantRepository.findByCategoryAndRegionSigungu(category, regionSigungu);
-        } else if (category != null) {
-            restaurants = restaurantRepository.findByCategory(category);
-        } else if (regionSigungu != null) {
+        // 필터링 조건 존재 여부 체크
+        boolean hasCategory = categoryList != null && !categoryList.isEmpty();      // 카테고리 필터가 있는지 확인
+        boolean hasRegion = regionSigungu != null && !regionSigungu.isBlank();     // 지역(구) 필터가 있는지 확인
+
+        // 조건에 따라 식당 목록 조회
+        if (hasCategory && hasRegion) {
+            // 카테고리 리스트와 지역(구) 모두 필터링
+            restaurants = restaurantRepository.findByCategoryInAndRegionSigungu(categoryList, regionSigungu);
+        } else if (hasCategory) {
+            // 카테고리 리스트만 필터링
+            restaurants = restaurantRepository.findByCategoryIn(categoryList);
+        } else if (hasRegion) {
+            // 지역(구)만 필터링
             restaurants = restaurantRepository.findByRegionSigungu(regionSigungu);
         } else {
-            restaurants = restaurantRepository.findAll(); // 전체 조회
+            // 필터 없이 전체 식당 조회
+            restaurants = restaurantRepository.findAll();
         }
 
         List<RestaurantListResponseDTO> result = restaurants.stream()
                 .map(restaurant -> {
                     int likeCount = userLikeRepository.countByRestaurant(restaurant);
-                    int reviewCount = 0;       // 리뷰 수 연동
-                    int reservationCount = 0;  // 예약 수 연동
+                    long reviewCount = reviewRepository.countReviewByRestaurant(restaurant);
+                    int reservationCount = reservationRepository.countByRestaurant(restaurant);
 
                     return RestaurantListResponseDTO.builder()
                             .restaurantId(restaurant.getRestaurantId())
@@ -57,6 +69,7 @@ public class RestaurantServiceImpl implements RestaurantService {
                             .regionSigungu(restaurant.getRegionSigungu())
                             .category(restaurant.getCategory())
                             .avgRating(restaurant.getAvgRating())
+                            .avgRatingLocal(restaurant.getAvgRatingLocal())
                             .likeCount(likeCount)
                             .reviewCount(reviewCount)
                             .reservationCount(reservationCount)
@@ -70,18 +83,22 @@ public class RestaurantServiceImpl implements RestaurantService {
 
         // 정렬 처리
         switch (sortBy) {
-            case "likes": // 가게 좋아요 순
-                result.sort((r1, r2) -> Integer.compare(r2.getLikeCount(), r1.getLikeCount()));
+            case "likes":
+                result.sort(Comparator.comparingInt(RestaurantListResponseDTO::getLikeCount).reversed());
                 break;
-            case "reviewCount": // 리뷰 횟수 순
-                result.sort((r1, r2) -> Integer.compare(r2.getReviewCount(), r1.getReviewCount()));
+            case "reviewCount":
+                result.sort(Comparator.comparingLong(RestaurantListResponseDTO::getReviewCount).reversed());
                 break;
-            case "reservationCount": // 예약 횟수 순
-                result.sort((r1, r2) -> Integer.compare(r2.getReservationCount(), r1.getReservationCount()));
+            case "reservationCount":
+                result.sort(Comparator.comparingInt(RestaurantListResponseDTO::getReservationCount).reversed());
+                break;
+            case "avgRatingLocal":
+                result.sort(Comparator.comparingDouble((RestaurantListResponseDTO dto) ->
+                        Optional.ofNullable(dto.getAvgRatingLocal()).orElse(0.0)
+                ).reversed());
                 break;
             default:
-                // 기본: likes 기준
-                result.sort((r1, r2) -> Integer.compare(r2.getLikeCount(), r1.getLikeCount()));
+                result.sort(Comparator.comparingInt(RestaurantListResponseDTO::getLikeCount).reversed());
         }
 
         return result;
@@ -106,6 +123,9 @@ public class RestaurantServiceImpl implements RestaurantService {
         List<String> imageUrls = restaurantImageRepository.findAllByRestaurant(restaurant)
                 .stream().map(RestaurantImage::getImageUrl).collect(Collectors.toList());
 
+        int likeCount = userLikeRepository.countByRestaurant(restaurant);
+        long reviewCount = reviewRepository.countReviewByRestaurant(restaurant);
+
         return RestaurantDetailDTO.builder()
                 .restaurantId(restaurant.getRestaurantId())
                 .restaurantName(restaurant.getRestaurantName())
@@ -120,8 +140,8 @@ public class RestaurantServiceImpl implements RestaurantService {
                 .closeTime(restaurant.getCloseTime() != null ? restaurant.getCloseTime().toLocalTime() : null)
                 .menus(menus)
                 .imageUrls(imageUrls)
-                .likeCount(userLikeRepository.countByRestaurant(restaurant))
-                .reviewCount(0) // 리뷰 수 추후 연동
+                .likeCount(likeCount)
+                .reviewCount(reviewCount)
                 .build();
     }
 
@@ -155,8 +175,8 @@ public class RestaurantServiceImpl implements RestaurantService {
         return restaurants.stream()
                 .map(restaurant -> {
                     int likeCount = userLikeRepository.countByRestaurant(restaurant);
-                    int reviewCount = 0;       // TODO
-                    int reservationCount = 0;  // TODO
+                    long reviewCount = reviewRepository.countReviewByRestaurant(restaurant);
+                    int reservationCount = reservationRepository.countByRestaurant(restaurant);
 
                     return RestaurantListResponseDTO.builder()
                             .restaurantId(restaurant.getRestaurantId())
