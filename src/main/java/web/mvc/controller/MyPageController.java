@@ -225,4 +225,12 @@ public class MyPageController {
             return ResponseEntity.status(e.getErrorCode().getHttpStatus()).build();
         }
     }
+
+    @GetMapping("/preference")
+    public ResponseEntity<UserPreferenceDto> getUserPreference(@AuthenticationPrincipal CustomUserDetails principal) {
+        User user = principal.getUser();
+        return ResponseEntity.ok(
+                new UserPreferenceDto(user.getPreferenceCategory())
+        );
+    }
 }
