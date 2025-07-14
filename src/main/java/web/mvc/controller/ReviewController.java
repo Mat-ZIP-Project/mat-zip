@@ -36,7 +36,9 @@ public class ReviewController {
     @PostMapping("/ocr/{restaurantId}")
     public ResponseEntity<ResOcrDTO> parseReceipt(@RequestParam MultipartFile image, @PathVariable Long restaurantId,
                                                      @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("restaurantId:{}", restaurantId);
         ResOcrDTO result = receiptOcrService.parseReceipt(image,restaurantId,userDetails.getUser().getId());
+        log.info("receiptOcrService.parseReceipt():{}", result);
         return ResponseEntity.ok(result);
     }
 
