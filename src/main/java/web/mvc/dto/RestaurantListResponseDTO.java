@@ -17,6 +17,6 @@ public class RestaurantListResponseDTO {
     private String category;
     private String thumbnailImageUrl; // 대표 이미지
     private int likeCount;     // 찜 수
-    private int reviewCount;
+    private long reviewCount;
     private int reservationCount;
 }

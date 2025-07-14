@@ -111,13 +111,13 @@ public class MyPageServiceImpl implements MyPageService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<ReviewDetailDto> getUserReviews(Long id) throws BasicException {
+    public List<ReviewDetailResponse> getUserReviews(Long id) throws BasicException {
         try {
             List<Review> reviews = reviewRepository.findByUserId(id);
 
             // Review 리스트를 ReviewDetailDto 리스트로 변환
             return reviews.stream()
-                    .map(review -> ReviewDetailDto.builder()
+                    .map(review -> ReviewDetailResponse.builder()
                             .reviewId(review.getReviewId())
                             .content(review.getContent())
                             .rating(review.getRating())

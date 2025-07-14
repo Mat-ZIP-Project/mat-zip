@@ -16,14 +16,18 @@ import java.time.LocalDateTime;
 public class ReviewImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "image_id")
     private Long imageId;
+    @Column(name = "image_name", nullable = false)
     private String imageName;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "reviewId")
+    @ManyToOne(fetch = FetchType.LAZY)
+
+    @JoinColumn(name = "review_id", nullable = false)
     private Review review;
 
     @CreationTimestamp
+    @Column(name = "uploaded_at", nullable = false, updatable = false)
     private LocalDateTime uploadedAt;
 
 

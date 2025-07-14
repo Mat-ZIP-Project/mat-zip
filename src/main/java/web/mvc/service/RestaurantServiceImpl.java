@@ -58,7 +58,7 @@ public class RestaurantServiceImpl implements RestaurantService {
         List<RestaurantListResponseDTO> result = restaurants.stream()
                 .map(restaurant -> {
                     int likeCount = userLikeRepository.countByRestaurant(restaurant);
-                    int reviewCount = reviewRepository.countByRestaurant(restaurant);
+                    long reviewCount = reviewRepository.countReviewByRestaurant(restaurant);
                     int reservationCount = reservationRepository.countByRestaurant(restaurant);
 
                     return RestaurantListResponseDTO.builder()
@@ -87,7 +87,7 @@ public class RestaurantServiceImpl implements RestaurantService {
                 result.sort(Comparator.comparingInt(RestaurantListResponseDTO::getLikeCount).reversed());
                 break;
             case "reviewCount":
-                result.sort(Comparator.comparingInt(RestaurantListResponseDTO::getReviewCount).reversed());
+                result.sort(Comparator.comparingLong(RestaurantListResponseDTO::getReviewCount).reversed());
                 break;
             case "reservationCount":
                 result.sort(Comparator.comparingInt(RestaurantListResponseDTO::getReservationCount).reversed());
@@ -124,7 +124,7 @@ public class RestaurantServiceImpl implements RestaurantService {
                 .stream().map(RestaurantImage::getImageUrl).collect(Collectors.toList());
 
         int likeCount = userLikeRepository.countByRestaurant(restaurant);
-        int reviewCount = reviewRepository.countByRestaurant(restaurant);
+        long reviewCount = reviewRepository.countReviewByRestaurant(restaurant);
 
         return RestaurantDetailDTO.builder()
                 .restaurantId(restaurant.getRestaurantId())
@@ -175,7 +175,7 @@ public class RestaurantServiceImpl implements RestaurantService {
         return restaurants.stream()
                 .map(restaurant -> {
                     int likeCount = userLikeRepository.countByRestaurant(restaurant);
-                    int reviewCount = reviewRepository.countByRestaurant(restaurant);
+                    long reviewCount = reviewRepository.countReviewByRestaurant(restaurant);
                     int reservationCount = reservationRepository.countByRestaurant(restaurant);
 
                     return RestaurantListResponseDTO.builder()

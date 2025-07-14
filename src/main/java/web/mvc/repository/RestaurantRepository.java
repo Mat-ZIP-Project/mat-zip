@@ -36,23 +36,15 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             "    ) < :radius;",nativeQuery = true)
     List<Restaurant> searchByPosition(@Param("longitude")  double longitude, @Param("latitude") double latitude, @Param("radius") long radius);
 
-    /** 업주 ID(userId)에 매핑된 식당 조회 */
+    /** 업주 ID(userId)에 매핑된 식당 조회 ( owner, user 조인한 식당 조회 ) */
     @Query("SELECT r FROM Restaurant r JOIN FETCH r.owner o " +
             "JOIN FETCH o.user u WHERE u.userId = :userId")
     Optional<Restaurant> findByOwnerUserId(@Param("userId") String userId);
 
-    // Restaurant 엔티티에서 owner.userId 기준으로 식당 조회
+    /** ownerId로 식당 조회  */
+    @Query("SELECT r FROM Restaurant r WHERE r.owner.ownerId = :ownerId")
+    Optional<Restaurant> findByOwnerId(@Param("ownerId") Long ownerId);
+
+    // Restaurant 엔티티에서 owner.userId 기준으로 식당 리스트 조회
     List<Restaurant> findByOwner_User_UserId(String userId);
-
-    @Query("SELECT r FROM Restaurant r WHERE " +
-            "(:regionSigungu IS NULL OR r.regionSigungu = :regionSigungu) AND " +
-            "(:#{#categoryList == null || #categoryList.isEmpty()} = true OR r.category IN :categoryList)")
-    Page<Restaurant> findFiltered(
-            @Param("categoryList") List<String> categoryList,
-            @Param("regionSigungu") String regionSigungu,
-            Pageable pageable);
-
-
-
-
 }
