@@ -47,7 +47,6 @@ jobs:
           echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env  # DB 비밀번호
           echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> .env  # 도커 허브 사용자명
           
-          echo "NAVER_OCR_CLIENT_ID=${{ secrets.NAVER_OCR_CLIENT_ID }}" >> .env
           echo "NAVER_OCR_CLIENT_SECRET=${{ secrets.NAVER_OCR_CLIENT_SECRET }}" >> .env
           echo "NAVER_OCR_API_URL=${{ secrets.NAVER_OCR_API_URL }}" >> .env
           
