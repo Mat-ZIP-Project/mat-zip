@@ -46,6 +46,26 @@ jobs:
           echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env  # DB 사용자명
           echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env  # DB 비밀번호
           echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> .env  # 도커 허브 사용자명
+          
+          echo "NAVER_OCR_CLIENT_ID=${{ secrets.NAVER_OCR_CLIENT_ID }}" >> .env
+          echo "NAVER_OCR_CLIENT_SECRET=${{ secrets.NAVER_OCR_CLIENT_SECRET }}" >> .env
+          echo "NAVER_OCR_API_URL=${{ secrets.NAVER_OCR_API_URL }}" >> .env
+          
+          echo "IAMPORT_REST_API_KEY=${{ secrets.IAMPORT_REST_API_KEY }}" >> .env
+          echo "IAMPORT_REST_API_SECRET=${{ secrets.IAMPORT_REST_API_SECRET }}" >> .env
+          
+          echo "KAKAO_MAP_BASE_URL=${{ secrets.KAKAO_MAP_BASE_URL }}" >> .env
+          echo "KAKAO_MAP_REST_API_KEY=${{ secrets.KAKAO_MAP_REST_API_KEY }}" >> .env
+          
+          echo "COOLSMS_API_KEY=${{ secrets.COOLSMS_API_KEY }}" >> .env
+          echo "COOLSMS_API_SECRET=${{ secrets.COOLSMS_API_SECRET }}" >> .env
+          echo "COOLSMS_API_FROM_NUMBER=${{ secrets.COOLSMS_API_FROM_NUMBER }}" >> .env # 예시: coolsms.api.from-number 매핑
+          echo "NTS_API_SERVICE_KEY=${{ secrets.NTS_API_SERVICE_KEY }}" >> .env
+          
+          echo "AWS_CREDENTIALS_ACCESSKEY=${{ secrets.AWS_CREDENTIALS_ACCESSKEY }}" >> .env
+          echo "AWS_CREDENTIALS_SECRETKEY=${{ secrets.AWS_CREDENTIALS_SECRETKEY }}" >> .env
+          echo "AWS_REGION_STATIC=${{ secrets.AWS_REGION_STATIC }}" >> .env
+          echo "AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}" >> .env
 
       - name: EC2에 docker-compose.yml + .env 전송
         uses: appleboy/scp-action@v0.1.7  # EC2로 파일 전송하는 액션(SCP 방식)
