@@ -16,6 +16,8 @@ local.properties
 
 #Spring Boot secret config
 application.properties
+application-dev.properties
+application-secret.properties
 
 # External tool builders
 .externalToolBuilders/
