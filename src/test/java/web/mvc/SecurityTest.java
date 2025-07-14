@@ -42,10 +42,10 @@ public class SecurityTest {
     void insertSampleUsers() {
         userRepository.save(
                 User.builder()
-                        .userId("user1")
+                        .userId("user5")
                         .password(passwordEncoder.encode("1234")) //비번 암호화
                         .name("홍길동")
-                        .phone("010-1252-5678")
+                        .phone("010-5555-5678")
                         .role("ROLE_USER")
                         .userStatus("활성")
                         .pointBalance(0)

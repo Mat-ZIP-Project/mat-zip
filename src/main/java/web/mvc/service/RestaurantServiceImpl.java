@@ -199,4 +199,30 @@ public class RestaurantServiceImpl implements RestaurantService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<ResReviewDTO> getReviewsByRestaurant(Long restaurantId) {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
+
+        List<Review> reviews = reviewRepository.findByRestaurant(restaurant);
+
+        return reviews.stream()
+                .map(review -> ResReviewDTO.builder()
+                        .reviewId(review.getReviewId())
+                        .content(review.getContent())
+                        .rating(review.getRating())
+                        .reviewedAt(review.getReviewedAt())
+                        .visitDate(review.getVisitDate())
+                        .localReview(review.isLocalReview())
+                        .userNickname(review.getUser().getName())
+                        .imageUrls(
+                                review.getReviewImages().stream()
+                                        .map(image -> "/images/reviews/" + image.getImageName())
+                                        .toList()
+                        )
+                        .build())
+                .toList();
+    }
+
+
 }
