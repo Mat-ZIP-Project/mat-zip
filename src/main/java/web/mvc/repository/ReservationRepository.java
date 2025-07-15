@@ -75,7 +75,7 @@ public interface ReservationRepository extends JpaRepository<Reservation,Long> {
         COALESCE(SUM(p.finalPaymentAmount), 0) AS revenue
       FROM Reservation r
       LEFT JOIN ReservationPayment p ON p.reservation = r
-      WHERE r.restaurant.id = :restaurantId
+      WHERE r.restaurant.restaurantId = :restaurantId
         AND r.date BETWEEN :from AND :to
       GROUP BY r.date
       ORDER BY r.date
@@ -95,7 +95,7 @@ public interface ReservationRepository extends JpaRepository<Reservation,Long> {
         COALESCE(SUM(p.finalPaymentAmount), 0) AS revenue
       FROM Reservation r
       LEFT JOIN ReservationPayment p ON p.reservation = r
-      WHERE r.restaurant.id = :restaurantId
+      WHERE r.restaurant.restaurantId = :restaurantId
         AND FUNCTION('STR_TO_DATE', r.date, '%Y-%m-%d')
             BETWEEN FUNCTION('STR_TO_DATE', :from, '%Y-%m-%d')
                 AND FUNCTION('STR_TO_DATE', :to, '%Y-%m-%d')
