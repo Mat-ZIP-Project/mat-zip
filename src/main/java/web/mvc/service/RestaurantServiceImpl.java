@@ -204,7 +204,8 @@ public class RestaurantServiceImpl implements RestaurantService {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
 
-        List<Review> reviews = reviewRepository.findByRestaurant(restaurant);
+
+        List<Review> reviews = reviewRepository.findByRestaurantAndLocalReviewFalse(restaurant);
 
         return reviews.stream()
                 .map(review -> ResReviewDTO.builder()
@@ -224,5 +225,31 @@ public class RestaurantServiceImpl implements RestaurantService {
                 .toList();
     }
 
+    @Override
+    public List<ResReviewDTO> getLocalReviewsByRestaurant(Long restaurantId) {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
+
+        // ✅ local_review = true만 가져옴
+        List<Review> reviews = reviewRepository.findByRestaurantAndLocalReviewTrue(restaurant);
+        System.out.println("로컬 리뷰 개수: " + reviews.size());
+
+        return reviews.stream()
+                .map(review -> ResReviewDTO.builder()
+                        .reviewId(review.getReviewId())
+                        .content(review.getContent())
+                        .rating(review.getRating())
+                        .reviewedAt(review.getReviewedAt())
+                        .visitDate(review.getVisitDate())
+                        .localReview(review.isLocalReview())
+                        .userNickname(review.getUser().getName())
+                        .imageUrls(
+                                review.getReviewImages().stream()
+                                        .map(image -> "/images/reviews/" + image.getImageName())
+                                        .toList()
+                        )
+                        .build())
+                .toList();
+    }
 
 }
