@@ -62,7 +62,7 @@ public class SecurityConfig {
                         //configuration.setAllowedOrigins(Collections.singletonList("http://localhost:5173"));
                         //configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:4173"));
                         //configuration.setAllowedOrigins(Arrays.asList("http://52.79.227.209", "http://52.79.227.209:80"));
-                        configuration.setAllowedOrigins(Arrays.asList("https://mat-zip.kro.kr", "http://mat-zip.kro.kr"));
+                        configuration.setAllowedOriginPatterns(Arrays.asList("https://mat-zip.kro.kr", "http://mat-zip.kro.kr"));
                         configuration.setAllowedMethods(Collections.singletonList("*"));
                         configuration.setAllowCredentials(true);
 
