@@ -79,8 +79,15 @@ public class RestaurantController {
     }
 
     @GetMapping("/{restaurantId}/reviews")
-    public ResponseEntity<List<ResReviewDTO>> getReviewsByRestaurant(@PathVariable Long restaurantId) {
-        List<ResReviewDTO> reviews = restaurantService.getReviewsByRestaurant(restaurantId);
+    public ResponseEntity<List<ResReviewDTO>> getReviewsByRestaurant(
+            @PathVariable Long restaurantId,
+            @RequestParam(required = false, defaultValue = "false") boolean localOnly) {
+
+        List<ResReviewDTO> reviews = localOnly
+                ? restaurantService.getLocalReviewsByRestaurant(restaurantId)
+                : restaurantService.getReviewsByRestaurant(restaurantId);
+
         return ResponseEntity.ok(reviews);
     }
+
 }
