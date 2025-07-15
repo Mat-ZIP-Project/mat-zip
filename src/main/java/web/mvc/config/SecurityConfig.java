@@ -67,7 +67,7 @@ public class SecurityConfig {
                         //configuration.setAllowedOrigins(Arrays.asList("http://52.79.227.209", "http://52.79.227.209:80"));
                         //configuration.setAllowedOriginPatterns(Arrays.asList("https://mat-zip.kro.kr", "http://mat-zip.kro.kr"));
                         configuration.setAllowedOrigins(List.of("https://mat-zip.kro.kr"));
-                      //  configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+                      // configuration.setAllowedOrigins(List.of("http://13.209.64.215"));
                         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                         configuration.setAllowCredentials(true);
                         configuration.setAllowedHeaders(List.of("*"));
