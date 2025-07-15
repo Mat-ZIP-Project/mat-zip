@@ -83,7 +83,7 @@ public class SecurityConfig {
 
                         // 접근 허용 (접근 허용 url은 무조건 명시)
                         .requestMatchers("/login","/auth/**", "/signup/**",
-                                "/payment/complete", "/map/**", "/api/reviews/**", "/api/restaurants/**", "/api/waiting/status/**").permitAll()
+                                "/payment/complete", "/map/**", "/api/reviews/**", "/api/restaurants/**", "/api/waiting/status/**","/test").permitAll()
 
                         // 웨이팅 사용자용
 //                        .requestMatchers(HttpMethod.POST, "/api/waiting").hasRole("USER")
