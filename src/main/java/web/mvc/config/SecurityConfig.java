@@ -51,6 +51,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        System.out.println("********************ok******");
         // CORS 설정
         //http.cors(cors -> cors.configurationSource(corsConfig()));
 
