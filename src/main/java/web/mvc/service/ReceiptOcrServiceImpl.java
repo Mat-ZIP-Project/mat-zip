@@ -1,6 +1,7 @@
 package web.mvc.service;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import web.mvc.exception.ErrorCode;
 import web.mvc.repository.RestaurantRepository;
 
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -76,10 +78,17 @@ public class ReceiptOcrServiceImpl implements ReceiptOcrService {
             log.info(response.getBody());
 
             // 4. 결과 파싱
-            return extractRestaurantInfo(response.getBody(),restaurantId,id);
+            return extractRestaurantInfo(response.getBody(), restaurantId, id);
 
+        } catch (BasicException e) {
+            log.warn("OCR 도메인 예외 발생: {}", e.getMessage(), e);
+            throw e; // 도메인 검증 실패는 그대로 던짐
+        } catch (IOException e) {
+            log.error("OCR 이미지 인코딩 또는 JSON 직렬화 실패", e);
+            throw new RuntimeException("영수증 이미지를 처리하는 도중 오류가 발생했습니다.", e);
         } catch (Exception e) {
-            throw new RuntimeException("OCR 처리 실패", e);
+            log.error("OCR 처리 중 알 수 없는 예외 발생", e);
+            throw new RuntimeException("영수증 인증 중 시스템 오류가 발생했습니다.", e);
         }
     }
 
@@ -111,8 +120,8 @@ public class ReceiptOcrServiceImpl implements ReceiptOcrService {
 
 
 
-    private ResOcrDTO extractRestaurantInfo(String responseJson,Long restaurantId,Long id) {
-        try {
+    private ResOcrDTO extractRestaurantInfo(String responseJson,Long restaurantId,Long id) throws JsonProcessingException {
+
             ObjectMapper mapper = new ObjectMapper();
             OcrResponse response = mapper.readValue(responseJson, OcrResponse.class);
 
@@ -126,9 +135,7 @@ public class ReceiptOcrServiceImpl implements ReceiptOcrService {
 
             validateReceipt(restaurantId,restaurantName,visitDate,id);
             return new ResOcrDTO(restaurantName, visitDate);
-        } catch (Exception e) {
-            throw new RuntimeException("OCR 결과 파싱 실패", e);
-        }
+
     }
 }
 

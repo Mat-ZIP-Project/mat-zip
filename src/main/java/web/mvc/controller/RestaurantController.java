@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import web.mvc.dto.ResReviewDTO;
 import web.mvc.dto.RestaurantListResponseDTO;
 import web.mvc.dto.RestaurantDetailDTO;
 import web.mvc.security.CustomUserDetails;
@@ -76,4 +77,17 @@ public class RestaurantController {
         List<RestaurantListResponseDTO> result = restaurantService.searchRestaurantsByKeyword(keyword);
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("/{restaurantId}/reviews")
+    public ResponseEntity<List<ResReviewDTO>> getReviewsByRestaurant(
+            @PathVariable Long restaurantId,
+            @RequestParam(required = false, defaultValue = "false") boolean localOnly) {
+
+        List<ResReviewDTO> reviews = localOnly
+                ? restaurantService.getLocalReviewsByRestaurant(restaurantId)
+                : restaurantService.getReviewsByRestaurant(restaurantId);
+
+        return ResponseEntity.ok(reviews);
+    }
+
 }

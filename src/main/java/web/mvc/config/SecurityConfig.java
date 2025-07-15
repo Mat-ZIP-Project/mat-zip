@@ -89,7 +89,7 @@ public class SecurityConfig {
 //                        .requestMatchers(HttpMethod.POST, "/api/waiting").hasRole("USER")
 //                        .requestMatchers(HttpMethod.GET, "/api/waiting/me").hasRole("USER")
 //                        .requestMatchers(HttpMethod.PUT, "/api/waiting/enter/**").hasRole("USER")
-                        .requestMatchers("/api/waiting/subscribe").authenticated()
+//                        .requestMatchers("/api/waiting/subscribe").authenticated()
 
                         // 권한별 접근 제한
                         .requestMatchers("/owner/**","/reservation/owner/approve").hasRole("OWNER")

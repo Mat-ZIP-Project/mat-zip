@@ -108,7 +108,7 @@ public class Reservation {
         this.updatedAt = LocalDateTime.now();
 
         if (this.status == null || this.status.isEmpty()) {
-            this.status = "pending";
+            this.status = "예약 완료";
         }
     }
 
