@@ -15,6 +15,7 @@ import web.mvc.service.MenuService;
 import web.mvc.service.OwnerService;
 import web.mvc.service.ReservationService;
 import web.mvc.service.RestaurantReviewService;
+import web.mvc.util.WaitingConstants;
 
 import java.util.List;
 
@@ -130,7 +131,7 @@ public class OwnerController {
     }
 
     /** 메뉴 수정 */
-    @PutMapping(value = "/menu/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/menu/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MenuResponse> updateMenu(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable("id") Long menuId,
@@ -184,6 +185,20 @@ public class OwnerController {
     public ResponseEntity<String> markNoShow(@RequestBody NoShowRequest request) throws BasicException {
         reservationService.markNoShow(request.getReservationId());
         return ResponseEntity.ok("노쇼 처리 완료");
+    }
+    //////////////////////////////////////////////////////////
+    // 웨이팅 관리
+    /** 웨이팅 '입장 대기' 명단 조회 */
+    @GetMapping("/waiting/list")
+    public ResponseEntity<List<WaitingListResponse>> getWaitingList(@AuthenticationPrincipal CustomUserDetails principal) throws BasicException {
+        List<WaitingListResponse> responses = ownerService.getWaitingListByRestaurantAndStatus(principal.getUsername(), WaitingConstants.STATUS_WAITING);
+        return ResponseEntity.ok(responses);
+    }
+    /** 웨이팅 '호출' 명단 조회 */
+    @GetMapping("/waiting/call-list")
+    public ResponseEntity<List<WaitingListResponse>> getCallList(@AuthenticationPrincipal CustomUserDetails principal) throws BasicException {
+        List<WaitingListResponse> responses = ownerService.getWaitingListByRestaurantAndStatus(principal.getUsername(), WaitingConstants.STATUS_CALLED);
+        return ResponseEntity.ok(responses);
     }
 
     //////////////////////////////////////////////////////////
