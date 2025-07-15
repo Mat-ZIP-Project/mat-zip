@@ -50,7 +50,30 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // CORS 설정
-        http.cors(cors -> cors.configurationSource(corsConfig()));
+        //http.cors(cors -> cors.configurationSource(corsConfig()));
+
+        //CORS 설정
+        http.cors((corsCustomizer ->
+                corsCustomizer.configurationSource(new CorsConfigurationSource()
+                {
+                    @Override
+                    public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
+                        CorsConfiguration configuration = new CorsConfiguration();
+                        //configuration.setAllowedOrigins(Collections.singletonList("http://localhost:5173"));
+                        //configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:4173"));
+                        //configuration.setAllowedOrigins(Arrays.asList("http://52.79.227.209", "http://52.79.227.209:80"));
+                        configuration.setAllowedOrigins(Arrays.asList("https://mat-zip.kro.kr", "http://mat-zip.kro.kr"));
+                        configuration.setAllowedMethods(Collections.singletonList("*"));
+                        configuration.setAllowCredentials(true);
+
+                        configuration.setAllowedHeaders(Collections.singletonList("*"));
+                        configuration.setMaxAge(3600L);
+
+                        configuration.setExposedHeaders(Collections.singletonList("Authorization"));
+                        return configuration;
+                    }
+                })));
+
 
         // 기본 설정 비활성화 (JWT, 커스텀 LoginFilter 사용)
         http.csrf(csrf -> csrf.disable())
@@ -115,25 +138,25 @@ public class SecurityConfig {
     }
 
     // CORS 설정 메서드
-    @Bean
-    public CorsConfigurationSource corsConfig() {
-        return new CorsConfigurationSource() {
-            @Override
-            public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
-                CorsConfiguration configuration = new CorsConfiguration();
-                configuration.setAllowedOrigins(
-                        Arrays.asList(
-                                //"http://localhost:5173", "http://localhost:4173",
-                               // "http://13.209.64.215", "http://13.209.64.215:80",
-                                "https://mat-zip.kro.kr", "http://mat-zip.kro.kr")
-                );
-                configuration.setAllowedMethods(Collections.singletonList("*"));
-                configuration.setAllowedHeaders(Collections.singletonList("*"));
-                configuration.setAllowCredentials(true);
-                configuration.setMaxAge(3600L);
-                configuration.setExposedHeaders(Collections.singletonList("Authorization"));
-                return configuration;
-            }
-        };
-    }
+//    //@Bean
+//    public CorsConfigurationSource corsConfig() {
+//        return new CorsConfigurationSource() {
+//            @Override
+//            public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
+//                CorsConfiguration configuration = new CorsConfiguration();
+//                configuration.setAllowedOrigins(
+//                        Arrays.asList(
+//                                //"http://localhost:5173", "http://localhost:4173",
+//                               // "http://13.209.64.215", "http://13.209.64.215:80",
+//                                "https://mat-zip.kro.kr", "http://mat-zip.kro.kr")
+//                );
+//                configuration.setAllowedMethods(Collections.singletonList("*"));
+//                configuration.setAllowedHeaders(Collections.singletonList("*"));
+//                configuration.setAllowCredentials(true);
+//                configuration.setMaxAge(3600L);
+//                configuration.setExposedHeaders(Collections.singletonList("Authorization"));
+//                return configuration;
+//            }
+//        };
+//    }
 }
