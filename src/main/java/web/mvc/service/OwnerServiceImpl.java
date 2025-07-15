@@ -12,6 +12,7 @@ import web.mvc.dto.*;
 import web.mvc.exception.BasicException;
 import web.mvc.exception.ErrorCode;
 import web.mvc.repository.*;
+import web.mvc.util.WaitingConstants;
 
 import java.sql.Time;
 import java.time.LocalDate;
@@ -31,6 +32,7 @@ public class OwnerServiceImpl implements OwnerService {
     private final RestaurantImageRepository restaurantImageRepository;
     private final ReservationRepository reservationRepository;
     private final ReservationPaymentRepository reservationPaymentRepository;
+    private final WaitingQueueRepository waitingRepository;
     private final ReviewRepository reviewRepository;
     private final S3Service s3Service;
     private final ModelMapper modelMapper;
@@ -298,16 +300,36 @@ public class OwnerServiceImpl implements OwnerService {
                 .collect(Collectors.toList());
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////
-//    @Override
-//    public List<WaitingListResponse> getWaitingListByRestaurant(String userId) {
-//        Restaurant restaurant = restaurantRepository
-//                .findByOwnerUserId(userId)
-//                .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
-//
-//        return list;
-//    }
-//
+    //////////////////////////////////////////////////////////////////////////////////
+    /**
+     * 사장(userId)에 해당하는 식당의 전체 웨이팅 대기자 명단 조회 ("입장 대기")
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<WaitingListResponse> getWaitingListByRestaurantAndStatus(String userId, String status) {
+        // 1. userId로 식당 조회 (사장 userId → restaurant)
+        Restaurant restaurant = restaurantRepository.findByOwnerUserId(userId)
+                .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
+
+        // 2. 해당 식당의 status별 웨이팅 목록 조회 (번호순)
+        List<WaitingQueue> waitingList = waitingRepository
+                .findByRestaurant_RestaurantIdAndStatusOrderByWaitingNumberAsc(
+                        restaurant.getRestaurantId(), status);
+
+        // 3. ModelMapper 로 매핑
+        return waitingList.stream()
+                .map(wq -> {
+                    WaitingListResponse dto = modelMapper.map(wq, WaitingListResponse.class);
+
+                    dto.setUserId(   wq.getUser().getUserId());
+                    dto.setUserName( wq.getUser().getName());
+                    dto.setPhone(    wq.getUser().getPhone());
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////
     /**
      * 식당의 전체 리뷰 조회
