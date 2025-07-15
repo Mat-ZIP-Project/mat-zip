@@ -21,6 +21,7 @@ import web.mvc.service.TokenService;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -63,7 +64,7 @@ public class SecurityConfig {
                         //configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:4173"));
                         //configuration.setAllowedOrigins(Arrays.asList("http://52.79.227.209", "http://52.79.227.209:80"));
                         //configuration.setAllowedOriginPatterns(Arrays.asList("https://mat-zip.kro.kr", "http://mat-zip.kro.kr"));
-                        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+                        configuration.setAllowedOrigins(List.of("https://mat-zip.kro.kr"));
                         configuration.setAllowedMethods(Collections.singletonList("*"));
                         configuration.setAllowCredentials(true);
 
@@ -160,4 +161,18 @@ public class SecurityConfig {
 //            }
 //        };
 //    }
+
+//    @Bean
+//    public CorsConfigurationSource corsConfigurationSource() {
+//        CorsConfiguration configuration = new CorsConfiguration();
+//        configuration.setAllowedOrigins(List.of("https://mat-zip.kro.kr")); // 정확히 지정
+//        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+//        configuration.setAllowedHeaders(List.of("*"));
+//        configuration.setAllowCredentials(true); // 쿠키 등 인증정보 전송 가능
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/**", configuration);
+//        return source;
+//    }
+
+
 }
