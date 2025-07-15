@@ -843,3 +843,7 @@ application-secret.properties
 
 firebase-admin.json
 matzip-google-key.json
+
+#s3
+/src/main/java/web/mvc/config/S3Config.java
+/src/main/java/web/mvc/service/S3ServiceImpl.java
