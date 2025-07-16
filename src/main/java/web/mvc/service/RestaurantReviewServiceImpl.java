@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 import web.mvc.domain.*;
 import web.mvc.dto.ReqReviewDTO;
 import web.mvc.dto.ResLocalDTO;
+import web.mvc.dto.ResReviewDTO;
 import web.mvc.exception.BasicException;
 import web.mvc.exception.ErrorCode;
 import web.mvc.repository.*;
@@ -16,6 +17,7 @@ import web.mvc.repository.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -149,6 +151,29 @@ public class RestaurantReviewServiceImpl implements RestaurantReviewService{
         reviewRepository.deleteById(reviewId);
 
     }
+
+    @Override
+    public List<ResReviewDTO> getReviewsByRestaurant(Long restaurantId) {
+        List<Review> reviews = reviewRepository.findAllByRestaurantWithImages(restaurantId);
+
+        return reviews.stream()
+                .map(review -> ResReviewDTO.builder()
+                        .reviewId(review.getReviewId())
+                        .content(review.getContent())
+                        .rating(review.getRating())
+                        .reviewedAt(review.getReviewedAt())
+                        .visitDate(review.getVisitDate())
+                        .localReview(review.isLocalReview())
+                        .userNickname(review.getUser().getName())
+                        .imageUrls(
+                                review.getReviewImages().stream()
+                                        .map(ReviewImage::getImageName)
+                                        .collect(Collectors.toList())
+                        )
+                        .build())
+                .collect(Collectors.toList());
+    }
+
 
 
 }

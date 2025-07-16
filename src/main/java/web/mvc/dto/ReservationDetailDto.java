@@ -17,6 +17,7 @@ public class ReservationDetailDto {
     private Long reservationId;
     private Long restaurantId;
     private String restaurantName;
+    private Long avgRatingLocal;
     private LocalDate date;
     private LocalTime time;
     private int numPeople;

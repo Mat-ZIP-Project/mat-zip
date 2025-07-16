@@ -77,7 +77,7 @@ public class SmsVerificationServiceImpl implements SmsVerificationService {
         log.info("인증코드 생성 및 저장 완료 - phone: {}, purpose: {}", phone, purpose);
         System.out.println("[MatZIP] 인증번호 [" + code + "]를 입력해주세요.");
         // 문자 발송 메소드 호출 (배포시 주석 풀기)
-        //sendSms(phone, code);
+        sendSms(phone, code);
     }
 
 
