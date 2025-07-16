@@ -12,7 +12,7 @@ public interface RestaurantService {
      * [식당 목록 조회]
      * 사용자의 필터(카테고리, 지역)와 정렬 기준에 따라 식당 목록을 조회합니다.
      */
-    List<RestaurantListResponseDTO> getRestaurants(List<String> category, String regionSigungu, String sortBy);
+    List<RestaurantListResponseDTO> getRestaurants(List<String> category, String regionSigungu, String sortBy, Integer size, Long userId);
 
     /**
      * [식당 상세 정보 조회]
@@ -35,6 +35,10 @@ public interface RestaurantService {
     List<ResReviewDTO> getReviewsByRestaurant(Long restaurantId);
 
     List<ResReviewDTO> getLocalReviewsByRestaurant(Long restaurantId);
+
+    List<RestaurantListResponseDTO> getRecommendedByCategory(Long userId);
+    List<RestaurantListResponseDTO> getRecommendedByLocalRating();
+    List<RestaurantListResponseDTO> getRecommendedByReservation();
 
 
 }

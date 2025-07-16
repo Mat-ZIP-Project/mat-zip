@@ -19,7 +19,7 @@ import java.util.Date;
 public class JwtTokenProvider {
 
     private SecretKey secretKey;//Decode한 secret key를 담는 객체
-    private final long ACCESS_TOKEN_VALIDITY = 1000L * 60 * 10;  // 10분
+    private final long ACCESS_TOKEN_VALIDITY = 1000L * 60 * 30;  // 10분
     private final long REFRESH_TOKEN_VALIDITY = 1000L * 60 * 60 * 24 * 14; // 14일
 
     //application.properties에 있는 미리 Base64로 Encode된 Secret key를 가져온다

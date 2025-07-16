@@ -8,6 +8,7 @@ import web.mvc.dto.ResReviewDTO;
 import web.mvc.dto.RestaurantListResponseDTO;
 import web.mvc.dto.RestaurantDetailDTO;
 import web.mvc.security.CustomUserDetails;
+import web.mvc.service.RestaurantReviewService;
 import web.mvc.service.RestaurantService;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.List;
 public class RestaurantController {
 
     private final RestaurantService restaurantService;
+    private final RestaurantReviewService restaurantReviewService;
 
     /**
      * 식당 목록 조회
@@ -29,11 +31,12 @@ public class RestaurantController {
     public ResponseEntity<List<RestaurantListResponseDTO>> getRestaurantList(
             @RequestParam(required = false) List<String> category,
             @RequestParam(required = false) String regionSigungu,
-            @RequestParam(required = false, defaultValue = "likes") String sortBy
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "10") int size
+            @RequestParam(required = false, defaultValue = "likes") String sortBy,
+            @RequestParam(required = false) Integer size,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        List<RestaurantListResponseDTO> list = restaurantService.getRestaurants(category, regionSigungu, sortBy);
+        Long userId = userDetails == null ? null : userDetails.getUser().getId();
+        List<RestaurantListResponseDTO> list = restaurantService.getRestaurants(category, regionSigungu, sortBy, size, userId);
         return ResponseEntity.ok(list);
     }
 
@@ -89,5 +92,29 @@ public class RestaurantController {
 
         return ResponseEntity.ok(reviews);
     }
+
+    @GetMapping("/api/restaurants/{restaurantId}/reviews")
+    public ResponseEntity<List<ResReviewDTO>> getReviews(@PathVariable Long restaurantId) {
+        List<ResReviewDTO> reviews = restaurantReviewService.getReviewsByRestaurant(restaurantId);
+        return ResponseEntity.ok(reviews);
+    }
+
+    @GetMapping("/recommend/category")
+    public ResponseEntity<List<RestaurantListResponseDTO>> getRecommendedByCategory(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userId = userDetails.getUser().getId();
+        List<RestaurantListResponseDTO> result = restaurantService.getRecommendedByCategory(userId);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/recommend/local")
+    public ResponseEntity<List<RestaurantListResponseDTO>> getRecommendedByLocalRating() {
+        return ResponseEntity.ok(restaurantService.getRecommendedByLocalRating());
+    }
+
+    @GetMapping("/recommend/popular")
+    public ResponseEntity<List<RestaurantListResponseDTO>> getRecommendedByReservation() {
+        return ResponseEntity.ok(restaurantService.getRecommendedByReservation());
+    }
+
 
 }

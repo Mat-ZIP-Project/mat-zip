@@ -47,4 +47,39 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     // Restaurant 엔티티에서 owner.userId 기준으로 식당 리스트 조회
     List<Restaurant> findByOwner_User_UserId(String userId);
+
+    // 1. [카테고리 기반 추천] - 찜 많은 순 상위 20
+    @Query(value = """
+    SELECT r.*
+    FROM restaurants r
+    LEFT JOIN user_likes ul ON r.restaurant_id = ul.restaurant_id
+    WHERE r.category IN :categories
+    GROUP BY r.restaurant_id
+    ORDER BY COUNT(ul.like_id) DESC
+    LIMIT 20
+""", nativeQuery = true)
+    List<Restaurant> findTop20ByCategoryInOrderByLikesDesc(@Param("categories") List<String> categories);
+
+
+    // 2. [로컬 맛집 추천] - 로컬 평점 높은 순 상위 20
+    @Query(value = """
+    SELECT * FROM restaurants
+    ORDER BY avg_rating_local DESC
+    LIMIT 20
+""", nativeQuery = true)
+    List<Restaurant> findTop20ByAvgRatingLocalDesc();
+
+
+    // 3. [인기 맛집 추천] - 예약 많은 순 상위 20
+    @Query(value = """
+    SELECT r.*
+    FROM restaurants r
+    LEFT JOIN reservations rs ON r.restaurant_id = rs.restaurant_id
+    GROUP BY r.restaurant_id
+    ORDER BY COUNT(rs.reservation_id) DESC
+    LIMIT 20
+""", nativeQuery = true)
+    List<Restaurant> findTop20ByReservationCountDesc();
+
+
 }
