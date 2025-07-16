@@ -26,9 +26,14 @@ public class SseEmitterManager {
         if (emitter != null) {
             try {
                 emitter.send(SseEmitter.event().name("waiting-update").data(data));
+                System.out.println("SSE 이벤트 전송 성공: userId=" + userId + ", data=" + data);
             } catch (Exception e) {
+                System.err.println("SSE 전송 실패, emitter 제거: userId=" + userId);
+                e.printStackTrace();
                 emitters.remove(userId);
             }
+        } else {
+            System.out.println("Emitter가 존재하지 않음: userId=" + userId);
         }
     }
 }

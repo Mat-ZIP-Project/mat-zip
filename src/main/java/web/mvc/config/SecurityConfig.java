@@ -77,7 +77,7 @@ public class SecurityConfig {
                 // 접근 허용 요청
                 .requestMatchers("/login", "/auth/**", "/signup/**",
                         "/payment/complete", "/map/**", "/api/reviews/**",
-                        "/api/restaurants/**", "/api/waiting/status/**", "/test").permitAll()
+                        "/api/restaurants/**", "/api/waiting/status/**", "/test", "/api/waiting/subscribe").permitAll()
 
                 // 권한별 접근 제한
                 .requestMatchers("/owner/**", "/reservation/owner/approve").hasRole("OWNER")
