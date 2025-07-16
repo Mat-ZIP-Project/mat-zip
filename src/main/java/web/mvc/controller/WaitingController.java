@@ -1,15 +1,19 @@
 package web.mvc.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import web.mvc.dto.WaitingRegisterRequestDTO;
 import web.mvc.dto.WaitingRegisterResponseDTO;
 import web.mvc.dto.WaitingStatusResponseDTO;
 import web.mvc.security.CustomUserDetails;
+import web.mvc.security.JwtTokenProvider;
 import web.mvc.service.WaitingService;
 import web.mvc.util.SseEmitterManager;
 
@@ -22,6 +26,7 @@ public class WaitingController {
 
     private final WaitingService waitingService;
     private final SseEmitterManager sseEmitterManager;
+    private final JwtTokenProvider jwtTokenProvider;
 
     /**
      * [POST] 웨이팅 등록
@@ -114,10 +119,11 @@ public class WaitingController {
      * - 사용자가 이 API를 호출하면 서버와의 SSE 연결을 시작
      * - 이후 서버에서 이벤트가 발생할 때마다 실시간으로 전달됨
      */
+    @CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
     @GetMapping("/subscribe")
-    public SseEmitter subscribe(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        String userId = userDetails.getUsername();
-        return sseEmitterManager.createEmitter(userId); // 사용자 ID 기반 SSE 연결 등록
+    public SseEmitter subscribe(@RequestParam String token) {
+        String userId = jwtTokenProvider.getUserId(token);
+        return sseEmitterManager.createEmitter(userId);
     }
 
 }

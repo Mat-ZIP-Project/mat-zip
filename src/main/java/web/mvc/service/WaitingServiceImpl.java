@@ -1,5 +1,6 @@
 package web.mvc.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,8 @@ public class WaitingServiceImpl implements WaitingService {
     private final UserRepository userRepository;
     private final RestaurantRepository restaurantRepository;
     private final SseEmitterManager sseEmitterManager;
+
+    private final ObjectMapper objectMapper;
 
 
     /**
@@ -153,23 +156,53 @@ public class WaitingServiceImpl implements WaitingService {
      */
     @Override
     public void callNextWaiting(Long restaurantId) {
-        // 해당 식당의 웨이팅 리스트 조회
         List<WaitingQueue> waitingList = waitingQueueRepository
                 .findByRestaurant_RestaurantIdAndStatusOrderByWaitingNumberAsc(restaurantId, WaitingConstants.STATUS_WAITING);
 
-        // 대기자가 없으면 예외
         if (waitingList.isEmpty()) {
             throw new BasicException(ErrorCode.NO_WAITING_AVAILABLE);
         }
 
-        // 가장 앞선 대기자 상태 '호출됨'으로 변경
         WaitingQueue first = waitingList.get(0);
         first.setStatus(WaitingConstants.STATUS_CALLED);
         first.setCalledAt(LocalDateTime.now());
         waitingQueueRepository.save(first);
 
-        // ✅ 호출된 사용자에게 실시간 알림 전송 (SSE)
-        sseEmitterManager.sendToUser(first.getUser().getUserId(), "당신의 차례입니다!");
+        try {
+            // 첫 번째 유저에게 보낼 DTO 생성 및 JSON 직렬화
+            WaitingStatusResponseDTO firstDto = WaitingStatusResponseDTO.builder()
+                    .restaurantName(first.getRestaurant().getRestaurantName())
+                    .waitingNumber(first.getWaitingNumber())
+                    .waitingOrder(1) // 첫번째니까 1
+                    .status(first.getStatus())
+                    .expectedEntryTime(first.getExpectedEntryTime())
+                    .waitingCount(waitingList.size() - 1) // 현재 대기인원 감소
+                    .build();
+
+            String firstJson = objectMapper.writeValueAsString(firstDto);
+            sseEmitterManager.sendToUser(first.getUser().getUserId(), firstJson);
+
+            // 나머지 대기자들에 대해 새 순번 부여 및 JSON으로 보내기
+            for (int i = 1; i < waitingList.size(); i++) {
+                WaitingQueue w = waitingList.get(i);
+                int newOrder = i; // 첫 번째 빠졌으니 i번째 순번
+
+                WaitingStatusResponseDTO dto = WaitingStatusResponseDTO.builder()
+                        .restaurantName(w.getRestaurant().getRestaurantName())
+                        .waitingNumber(w.getWaitingNumber())
+                        .waitingOrder(newOrder)
+                        .status(w.getStatus())
+                        .expectedEntryTime(w.getExpectedEntryTime())
+                        .waitingCount(waitingList.size() - 1)
+                        .build();
+
+                String json = objectMapper.writeValueAsString(dto);
+                sseEmitterManager.sendToUser(w.getUser().getUserId(), json);
+            }
+
+        } catch (Exception e) {
+            log.error("callNextWaiting: SSE 전송 실패", e);
+        }
 
         // waiting_status 대기자 수 감소 및 시간 갱신
         WaitingStatus status = waitingStatusRepository.findByRestaurant_RestaurantId(restaurantId)

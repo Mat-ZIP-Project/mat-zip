@@ -202,6 +202,7 @@ public class RestaurantServiceImpl implements RestaurantService {
                             .regionSigungu(restaurant.getRegionSigungu())
                             .category(restaurant.getCategory())
                             .avgRating(restaurant.getAvgRating())
+                            .avgRatingLocal(restaurant.getAvgRatingLocal())
                             .likeCount(likeCount)
                             .reviewCount(reviewCount)
                             .reservationCount(reservationCount)
