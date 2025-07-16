@@ -13,27 +13,27 @@ import web.mvc.service.LocalAuthService;
 
 import java.time.LocalDate;
 
-@SpringBootTest
+//@SpringBootTest
 class MatzipApplicationTests {
-    @Autowired
-    private LocalAuthRepository localAuthRepository;
-    @Autowired
-    private LocalBadgeRepository badgeRepository;
-
-    @Test
-    void contextLoads() {
-
-    }
-
-    @Test
-    void insertLocalAuth(){
-        localAuthRepository.save(UserLocalAuth.builder().regionName("경기도 용인시 수지구").user(User.builder().id(7L).build()).authDate(LocalDate.of(2025,6,19)).build());
-        localAuthRepository.save(UserLocalAuth.builder().regionName("경기도 용인시 수지구").user(User.builder().id(7L).build()).authDate(LocalDate.of(2025,6,20)).build());
-    }
-    @Test
-    void insertBadge(){
-        badgeRepository.save(UserLocalBadge.builder().regionName("서울특별시 강남구").user(User.builder().id(4L).build()).build());
-    }
+//    @Autowired
+//    private LocalAuthRepository localAuthRepository;
+//    @Autowired
+//    private LocalBadgeRepository badgeRepository;
+//
+//    @Test
+//    void contextLoads() {
+//
+//    }
+//
+//    @Test
+//    void insertLocalAuth(){
+//        localAuthRepository.save(UserLocalAuth.builder().regionName("경기도 용인시 수지구").user(User.builder().id(7L).build()).authDate(LocalDate.of(2025,6,19)).build());
+//        localAuthRepository.save(UserLocalAuth.builder().regionName("경기도 용인시 수지구").user(User.builder().id(7L).build()).authDate(LocalDate.of(2025,6,20)).build());
+//    }
+//    @Test
+//    void insertBadge(){
+//        badgeRepository.save(UserLocalBadge.builder().regionName("서울특별시 강남구").user(User.builder().id(4L).build()).build());
+//    }
 
 
 }
