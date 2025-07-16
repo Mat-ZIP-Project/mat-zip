@@ -21,6 +21,7 @@ import web.mvc.service.TokenService;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -51,6 +52,30 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // CORS 설정
         http.cors(cors -> cors.configurationSource(corsConfig()));
+
+        //CORS 설정
+//        http.cors((corsCustomizer ->
+//                corsCustomizer.configurationSource(new CorsConfigurationSource()
+//                {
+//                    @Override
+//                    public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
+//                        CorsConfiguration configuration = new CorsConfiguration();
+//                        //configuration.setAllowedOrigins(Collections.singletonList("http://localhost:5173"));
+//                        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:4173"));
+//                        //configuration.setAllowedOrigins(Arrays.asList("http://52.79.227.209", "http://52.79.227.209:80"));
+//                        //configuration.setAllowedOriginPatterns(Arrays.asList("https://mat-zip.kro.kr", "http://mat-zip.kro.kr"));
+//                        configuration.setAllowedOrigins(List.of("https://mat-zip.kro.kr"));
+//                        configuration.setAllowedMethods(Collections.singletonList("*"));
+//                        configuration.setAllowCredentials(true);
+//
+//                        configuration.setAllowedHeaders(Collections.singletonList("*"));
+//                        configuration.setMaxAge(3600L);
+//
+//                        configuration.setExposedHeaders(Collections.singletonList("Authorization"));
+//                        return configuration;
+//                    }
+//                })));
+
 
         // 기본 설정 비활성화 (JWT, 커스텀 LoginFilter 사용)
         http.csrf(csrf -> csrf.disable())
@@ -83,13 +108,7 @@ public class SecurityConfig {
 
                         // 접근 허용 (접근 허용 url은 무조건 명시)
                         .requestMatchers("/login","/auth/**", "/signup/**",
-                                "/payment/complete", "/map/**", "/api/reviews/**", "/api/restaurants/**", "/api/waiting/status/**").permitAll()
-
-                        // 웨이팅 사용자용
-//                        .requestMatchers(HttpMethod.POST, "/api/waiting").hasRole("USER")
-//                        .requestMatchers(HttpMethod.GET, "/api/waiting/me").hasRole("USER")
-//                        .requestMatchers(HttpMethod.PUT, "/api/waiting/enter/**").hasRole("USER")
-//                        .requestMatchers("/api/waiting/subscribe").authenticated()
+                                "/payment/complete", "/map/**", "/api/reviews/**", "/api/restaurants/**", "/api/waiting/status/**","/test").permitAll()
 
                         // 권한별 접근 제한
                         .requestMatchers("/owner/**","/reservation/owner/approve").hasRole("OWNER")
@@ -122,7 +141,10 @@ public class SecurityConfig {
             public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                 CorsConfiguration configuration = new CorsConfiguration();
                 configuration.setAllowedOrigins(
-                        Arrays.asList("http://localhost:5173", "http://localhost:4173")
+                        Arrays.asList(
+                                "http://localhost:5173", "http://localhost:4173",
+                               // "http://13.209.64.215", "http://13.209.64.215:80",
+                                "https://mat-zip.kro.kr", "http://mat-zip.kro.kr")
                 );
                 configuration.setAllowedMethods(Collections.singletonList("*"));
                 configuration.setAllowedHeaders(Collections.singletonList("*"));
@@ -133,4 +155,18 @@ public class SecurityConfig {
             }
         };
     }
+
+//    @Bean
+//    public CorsConfigurationSource corsConfigurationSource() {
+//        CorsConfiguration configuration = new CorsConfiguration();
+//        configuration.setAllowedOrigins(List.of("https://mat-zip.kro.kr")); // 정확히 지정
+//        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+//        configuration.setAllowedHeaders(List.of("*"));
+//        configuration.setAllowCredentials(true); // 쿠키 등 인증정보 전송 가능
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/**", configuration);
+//        return source;
+//    }
+
+
 }

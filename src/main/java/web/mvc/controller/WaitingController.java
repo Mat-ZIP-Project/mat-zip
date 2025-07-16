@@ -70,6 +70,7 @@ public class WaitingController {
     @GetMapping("/status/{restaurantId}")
     public ResponseEntity<WaitingStatusResponseDTO> getWaitingStatusByRestaurant(@PathVariable Long restaurantId) {
         WaitingStatusResponseDTO response = waitingService.getWaitingStatusByRestaurantId(restaurantId);
+        System.out.println("웨이팅현황:" +response);
         return ResponseEntity.ok(response);
     }
 
