@@ -121,22 +121,41 @@ public class ReceiptOcrServiceImpl implements ReceiptOcrService {
 
 
     private ResOcrDTO extractRestaurantInfo(String responseJson,Long restaurantId,Long id) throws JsonProcessingException {
-
             ObjectMapper mapper = new ObjectMapper();
             OcrResponse response = mapper.readValue(responseJson, OcrResponse.class);
 
             OcrReceiptResult result = response.getImages().get(0).getReceipt().getResult();
             String name = result.getStoreInfo().getName().getText();
-            String subName = result.getStoreInfo().getSubName().getText();
-            String restaurantName = name + subName;
+            String subName = Optional.ofNullable(result.getStoreInfo().getSubName())
+                    .map(OcrSimpleText::getText)
+                    .orElse("");
+            String combinedName = name + subName;
+
+            String restaurantName = formatRestaurantName(combinedName);
+
+            log.info("restaurantName={}",restaurantName);
 
             OcrFormattedDate date = result.getPaymentInfo().getDate().getFormatted();
             String visitDate = String.format("%s-%s-%s", date.getYear(), date.getMonth(), date.getDay());
+
+            log.info("visitDate={}",visitDate);
 
             validateReceipt(restaurantId,restaurantName,visitDate,id);
             return new ResOcrDTO(restaurantName, visitDate);
 
     }
+
+    private String formatRestaurantName(String raw) {
+        // 예: "오리역점(메가MGC커피)" → "메가MGC커피 오리역점"
+        if (raw.contains("(") && raw.contains(")")) {
+            String inside = raw.replaceAll(".*\\((.*)\\).*", "$1").trim(); // 괄호 안
+            String outside = raw.replaceAll("\\(.*\\)", "").trim(); // 괄호 밖
+            return inside + " " + outside;
+        }
+        return raw.trim();
+    }
+
+
 }
 
 
