@@ -27,4 +27,5 @@ public interface WaitingQueueRepository extends JpaRepository<WaitingQueue, Long
     List<WaitingQueue> findExpiredWaitings();
 
     List<WaitingQueue> findByStatusAndCalledAtBefore(String status, LocalDateTime beforeTime);
+
 }

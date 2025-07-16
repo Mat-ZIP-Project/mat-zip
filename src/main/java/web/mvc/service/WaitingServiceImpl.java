@@ -293,5 +293,4 @@ public class WaitingServiceImpl implements WaitingService {
             log.info("autoMarkNoShow: waitingId={} 노쇼 처리됨 [{}]", waiting.getWaitingId(), LocalDateTime.now());
         }
     }
-
 }
