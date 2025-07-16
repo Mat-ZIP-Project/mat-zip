@@ -192,12 +192,14 @@ public class OwnerController {
     @GetMapping("/waiting/list")
     public ResponseEntity<List<WaitingListResponse>> getWaitingList(@AuthenticationPrincipal CustomUserDetails principal) throws BasicException {
         List<WaitingListResponse> responses = ownerService.getWaitingListByRestaurantAndStatus(principal.getUsername(), WaitingConstants.STATUS_WAITING);
+        System.out.println("웨이팅입장대기 "+responses.size());
         return ResponseEntity.ok(responses);
     }
     /** 웨이팅 '호출' 명단 조회 */
     @GetMapping("/waiting/call-list")
     public ResponseEntity<List<WaitingListResponse>> getCallList(@AuthenticationPrincipal CustomUserDetails principal) throws BasicException {
         List<WaitingListResponse> responses = ownerService.getWaitingListByRestaurantAndStatus(principal.getUsername(), WaitingConstants.STATUS_CALLED);
+        System.out.println("웨이팅호출명단 "+responses.size());
         return ResponseEntity.ok(responses);
     }
 

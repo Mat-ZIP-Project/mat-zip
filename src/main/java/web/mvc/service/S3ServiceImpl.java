@@ -35,7 +35,7 @@ public class S3ServiceImpl implements S3Service {
     private final AmazonS3 amazonS3;
     private final RestaurantRepository restaurantRepository;
 
-    @Value("${AWS.S3.BUCKET:default-aws.s3.bucket}")
+    @Value("${aws.s3.bucket}")
     private String bucketName;
 
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif");
