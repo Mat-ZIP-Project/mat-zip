@@ -36,7 +36,8 @@ public class AppConfig {
     }
 
 
-    @Value("${IAMPORT_REST_API_KEY}")
+
+    @Value("${iamport.rest-api-secret}")
     private String apiKey;
 
     @Value("${IAMPORT_REST_API_SECRET}")

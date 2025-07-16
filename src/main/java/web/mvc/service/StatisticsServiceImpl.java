@@ -52,6 +52,10 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public ReviewSummaryDto getReviewSummary(Long restaurantId, LocalDate from, LocalDate to) {
-        return reviewRepo.findReviewSummaryByVisitDate(restaurantId, from, to);
+        ReviewSummaryDto dto = reviewRepo.findReviewSummaryByVisitDate(restaurantId, from, to);
+        if (dto == null) {
+            return new ReviewSummaryDto(0L, 0L);
+        }
+        return dto;
     }
 }
