@@ -100,7 +100,7 @@ public class MyPageController {
     /**
      * 사용자 예약 취소
      */
-    @PostMapping("/reservations/cancel/{reservationId}")
+    @DeleteMapping("/reservations/cancel/{reservationId}")
     public ResponseEntity<String> cancelReservation(@AuthenticationPrincipal CustomUserDetails principal,
                                                     @PathVariable Long reservationId) {
         if (principal == null || principal.getUser() == null) {

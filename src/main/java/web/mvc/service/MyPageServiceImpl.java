@@ -153,19 +153,25 @@ public class MyPageServiceImpl implements MyPageService {
         }
         // 시간 기반 취소 가능여부
         LocalDate reservationDate = LocalDate.parse(reservation.getDate());
-        LocalTime reservationTime = LocalTime.parse(reservation.getTime());
-        LocalDateTime reservationDateTime = LocalDateTime.of(reservationDate, reservationTime);
+//        LocalTime reservationTime = LocalTime.parse(reservation.getTime());
         LocalDateTime now = LocalDateTime.now();
+        LocalDate today = now.toLocalDate();
+//        LocalDateTime reservationDateTime = LocalDateTime.of(reservationDate, reservationTime);
+//        LocalDateTime now = LocalDateTime.now();
 
         // 예약 시간이 현재 시간보다 이전이면 취소 불가능
-        if (reservationDateTime.isBefore(now)) {
+//        if (reservationDateTime.isBefore(now)) {
+//            throw new BasicException(ErrorCode.INVALID_RESERVATION_STATUS);
+//        }
+        // 예약 날짜가 오늘보다 이전이거나 같으면 취소 불가능 (하루 전까지 가능)
+        if (!reservationDate.isAfter(today)) {
             throw new BasicException(ErrorCode.INVALID_RESERVATION_STATUS);
         }
-        // 예약 시간이 3시간 이내로 남았으므로 취소 불가능
-        long hoursUntilReservation = ChronoUnit.HOURS.between(now, reservationDate);
-        if (hoursUntilReservation < 3) {
-            throw new BasicException(ErrorCode.INVALID_RESERVATION_STATUS);
-        }
+//        // 예약 시간이 3시간 이내로 남았으므로 취소 불가능
+//        long hoursUntilReservation = ChronoUnit.HOURS.between(now, reservationDate);
+//        if (hoursUntilReservation < 3) {
+//            throw new BasicException(ErrorCode.INVALID_RESERVATION_STATUS);
+//        }
 
         // 결제 정보 확인 및 PaymentService를 통한 환불 처리
         Optional<ReservationPayment> paymentOpt = reservationPaymentRepository.findByReservation(reservation);
