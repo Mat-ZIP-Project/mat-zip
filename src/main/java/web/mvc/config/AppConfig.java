@@ -36,10 +36,10 @@ public class AppConfig {
     }
 
 
-    @Value("${IAMPORT_REST_API_SECRET}")
+    @Value("${IAMPORT_REST_API_KEY}")
     private String apiKey;
 
-    @Value("${IAMPORT_REST_API_KEY}")
+    @Value("${IAMPORT_REST_API_SECRET}")
     private String apiSecret;
 
     @Bean
