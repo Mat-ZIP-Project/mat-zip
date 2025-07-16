@@ -43,7 +43,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Query("""
       SELECT new web.mvc.dto.ReviewSummaryDto(
         COUNT(r),
-        SUM(CASE WHEN r.localReview = true THEN 1 ELSE 0 END)
+        COALESCE(SUM(CASE WHEN r.localReview = true THEN 1 ELSE 0 END), 0)
       )
       FROM Review r
       WHERE r.restaurant.restaurantId = :restaurantId
