@@ -3,6 +3,7 @@ package web.mvc.service;
 import org.springframework.web.multipart.MultipartFile;
 import web.mvc.dto.ReqReviewDTO;
 import web.mvc.dto.ResLocalDTO;
+import web.mvc.dto.ResReviewDTO;
 
 import java.util.List;
 
@@ -21,4 +22,5 @@ public interface RestaurantReviewService {
      */
     void deleteReview( Long reviewId);
 
+    List<ResReviewDTO> getReviewsByRestaurant(Long restaurantId);
 }

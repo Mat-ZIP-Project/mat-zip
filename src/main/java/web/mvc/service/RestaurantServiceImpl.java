@@ -1,6 +1,8 @@
 package web.mvc.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import web.mvc.repository.*;
 import web.mvc.security.CustomUserDetails;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -33,30 +36,36 @@ public class RestaurantServiceImpl implements RestaurantService {
     private final ReservationRepository reservationRepository;
 
     @Override
-    public List<RestaurantListResponseDTO> getRestaurants(List<String> categoryList, String regionSigungu, String sortBy) {
+    public List<RestaurantListResponseDTO> getRestaurants(List<String> categoryList, String regionSigungu, String sortBy, Integer size, Long userId) {
         List<Restaurant> restaurants;
 
         // 필터링 조건 존재 여부 체크
-        boolean hasCategory = categoryList != null && !categoryList.isEmpty();      // 카테고리 필터가 있는지 확인
-        boolean hasRegion = regionSigungu != null && !regionSigungu.isBlank();     // 지역(구) 필터가 있는지 확인
+        boolean hasCategory = categoryList != null && !categoryList.isEmpty();
+        boolean hasRegion = regionSigungu != null && !regionSigungu.isBlank();
 
         // 조건에 따라 식당 목록 조회
         if (hasCategory && hasRegion) {
-            // 카테고리 리스트와 지역(구) 모두 필터링
             restaurants = restaurantRepository.findByCategoryInAndRegionSigungu(categoryList, regionSigungu);
         } else if (hasCategory) {
-            // 카테고리 리스트만 필터링
             restaurants = restaurantRepository.findByCategoryIn(categoryList);
         } else if (hasRegion) {
-            // 지역(구)만 필터링
             restaurants = restaurantRepository.findByRegionSigungu(regionSigungu);
         } else {
-            // 필터 없이 전체 식당 조회
             restaurants = restaurantRepository.findAll();
+        }
+
+        // 로그인한 유저가 있으면 찜한 식당 ID 목록 조회
+        List<Long> likedRestaurantIds;
+        if (userId != null) {
+            likedRestaurantIds = userLikeRepository.findLikedRestaurantIdsByUserId(userId);
+        } else {
+            likedRestaurantIds = Collections.emptyList();
         }
 
         List<RestaurantListResponseDTO> result = restaurants.stream()
                 .map(restaurant -> {
+                    boolean liked = likedRestaurantIds.contains(restaurant.getRestaurantId());
+
                     int likeCount = userLikeRepository.countByRestaurant(restaurant);
                     long reviewCount = reviewRepository.countReviewByRestaurant(restaurant);
                     int reservationCount = reservationRepository.countByRestaurant(restaurant);
@@ -73,11 +82,12 @@ public class RestaurantServiceImpl implements RestaurantService {
                             .likeCount(likeCount)
                             .reviewCount(reviewCount)
                             .reservationCount(reservationCount)
-                            .thumbnailImageUrl(
+                            .imageUrl(
                                     restaurantImageRepository.findAllByRestaurant(restaurant).stream()
                                             .map(RestaurantImage::getImageUrl)
                                             .findFirst()
                                             .orElse(null))
+                            .liked(liked)
                             .build();
                 }).collect(Collectors.toList());
 
@@ -101,7 +111,12 @@ public class RestaurantServiceImpl implements RestaurantService {
                 result.sort(Comparator.comparingInt(RestaurantListResponseDTO::getLikeCount).reversed());
         }
 
-        return result;
+        // size가 null이 아니면 제한, 아니면 전체 반환
+        if (size != null) {
+            return result.stream().limit(size).collect(Collectors.toList());
+        } else {
+            return result;
+        }
     }
 
 
@@ -136,6 +151,7 @@ public class RestaurantServiceImpl implements RestaurantService {
                 .category(restaurant.getCategory())
                 .descript(restaurant.getDescript())
                 .avgRating(restaurant.getAvgRating())
+                .avgRatingLocal(restaurant.getAvgRatingLocal())
                 .openTime(restaurant.getOpenTime() != null ? restaurant.getOpenTime().toLocalTime() : null)
                 .closeTime(restaurant.getCloseTime() != null ? restaurant.getCloseTime().toLocalTime() : null)
                 .menus(menus)
@@ -189,7 +205,7 @@ public class RestaurantServiceImpl implements RestaurantService {
                             .likeCount(likeCount)
                             .reviewCount(reviewCount)
                             .reservationCount(reservationCount)
-                            .thumbnailImageUrl(
+                            .imageUrl(
                                     restaurantImageRepository.findAllByRestaurant(restaurant).stream()
                                             .map(RestaurantImage::getImageUrl)
                                             .findFirst()
@@ -251,5 +267,70 @@ public class RestaurantServiceImpl implements RestaurantService {
                         .build())
                 .toList();
     }
+    
+    @Override
+    public List<RestaurantListResponseDTO> getRecommendedByCategory(Long userId) {
+        // 1. 사용자 선호 카테고리 가져오기
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BasicException(ErrorCode.USER_NOT_FOUND));
 
+        String preferenceCategory = user.getPreferenceCategory(); // ex) "한식,양식"
+        if (preferenceCategory == null || preferenceCategory.isBlank()) {
+            return List.of(); // 선호 카테고리가 없으면 빈 리스트 반환
+        }
+
+        List<String> categoryList = List.of(preferenceCategory.split(","));
+
+        // 2. 찜 많은 순으로 상위 20개 가져오기
+        List<Restaurant> restaurants = restaurantRepository.findTop20ByCategoryInOrderByLikesDesc(categoryList);
+
+        // 3. 로그인 유저가 찜한 식당 ID 조회
+        List<Long> likedRestaurantIds = userLikeRepository.findLikedRestaurantIdsByUserId(userId);
+
+        return convertToRestaurantDTOList(restaurants, likedRestaurantIds);
+    }
+
+    @Override
+    public List<RestaurantListResponseDTO> getRecommendedByLocalRating() {
+        List<Restaurant> restaurants = restaurantRepository.findTop20ByAvgRatingLocalDesc();
+        return convertToRestaurantDTOList(restaurants, Collections.emptyList());
+    }
+
+    @Override
+    public List<RestaurantListResponseDTO> getRecommendedByReservation() {
+        List<Restaurant> restaurants = restaurantRepository.findTop20ByReservationCountDesc();
+        return convertToRestaurantDTOList(restaurants, Collections.emptyList());
+    }
+
+    private List<RestaurantListResponseDTO> convertToRestaurantDTOList(List<Restaurant> restaurants, List<Long> likedRestaurantIds) {
+        return restaurants.stream().map(restaurant -> {
+            boolean liked = likedRestaurantIds.contains(restaurant.getRestaurantId());
+
+            int likeCount = userLikeRepository.countByRestaurant(restaurant);
+            long reviewCount = reviewRepository.countReviewByRestaurant(restaurant);
+            int reservationCount = reservationRepository.countByRestaurant(restaurant);
+
+            return RestaurantListResponseDTO.builder()
+                    .restaurantId(restaurant.getRestaurantId())
+                    .restaurantName(restaurant.getRestaurantName())
+                    .address(restaurant.getAddress())
+                    .regionSido(restaurant.getRegionSido())
+                    .regionSigungu(restaurant.getRegionSigungu())
+                    .category(restaurant.getCategory())
+                    .avgRating(restaurant.getAvgRating())
+                    .avgRatingLocal(restaurant.getAvgRatingLocal())
+                    .likeCount(likeCount)
+                    .reviewCount(reviewCount)
+                    .reservationCount(reservationCount)
+                    .imageUrl(
+                            restaurantImageRepository.findAllByRestaurant(restaurant).stream()
+                                    .map(RestaurantImage::getImageUrl)
+                                    .findFirst()
+                                    .orElse(null)
+                    )
+                    .liked(liked)
+                    .build();
+        }).toList();
+    }
+    
 }
