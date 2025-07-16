@@ -220,6 +220,7 @@ public class RestaurantServiceImpl implements RestaurantService {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new BasicException(ErrorCode.RESTAURANT_NOT_FOUND));
 
+
         List<Review> reviews = reviewRepository.findByRestaurantAndLocalReviewFalse(restaurant);
 
         return reviews.stream()
@@ -266,7 +267,7 @@ public class RestaurantServiceImpl implements RestaurantService {
                         .build())
                 .toList();
     }
-
+    
     @Override
     public List<RestaurantListResponseDTO> getRecommendedByCategory(Long userId) {
         // 1. 사용자 선호 카테고리 가져오기
@@ -331,9 +332,5 @@ public class RestaurantServiceImpl implements RestaurantService {
                     .build();
         }).toList();
     }
-
-
-
-
-
+    
 }
