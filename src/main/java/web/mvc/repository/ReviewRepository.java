@@ -58,6 +58,10 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review> findByRestaurantAndLocalReviewFalse(Restaurant restaurant);
 
+    @Query("SELECT DISTINCT r FROM Review r LEFT JOIN FETCH r.reviewImages WHERE r.restaurant.restaurantId = :restaurantId")
+    List<Review> findAllByRestaurantWithImages(@Param("restaurantId") Long restaurantId);
+
+
 
 }
 
