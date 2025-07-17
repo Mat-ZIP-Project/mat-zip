@@ -10,8 +10,8 @@ import web.mvc.domain.User;
 import web.mvc.repository.UserRepository;
 
 //@SpringBootTest
-@Slf4j
-public class SecurityTest {
+//@Slf4j
+//public class SecurityTest {
 //    @Autowired
 //    private PasswordEncoder passwordEncoder; //BCrypt가 아닌 passwordEncoder(인터페이스)를 주입받음
 //    @Autowired
@@ -42,7 +42,7 @@ public class SecurityTest {
 //    void insertSampleUsers() {
 //        userRepository.save(
 //                User.builder()
-//                        .userId("user5")
+//                        .userId("user")
 //                        .password(passwordEncoder.encode("1234")) //비번 암호화
 //                        .name("홍길동")
 //                        .phone("010-5555-5678")
@@ -108,4 +108,4 @@ public class SecurityTest {
 //                        .build());
 //    }
 
-}
+//}
